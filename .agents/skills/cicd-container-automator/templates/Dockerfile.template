@@ -1,0 +1,43 @@
+# ==============================================================================
+# Stage 1: Dependencies Cache
+# ==============================================================================
+FROM node:24-alpine AS deps
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+COPY package*.json ./
+RUN npm ci
+
+# ==============================================================================
+# Stage 2: Application Build
+# ==============================================================================
+FROM node:24-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+# Optional build step if compiling TypeScript/bundling:
+# RUN npm run build
+
+# ==============================================================================
+# Stage 3: Hardened Production Runner
+# ==============================================================================
+FROM node:24-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Security: Create and run as an unprivileged user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+
+COPY --from=builder --chown=appuser:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:nodejs /app ./
+
+USER appuser
+
+EXPOSE 3000
+ENV PORT=3000
+
+# Health check to ensure zero-downtime rolling updates
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+CMD ["node", "src/index.js"]
