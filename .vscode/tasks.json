@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SkillForge: Run All Quality Gates",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        ".agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SkillForge: Detect Breaking Changes & Impact",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "scripts/detect-breaking-changes.mjs"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SkillForge: Generate Code Graph & Repo Map",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "scripts/generate-code-graph.mjs"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SkillForge: Sync Editor Configurations",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "scripts/sync-editors.mjs"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

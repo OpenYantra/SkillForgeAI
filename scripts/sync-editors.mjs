@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
  * SkillForgeAI: Universal Editor Config Bridge
- * Generates editor-specific rules (.cursorrules, CLAUDE.md, .windsurfrules, AGENTS.md)
- * that point directly to the centralized .agents/skills/ library.
+ * Generates editor-specific rules and configurations for:
+ * - Antigravity (AGENTS.md)
+ * - Cursor (.cursorrules)
+ * - Claude Code (CLAUDE.md)
+ * - Windsurf (.windsurfrules)
+ * - OpenCode (OPENCODE.md & .opencode/instructions.md)
+ * - VSCode (.vscode/tasks.json, .vscode/settings.json, .clinerules, GitHub Copilot)
  */
 
 import fs from 'node:fs';
@@ -51,7 +56,7 @@ ${skillsListMarkdown}
    \`\`\`
 `;
 
-  // 1. Antigravity & Agentic Standard: AGENTS.md
+  // 1. Antigravity & Universal Agent Standard: AGENTS.md
   fs.writeFileSync('AGENTS.md', baseInstructions);
   console.log('   ✅ Updated AGENTS.md (Antigravity & universal agent standard)');
 
@@ -63,17 +68,89 @@ ${skillsListMarkdown}
   fs.writeFileSync('CLAUDE.md', baseInstructions);
   console.log('   ✅ Updated CLAUDE.md (Anthropic Claude Code)');
 
-  // 4. Windsurf: .windsurfrules
+  // 4. Windsurf / Codeium: .windsurfrules
   fs.writeFileSync('.windsurfrules', baseInstructions);
-  console.log('   ✅ Updated .windsurfrules (Windsurf / Codeium)');
+  console.log('   ✅ Updated .windsurfrules (Windsurf)');
 
-  // 5. GitHub Copilot: .github/copilot-instructions.md
+  // 5. OpenCode: OPENCODE.md & .opencode/instructions.md
+  fs.writeFileSync('OPENCODE.md', baseInstructions);
+  const openCodeDir = '.opencode';
+  if (!fs.existsSync(openCodeDir)) fs.mkdirSync(openCodeDir, { recursive: true });
+  fs.writeFileSync(path.join(openCodeDir, 'instructions.md'), baseInstructions);
+  console.log('   ✅ Updated OPENCODE.md & .opencode/instructions.md (OpenCode)');
+
+  // 6. GitHub Copilot: .github/copilot-instructions.md
   const githubDir = '.github';
   if (!fs.existsSync(githubDir)) fs.mkdirSync(githubDir, { recursive: true });
   fs.writeFileSync(path.join(githubDir, 'copilot-instructions.md'), baseInstructions);
   console.log('   ✅ Updated .github/copilot-instructions.md (GitHub Copilot)');
 
-  console.log('\n🎉 All agentic editor configs are synchronized to SkillForgeAI skills!\n');
+  // 7. VSCode Native Tasks & Configuration (.vscode/tasks.json & .vscode/settings.json)
+  const vscodeDir = '.vscode';
+  if (!fs.existsSync(vscodeDir)) fs.mkdirSync(vscodeDir, { recursive: true });
+
+  const vscodeTasks = {
+    version: '2.0.0',
+    tasks: [
+      {
+        label: 'SkillForge: Run All Quality Gates',
+        type: 'shell',
+        command: 'node',
+        args: ['.agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs'],
+        group: {
+          kind: 'test',
+          isDefault: true,
+        },
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+      {
+        label: 'SkillForge: Detect Breaking Changes & Impact',
+        type: 'shell',
+        command: 'node',
+        args: ['scripts/detect-breaking-changes.mjs'],
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+      {
+        label: 'SkillForge: Generate Code Graph & Repo Map',
+        type: 'shell',
+        command: 'node',
+        args: ['scripts/generate-code-graph.mjs'],
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+      {
+        label: 'SkillForge: Sync Editor Configurations',
+        type: 'shell',
+        command: 'node',
+        args: ['scripts/sync-editors.mjs'],
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+    ],
+  };
+
+  fs.writeFileSync(path.join(vscodeDir, 'tasks.json'), JSON.stringify(vscodeTasks, null, 2));
+  console.log('   ✅ Updated .vscode/tasks.json (VSCode One-Click Tasks)');
+
+  // 8. VSCode Cline / Roo-Code Agent Rules
+  fs.writeFileSync('.clinerules', baseInstructions);
+  console.log('   ✅ Updated .clinerules (VSCode Cline & Roo-Code extensions)');
+
+  console.log('\n🎉 All editor configurations (including OpenCode & VSCode) are synchronized!\n');
 }
 
 generateEditorConfigs();
