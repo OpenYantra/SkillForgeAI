@@ -130,6 +130,17 @@ ${skillsListMarkdown}
         problemMatcher: [],
       },
       {
+        label: 'SkillForge: Run Self-Healing Test Loop',
+        type: 'shell',
+        command: 'node',
+        args: ['scripts/self-heal-loop.mjs'],
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+      {
         label: 'SkillForge: Sync Editor Configurations',
         type: 'shell',
         command: 'node',
@@ -150,7 +161,7 @@ ${skillsListMarkdown}
   fs.writeFileSync('.clinerules', baseInstructions);
   console.log('   ✅ Updated .clinerules (VSCode Cline & Roo-Code extensions)');
 
-  console.log('\n🎉 All editor configurations (including OpenCode & VSCode) are synchronized!\n');
+  console.log('\n🎉 All editor configurations are synchronized!\n');
 }
 
 generateEditorConfigs();

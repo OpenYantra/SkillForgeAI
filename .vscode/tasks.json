@@ -45,6 +45,19 @@
       "problemMatcher": []
     },
     {
+      "label": "SkillForge: Run Self-Healing Test Loop",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "scripts/self-heal-loop.mjs"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "SkillForge: Sync Editor Configurations",
       "type": "shell",
       "command": "node",

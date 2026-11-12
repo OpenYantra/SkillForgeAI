@@ -1,8 +1,25 @@
 {
-  "generatedAt": "2026-11-12T17:38:06.648Z",
-  "totalFiles": 7,
+  "generatedAt": "2026-11-12T18:06:03.021Z",
+  "totalFiles": 10,
+  "languages": {
+    "typescript": 10
+  },
   "nodes": {
     "examples/order-service/src/domain/entities/order.entity.ts": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [
+          "DomainValidationError",
+          "InvalidStateTransitionError",
+          "OrderEntity"
+        ],
+        "interfaces": [
+          "OrderItem",
+          "OrderProps"
+        ],
+        "types": [],
+        "functions": []
+      },
       "imports": [],
       "importedBy": [
         "examples/order-service/src/domain/ports/order.repository.ts",
@@ -12,6 +29,15 @@
       ]
     },
     "examples/order-service/src/domain/ports/order.repository.ts": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [
+          "IOrderRepository"
+        ],
+        "types": [],
+        "functions": []
+      },
       "imports": [
         "examples/order-service/src/domain/entities/order.entity.ts"
       ],
@@ -21,6 +47,15 @@
       ]
     },
     "examples/order-service/src/repositories/in-memory-order.repository.ts": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [
+          "InMemoryOrderRepository"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
       "imports": [
         "examples/order-service/src/domain/entities/order.entity.ts",
         "examples/order-service/src/domain/ports/order.repository.ts"
@@ -30,6 +65,18 @@
       ]
     },
     "examples/order-service/src/services/order.service.ts": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [
+          "OrderNotFoundError",
+          "OrderService"
+        ],
+        "interfaces": [],
+        "types": [
+          "OrderItem"
+        ],
+        "functions": []
+      },
       "imports": [
         "examples/order-service/src/domain/entities/order.entity.ts",
         "examples/order-service/src/domain/ports/order.repository.ts"
@@ -39,6 +86,13 @@
       ]
     },
     "examples/order-service/tests/order.service.spec.ts": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
       "imports": [
         "examples/order-service/src/domain/entities/order.entity.ts",
         "examples/order-service/src/services/order.service.ts",
@@ -46,14 +100,81 @@
       ],
       "importedBy": []
     },
+    "scripts/detect-breaking-changes.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [
+          "methods"
+        ],
+        "types": [],
+        "functions": [
+          "getGitChangedFiles",
+          "getDiffForFile",
+          "classifyChanges",
+          "analyzeImpact"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
     "scripts/generate-code-graph.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "scanFiles",
+          "detectLanguage",
+          "extractSymbolsAndImports",
+          "generateCodeGraph"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "scripts/install-git-hooks.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "installHooks"
+        ]
+      },
       "imports": [],
       "importedBy": []
     },
     "scripts/sync-editors.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "getInstalledSkills",
+          "generateEditorConfigs"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "scripts/verify-human-signoff.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "verifySignOff"
+        ]
+      },
       "imports": [],
       "importedBy": []
     }
   },
-  "circularDependencies": []
+  "circularDependencies": [],
+  "orphanSymbols": []
 }
