@@ -34,6 +34,12 @@ const GATES = [
     target: '.agents/skills/system-architecture-adr/templates/architecture-spec-template.md',
   },
   {
+    phase: 3,
+    name: 'Phase 3 -> 4: Human-in-the-Loop (HITL) Sign-Off Gate',
+    script: 'scripts/verify-human-signoff.mjs',
+    target: 'examples/order-service/docs/approvals/order-service-signoff.md',
+  },
+  {
     phase: 4,
     name: 'Phase 4: Code Scaffolding Boundaries',
     script: '.agents/skills/feature-scaffolder/scripts/verify-scaffold.mjs',
