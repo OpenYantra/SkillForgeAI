@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-11-12T17:38:06.648Z",
+  "totalFiles": 7,
+  "nodes": {
+    "examples/order-service/src/domain/entities/order.entity.ts": {
+      "imports": [],
+      "importedBy": [
+        "examples/order-service/src/domain/ports/order.repository.ts",
+        "examples/order-service/src/repositories/in-memory-order.repository.ts",
+        "examples/order-service/src/services/order.service.ts",
+        "examples/order-service/tests/order.service.spec.ts"
+      ]
+    },
+    "examples/order-service/src/domain/ports/order.repository.ts": {
+      "imports": [
+        "examples/order-service/src/domain/entities/order.entity.ts"
+      ],
+      "importedBy": [
+        "examples/order-service/src/repositories/in-memory-order.repository.ts",
+        "examples/order-service/src/services/order.service.ts"
+      ]
+    },
+    "examples/order-service/src/repositories/in-memory-order.repository.ts": {
+      "imports": [
+        "examples/order-service/src/domain/entities/order.entity.ts",
+        "examples/order-service/src/domain/ports/order.repository.ts"
+      ],
+      "importedBy": [
+        "examples/order-service/tests/order.service.spec.ts"
+      ]
+    },
+    "examples/order-service/src/services/order.service.ts": {
+      "imports": [
+        "examples/order-service/src/domain/entities/order.entity.ts",
+        "examples/order-service/src/domain/ports/order.repository.ts"
+      ],
+      "importedBy": [
+        "examples/order-service/tests/order.service.spec.ts"
+      ]
+    },
+    "examples/order-service/tests/order.service.spec.ts": {
+      "imports": [
+        "examples/order-service/src/domain/entities/order.entity.ts",
+        "examples/order-service/src/services/order.service.ts",
+        "examples/order-service/src/repositories/in-memory-order.repository.ts"
+      ],
+      "importedBy": []
+    },
+    "scripts/generate-code-graph.mjs": {
+      "imports": [],
+      "importedBy": []
+    },
+    "scripts/sync-editors.mjs": {
+      "imports": [],
+      "importedBy": []
+    }
+  },
+  "circularDependencies": []
+}
