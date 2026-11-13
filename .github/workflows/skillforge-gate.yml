@@ -1,0 +1,115 @@
+name: SkillForgeAI SDLC Quality Gate Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate-sdlc-gates:
+    name: 🛡️ SDLC Quality Gates & PR Scorecard
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: ⚙️ Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 🔍 Audit Semantic Breaking Changes
+        id: diff_check
+        run: |
+          node bin/skillforge.mjs diff --out diff-report.json || true
+
+      - name: 🛡️ Run Master SDLC Quality Gates
+        id: gate_check
+        run: |
+          node bin/skillforge.mjs gate --out gate-report.json || true
+
+      - name: 📊 Synthesize PR Scorecard
+        id: scorecard_gen
+        run: |
+          node scripts/generate-pr-scorecard.mjs --diff diff-report.json --gate gate-report.json --out pr-scorecard.md
+
+      - name: 📋 Publish Job Step Summary
+        if: always()
+        run: |
+          if [ -f pr-scorecard.md ]; then
+            cat pr-scorecard.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💬 Auto-Comment PR Scorecard (Pull Requests Only)
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('pr-scorecard.md')) {
+              console.log('No scorecard file generated. Skipping PR comment.');
+              return;
+            }
+            const scorecard = fs.readFileSync('pr-scorecard.md', 'utf8');
+            const marker = '<!-- skillforge-pr-scorecard -->';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: scorecard,
+              });
+              console.log(`Updated existing PR scorecard comment (ID: ${existingComment.id})`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: scorecard,
+              });
+              console.log('Created new PR scorecard comment.');
+            }
+
+      - name: 🛑 Enforce Gate Status
+        run: |
+          node -e "
+            const fs = require('fs');
+            try {
+              const report = JSON.parse(fs.readFileSync('gate-report.json', 'utf8'));
+              if (report.status !== 'PASSED') {
+                console.error('❌ SkillForge Quality Gate failed: ' + (report.failed || 1) + ' gate(s) failed.');
+                process.exit(1);
+              }
+              console.log('✅ All ' + report.totalGates + ' quality gates passed successfully.');
+            } catch (err) {
+              console.error('❌ Could not parse gate report or gates failed:', err.message);
+              process.exit(1);
+            }
+          "

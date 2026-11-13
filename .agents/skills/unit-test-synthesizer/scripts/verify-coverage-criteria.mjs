@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Test Suite Criteria & Sanity Verifier
+ * Test Suite Criteria & Sanity Verifier (Polyglot: TS, C#, Python, Go)
  * Validates that generated unit test files:
- * 1. Exist and have valid naming conventions (*.spec.*, *.test.*).
- * 2. Contain explicit assertions (expect, assert).
+ * 1. Exist and have valid naming conventions (*.spec.*, *Tests.cs, test_*.py, *_test.go).
+ * 2. Contain explicit assertions (expect, assert, Assert.*).
  * 3. Reference functional requirements or edge cases (FR-XXX / EC-XXX).
  * 4. Are not empty or trivial.
  */
@@ -17,8 +17,15 @@ function scanTestFiles(dir, list = []) {
   for (const file of files) {
     const fullPath = path.join(dir, file);
     if (fs.statSync(fullPath).isDirectory()) {
-      scanTestFiles(fullPath, list);
-    } else if (/\.(spec|test)\.(ts|js|mjs)$/i.test(file)) {
+      if (!/bin|obj|node_modules|\.git/.test(file)) {
+        scanTestFiles(fullPath, list);
+      }
+    } else if (
+      /\.(spec|test)\.(ts|js|mjs)$/i.test(file) ||
+      /Tests?\.cs$/i.test(file) ||
+      /(^test_.*|.*_test)\.py$/i.test(file) ||
+      /.*_test\.go$/i.test(file)
+    ) {
       list.push(fullPath);
     }
   }
@@ -45,7 +52,7 @@ function verifyTestCriteria(targetPath) {
   const warnings = [];
 
   if (testFiles.length === 0) {
-    errors.push('No test files (*.spec.* or *.test.*) found.');
+    errors.push('No test files (*.spec.*, *Tests.cs, test_*.py, *_test.go) found.');
   }
 
   let totalTestsCount = 0;
@@ -56,24 +63,24 @@ function verifyTestCriteria(targetPath) {
     const content = fs.readFileSync(file, 'utf-8');
     const relativePath = path.basename(file);
 
-    // Count test cases
-    const testCases = content.match(/\b(it|test)\s*\(/g) || [];
+    // Count test cases (JS: it/test, C#: [Fact]/[Theory], Py: def test_, Go: func Test)
+    const testCases = content.match(/\b(it|test)\s*\(|\[Fact\]|\[Theory\]|\bdef\s+test_\w+|\bfunc\s+Test\w+/gi) || [];
     totalTestsCount += testCases.length;
 
     if (testCases.length === 0) {
-      warnings.push(`File "${relativePath}" does not contain any test cases [it() or test()].`);
+      warnings.push(`File "${relativePath}" does not contain recognized test case declarations.`);
     }
 
-    // Count assertions
-    const assertions = content.match(/\b(expect|assert)\b/g) || [];
+    // Count assertions (expect, assert, Assert.*)
+    const assertions = content.match(/\b(expect|assert|Assert\.\w+)\b/gi) || [];
     totalAssertionsCount += assertions.length;
 
     if (assertions.length === 0) {
       errors.push(`File "${relativePath}" has 0 assertions! Tests must assert outcomes.`);
     }
 
-    // Check FR / EC references
-    const reqMatches = content.match(/\b(FR-\d{3}|EC-\d{3})\b/g) || [];
+    // Check FR / EC references (FR-001, EC-001, FR001, EC001)
+    const reqMatches = content.match(/(?:^|[^a-zA-Z0-9])(FR-?\d{3}|EC-?\d{3})(?:$|[^a-zA-Z0-9])/gi) || [];
     requirementsCited += reqMatches.length;
     if (reqMatches.length === 0) {
       warnings.push(`File "${relativePath}" does not cite any requirement IDs (e.g. FR-001, EC-001).`);
@@ -81,7 +88,7 @@ function verifyTestCriteria(targetPath) {
   }
 
   console.log('\n========================================');
-  console.log(`🧪 Test Suite Verification Report`);
+  console.log(`🧪 Polyglot Test Suite Verification Report`);
   console.log('========================================');
   console.log(`Evaluated ${testFiles.length} test file(s).`);
   console.log(`Total test cases detected: ${totalTestsCount}`);
@@ -96,11 +103,11 @@ function verifyTestCriteria(targetPath) {
   if (errors.length > 0) {
     console.log('\n❌ FAILED - Test Quality Deficiencies Found:');
     errors.forEach((e) => console.log(`   - ${e}`));
-    console.log('\nPlease fix the issues above to complete the Wave 1 loop.\n');
+    console.log('\nPlease fix the issues above to complete the SDLC test gate.\n');
     process.exit(1);
   } else {
-    console.log('\n✅ PASSED: Test suite satisfies Wave 1 quality standards!');
-    console.log('   Core coding loop completed successfully.\n');
+    console.log('\n✅ PASSED: Test suite satisfies SDLC Phase 5 quality standards!');
+    console.log('   Testing phase verified successfully.\n');
     process.exit(0);
   }
 }

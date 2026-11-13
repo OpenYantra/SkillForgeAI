@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# .NET Build Artifacts (Target subprojects, preserve root bin/skillforge.mjs)
+**/obj/
+examples/**/bin/
+
+# Test & Coverage
+coverage/
+TestResults/
+*.trx
+
+# Environment & Logs
+.env
+.env.*
+*.log
+
+# OS & Editor
+.DS_Store
+Thumbs.db

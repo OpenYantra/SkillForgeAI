@@ -1,0 +1,38 @@
+{
+  "name": "skillforge-ai",
+  "version": "1.1.0",
+  "description": "Autonomous SDLC Engineering Platform for AI Coding Agents",
+  "type": "module",
+  "bin": {
+    "skillforge": "./bin/skillforge.mjs"
+  },
+  "scripts": {
+    "skillforge": "node bin/skillforge.mjs",
+    "gate": "node bin/skillforge.mjs gate",
+    "diff": "node bin/skillforge.mjs diff",
+    "graph": "node bin/skillforge.mjs graph",
+    "slice": "node bin/skillforge.mjs slice",
+    "scaffold": "node bin/skillforge.mjs scaffold",
+    "signoff": "node bin/skillforge.mjs signoff",
+    "heal": "node bin/skillforge.mjs heal",
+    "sync": "node bin/skillforge.mjs sync",
+    "mcp": "node bin/skillforge.mjs mcp",
+    "pr:scorecard": "node scripts/generate-pr-scorecard.mjs",
+    "test:ts": "node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts",
+    "test:dotnet": "dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/OrderService.Tests.csproj --no-restore",
+    "test": "npm run test:ts && npm run test:dotnet"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "sdlc",
+    "coding-agents",
+    "clean-architecture",
+    "quality-gates",
+    "mcp",
+    "dotnet",
+    "typescript"
+  ],
+  "author": "SkillForgeAI",
+  "license": "MIT"
+}

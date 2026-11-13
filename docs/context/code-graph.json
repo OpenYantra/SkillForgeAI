@@ -1,10 +1,117 @@
 {
-  "generatedAt": "2026-11-12T18:06:03.021Z",
-  "totalFiles": 10,
+  "generatedAt": "2026-11-13T15:57:04.982Z",
+  "totalFiles": 28,
   "languages": {
-    "typescript": 10
+    "csharp": 8,
+    "typescript": 20
   },
   "nodes": {
+    "examples/dotnet-order-service/src/Application/Services/OrderService.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "OrderApplicationService"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/src/Domain/Entities/Order.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "Order"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/src/Domain/Entities/OrderItem.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "OrderItem"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/src/Domain/Exceptions/DomainExceptions.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "DomainValidationException",
+          "InvalidStateTransitionException",
+          "OrderNotFoundException"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/src/Domain/Ports/IOrderRepository.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [],
+        "interfaces": [
+          "IOrderRepository"
+        ],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/src/Infrastructure/Persistence/InMemoryOrderRepository.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "InMemoryOrderRepository"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/tests/OrderService.Tests/OrderServiceTests.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "OrderServiceTests"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "examples/dotnet-order-service/tests/OrderService.Tests/Program.cs": {
+      "language": "csharp",
+      "symbols": {
+        "classes": [
+          "Program"
+        ],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
     "examples/order-service/src/domain/entities/order.entity.ts": {
       "language": "typescript",
       "symbols": {
@@ -134,6 +241,22 @@
       "imports": [],
       "importedBy": []
     },
+    "scripts/generate-pr-scorecard.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "parseArgs",
+          "loadJson",
+          "generateScorecard",
+          "main"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
     "scripts/install-git-hooks.mjs": {
       "language": "typescript",
       "symbols": {
@@ -142,6 +265,36 @@
         "types": [],
         "functions": [
           "installHooks"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "scripts/mcp-server.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "handleToolCall",
+          "processMessage",
+          "startServer"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "scripts/self-heal-loop.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "detectTestRunnerCommand",
+          "runSelfHealingLoop",
+          "using"
         ]
       },
       "imports": [],
@@ -173,8 +326,157 @@
       },
       "imports": [],
       "importedBy": []
+    },
+    "src/cli/commands/diff.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "getGitChangedFiles",
+          "getDiffForFile",
+          "classifyChanges",
+          "executeDiff"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs"
+      ],
+      "importedBy": []
+    },
+    "src/cli/commands/gate.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "executeGate"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs"
+      ],
+      "importedBy": []
+    },
+    "src/cli/commands/graph.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "scanFiles",
+          "detectLanguage",
+          "extractSymbolsAndImports",
+          "buildMermaidDiagram",
+          "buildCodeGraph",
+          "generateRepoMapMarkdown",
+          "executeGraph"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs",
+        "src/cli/commands/slice.mjs"
+      ],
+      "importedBy": [
+        "src/cli/commands/slice.mjs"
+      ]
+    },
+    "src/cli/commands/scaffold.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [
+          "InMemory",
+          "InMemory"
+        ],
+        "interfaces": [
+          "I",
+          "I"
+        ],
+        "types": [],
+        "functions": [
+          "toPascalCase",
+          "toCamelCase",
+          "generateTypeScriptTemplates",
+          "generateDotnetTemplates",
+          "executeScaffold"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs"
+      ],
+      "importedBy": []
+    },
+    "src/cli/commands/signoff.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "getCurrentGitSha",
+          "executeSignoff"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs"
+      ],
+      "importedBy": []
+    },
+    "src/cli/commands/slice.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "hasSourceFiles",
+          "discoverSlices",
+          "classifySliceSymbols",
+          "analyzeSlice",
+          "renderSliceMap",
+          "renderSliceIndex",
+          "generateSliceMaps",
+          "executeSlice"
+        ]
+      },
+      "imports": [
+        "src/cli/ui.mjs",
+        "src/cli/commands/graph.mjs"
+      ],
+      "importedBy": [
+        "src/cli/commands/graph.mjs"
+      ]
+    },
+    "src/cli/ui.mjs": {
+      "language": "typescript",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "printBanner",
+          "printSection",
+          "printSuccess",
+          "printError",
+          "printWarning",
+          "printInfo"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/cli/commands/diff.mjs",
+        "src/cli/commands/gate.mjs",
+        "src/cli/commands/graph.mjs",
+        "src/cli/commands/scaffold.mjs",
+        "src/cli/commands/signoff.mjs",
+        "src/cli/commands/slice.mjs"
+      ]
     }
   },
-  "circularDependencies": [],
-  "orphanSymbols": []
+  "circularDependencies": [
+    "src/cli/commands/graph.mjs <--> src/cli/commands/slice.mjs"
+  ]
 }

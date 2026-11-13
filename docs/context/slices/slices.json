@@ -1,0 +1,153 @@
+{
+  "generatedAt": "2026-11-13T16:04:22.454Z",
+  "globalStats": {
+    "monolithicTokens": 935,
+    "avgSliceTokens": 286,
+    "tokenSavingsPct": "69.4",
+    "totalSlices": 3
+  },
+  "slices": [
+    {
+      "name": "dotnet-order-service",
+      "root": "examples/dotnet-order-service",
+      "container": "examples",
+      "primaryStack": "csharp",
+      "filesCount": 8,
+      "tokenEstimate": 278,
+      "mapPath": "docs/context/slices/dotnet-order-service-map.md",
+      "symbols": {
+        "entities": [
+          "Order",
+          "OrderItem"
+        ],
+        "ports": [
+          "IOrderRepository"
+        ],
+        "services": [
+          "OrderApplicationService"
+        ],
+        "repositories": [
+          "InMemoryOrderRepository"
+        ],
+        "exceptions": [
+          "DomainValidationException",
+          "InvalidStateTransitionException",
+          "OrderNotFoundException"
+        ],
+        "commands": [],
+        "other": [
+          "OrderServiceTests",
+          "Program"
+        ]
+      },
+      "dependencies": {
+        "outbound": [],
+        "inbound": []
+      },
+      "testFiles": [
+        "examples/dotnet-order-service/tests/OrderService.Tests/OrderServiceTests.cs",
+        "examples/dotnet-order-service/tests/OrderService.Tests/Program.cs"
+      ]
+    },
+    {
+      "name": "order-service",
+      "root": "examples/order-service",
+      "container": "examples",
+      "primaryStack": "typescript",
+      "filesCount": 5,
+      "tokenEstimate": 234,
+      "mapPath": "docs/context/slices/order-service-map.md",
+      "symbols": {
+        "entities": [
+          "DomainValidationError",
+          "InvalidStateTransitionError",
+          "OrderEntity",
+          "OrderItem",
+          "OrderProps"
+        ],
+        "ports": [
+          "IOrderRepository"
+        ],
+        "services": [
+          "OrderService"
+        ],
+        "repositories": [
+          "InMemoryOrderRepository"
+        ],
+        "exceptions": [
+          "OrderNotFoundError"
+        ],
+        "commands": [],
+        "other": []
+      },
+      "dependencies": {
+        "outbound": [],
+        "inbound": []
+      },
+      "testFiles": [
+        "examples/order-service/tests/order.service.spec.ts"
+      ]
+    },
+    {
+      "name": "cli",
+      "root": "src/cli",
+      "container": "src",
+      "primaryStack": "typescript",
+      "filesCount": 7,
+      "tokenEstimate": 347,
+      "mapPath": "docs/context/slices/cli-map.md",
+      "symbols": {
+        "entities": [],
+        "ports": [
+          "I"
+        ],
+        "services": [],
+        "repositories": [],
+        "exceptions": [],
+        "commands": [
+          "getGitChangedFiles",
+          "getDiffForFile",
+          "classifyChanges",
+          "executeDiff",
+          "executeGate",
+          "scanFiles",
+          "detectLanguage",
+          "extractSymbolsAndImports",
+          "buildMermaidDiagram",
+          "buildCodeGraph",
+          "generateRepoMapMarkdown",
+          "executeGraph",
+          "toPascalCase",
+          "toCamelCase",
+          "generateTypeScriptTemplates",
+          "generateDotnetTemplates",
+          "executeScaffold",
+          "getCurrentGitSha",
+          "executeSignoff",
+          "hasSourceFiles",
+          "discoverSlices",
+          "classifySliceSymbols",
+          "analyzeSlice",
+          "renderSliceMap",
+          "renderSliceIndex",
+          "generateSliceMaps",
+          "executeSlice",
+          "printBanner",
+          "printSection",
+          "printSuccess",
+          "printError",
+          "printWarning",
+          "printInfo"
+        ],
+        "other": [
+          "InMemory"
+        ]
+      },
+      "dependencies": {
+        "outbound": [],
+        "inbound": []
+      },
+      "testFiles": []
+    }
+  ]
+}

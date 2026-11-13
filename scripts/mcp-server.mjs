@@ -80,6 +80,28 @@ const TOOLS = [
       required: ['skillName'],
     },
   },
+  {
+    name: 'list_domain_slices',
+    description: 'Lists all partitioned vertical domain slices in the monorepo with root paths, stacks, file counts, and token estimates.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'get_domain_slice',
+    description: 'Retrieves the token-efficient architectural slice map for a specific domain/feature (e.g. order-service, dotnet-order-service, cli).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'The name or identifier of the domain slice (e.g. order-service, dotnet-order-service, cli)',
+        },
+      },
+      required: ['name'],
+    },
+  },
 ];
 
 function handleToolCall(name, args = {}) {
@@ -126,6 +148,32 @@ function handleToolCall(name, args = {}) {
         return fs.readFileSync(skillPath, 'utf-8');
       }
       return `Skill "${args.skillName}" not found in .agents/skills/`;
+    }
+
+    case 'list_domain_slices': {
+      const indexPath = path.join('docs', 'context', 'slices', 'index.md');
+      if (fs.existsSync(indexPath)) {
+        return fs.readFileSync(indexPath, 'utf-8');
+      }
+      return 'Domain slices not found. Run "skillforge slice" first.';
+    }
+
+    case 'get_domain_slice': {
+      const slicesDir = path.join('docs', 'context', 'slices');
+      const targetName = (args.name || '').toLowerCase();
+      const directMap = path.join(slicesDir, `${targetName}-map.md`);
+      if (fs.existsSync(directMap)) {
+        return fs.readFileSync(directMap, 'utf-8');
+      }
+      if (fs.existsSync(slicesDir)) {
+        const files = fs.readdirSync(slicesDir);
+        const matched = files.find(f => f.toLowerCase().includes(targetName) && f.endsWith('-map.md'));
+        if (matched) {
+          return fs.readFileSync(path.join(slicesDir, matched), 'utf-8');
+        }
+        return `Domain slice "${args.name}" not found. Available slices:\n` + files.filter(f => f.endsWith('-map.md')).map(f => `- ${f.replace('-map.md', '')}`).join('\n');
+      }
+      return 'Domain slices directory not found. Run "skillforge slice" first.';
     }
 
     default:

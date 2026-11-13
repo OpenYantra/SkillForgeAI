@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Scaffold Structure & Architecture Boundary Verifier
+ * Polyglot Scaffold Structure & Architecture Boundary Verifier
  * Checks whether a feature directory adheres to clean architecture principles:
- * - Domain layer must not import infrastructure or web frameworks.
+ * - Domain layer must not import infrastructure or web frameworks (TS, C#, Python, Go).
  * - Layer separation (domain, services, repositories/controllers) is respected.
  */
 
@@ -10,17 +10,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const FORBIDDEN_DOMAIN_IMPORTS = [
-  'express',
-  'fastify',
-  'koa',
-  '@nestjs',
-  'prisma',
-  '@prisma/client',
-  'typeorm',
-  'mongoose',
-  'pg',
-  'mysql2',
-  'axios',
+  // TypeScript / Node
+  'express', 'fastify', 'koa', '@nestjs', 'prisma', '@prisma/client', 'typeorm', 'mongoose', 'pg', 'mysql2', 'axios',
+  // C# / .NET
+  'Microsoft.EntityFrameworkCore', 'Microsoft.AspNetCore', 'System.Data', 'Dapper', 'System.Net.Http',
+  // Python
+  'fastapi', 'flask', 'django.db', 'sqlalchemy', 'httpx', 'requests',
+  // Go
+  'net/http', 'gorm.io', 'database/sql', 'github.com/gin-gonic',
 ];
 
 function scanDirectory(dir, fileList = []) {
@@ -29,8 +26,10 @@ function scanDirectory(dir, fileList = []) {
   for (const file of files) {
     const fullPath = path.join(dir, file);
     if (fs.statSync(fullPath).isDirectory()) {
-      scanDirectory(fullPath, fileList);
-    } else if (/\.(ts|js|mjs)$/.test(file)) {
+      if (!/bin|obj|node_modules|\.git/.test(file)) {
+        scanDirectory(fullPath, fileList);
+      }
+    } else if (/\.(ts|js|mjs|cs|py|go)$/i.test(file)) {
       fileList.push(fullPath);
     }
   }
@@ -54,7 +53,7 @@ function verifyScaffold(targetDir) {
   const warnings = [];
 
   if (files.length === 0) {
-    errors.push('No source files (.ts, .js, .mjs) found in directory.');
+    errors.push('No source files (.ts, .js, .mjs, .cs, .py, .go) found in directory.');
   }
 
   for (const file of files) {
@@ -64,22 +63,25 @@ function verifyScaffold(targetDir) {
     // Rule: Domain layer must be pure and free of infrastructure/HTTP framework imports
     if (/[\\/]domain[\\/]/i.test(file)) {
       for (const forbidden of FORBIDDEN_DOMAIN_IMPORTS) {
-        const importRegex = new RegExp(`from\\s+['"]${forbidden}['"]|require\\(['"]${forbidden}['"]\\)`, 'i');
+        // Checks imports/usings: from 'x', using x;, import x
+        const importRegex = new RegExp(`(?:from\\s+['"]${forbidden}['"]|require\\(['"]${forbidden}['"]\\)|using\\s+${forbidden}|import\\s+['"]?${forbidden}['"]?)`, 'i');
         if (importRegex.test(content)) {
           errors.push(`Clean Architecture Violation in ${relativePath}: Domain layer must not import infrastructure package "${forbidden}".`);
         }
       }
     }
 
-    // Rule: Check for unhandled generic error throws
-    const genericThrow = /throw\s+new\s+Error\s*\(/g;
-    if (genericThrow.test(content)) {
-      warnings.push(`Generic error throw detected in ${relativePath}. Prefer typed domain errors (e.g., DomainValidationError).`);
+    // Rule: Check for unhandled generic error throws in TS/JS
+    if (/\.(ts|js|mjs)$/i.test(file)) {
+      const genericThrow = /throw\s+new\s+Error\s*\(/g;
+      if (genericThrow.test(content)) {
+        warnings.push(`Generic error throw detected in ${relativePath}. Prefer typed domain errors (e.g., DomainValidationError).`);
+      }
     }
   }
 
   console.log('\n========================================');
-  console.log(`🏗️  Feature Scaffold Verification: ${path.basename(resolvedDir)}`);
+  console.log(`🏗️  Polyglot Feature Scaffold Verification: ${path.basename(resolvedDir)}`);
   console.log('========================================');
   console.log(`Scanned ${files.length} source file(s).`);
 
@@ -94,7 +96,7 @@ function verifyScaffold(targetDir) {
     console.log('\nPlease fix the violations above before proceeding to Phase 5 (Unit Testing).\n');
     process.exit(1);
   } else {
-    console.log('\n✅ PASSED: Feature structure conforms to architectural boundary standards.');
+    console.log('\n✅ PASSED: Feature structure conforms to clean architectural boundary standards.');
     console.log('   Ready for Phase 5: `unit-test-synthesizer`.\n');
     process.exit(0);
   }
