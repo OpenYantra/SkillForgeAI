@@ -7,7 +7,45 @@
  */
 
 import { GATE_REGISTRY, loadGateConfig, isSelfTest, resolveGateTargets, applyGateConfig } from './gate-registry.mjs';
-import { VALIDATORS } from './validators/index.mjs';
+
+/**
+ * Lazily import validators so commands that do not use them (diff, security,
+ * graph, scaffold, ...) never load parser dependencies such as `yaml`.
+ */
+const VALIDATOR_LOADERS = {
+  plan: async () => (await import('./validators/plan.mjs')).validatePlan,
+  prd: async () => (await import('./validators/prd.mjs')).validatePrd,
+  openapi: async () => (await import('./validators/openapi.mjs')).validateOpenApi,
+  architecture: async () => (await import('./validators/architecture.mjs')).validateArchitecture,
+  rca: async () => (await import('./validators/rca.mjs')).validateRca,
+  ciContainer: async () => (await import('./validators/ci-container.mjs')).validateCiContainer,
+  scaffold: async () => (await import('./validators/scaffold.mjs')).verifyScaffold,
+  coverage: async () => (await import('./validators/coverage.mjs')).verifyCoverageCriteria,
+  security: async () => (await import('./validators/security.mjs')).validateSecurity,
+  signoff: async () => {
+    const { verifySignOff } = await import('./signoff-verify.mjs');
+    return (target, options) =>
+      verifySignOff(target, {
+        config: options.config,
+        selfTest: options.selfTest,
+        runGit: options.runGit,
+        silent: true,
+      });
+  },
+};
+
+async function loadValidator(name) {
+  const loader = VALIDATOR_LOADERS[name];
+  if (!loader) return null;
+  try {
+    return await loader();
+  } catch (err) {
+    const detail = err && err.message ? err.message : String(err);
+    throw new Error(`Validator "${name}" could not be loaded (missing dependencies?). Run "npm ci". ${detail}`, {
+      cause: err,
+    });
+  }
+}
 
 function normalizeValidatorResult(result) {
   if (!result || typeof result !== 'object') {
@@ -76,7 +114,23 @@ export async function runGates(options = {}) {
       continue;
     }
 
-    const validator = VALIDATORS[gate.validator];
+    let validator;
+    try {
+      validator = await loadValidator(gate.validator);
+    } catch (err) {
+      results.push({
+        id: gate.id,
+        name: gate.name,
+        phase: gate.phase,
+        status: 'FAILED',
+        reason: err.message,
+        error: err.message,
+        targets: resolved.targets,
+      });
+      failed++;
+      continue;
+    }
+
     if (typeof validator !== 'function') {
       results.push({
         id: gate.id,

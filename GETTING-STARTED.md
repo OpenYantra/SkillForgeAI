@@ -58,6 +58,16 @@ git --version
 dotnet --version  # Optional — only for .NET projects
 ```
 
+Then install the CLI's runtime dependencies from the repository root:
+
+```bash
+npm ci
+```
+
+The published `skillforge-ai` package installs these automatically; `npm ci` is
+required when working from a source checkout (parsers and validators rely on
+runtime packages such as `yaml` and `tree-sitter`).
+
 ---
 
 ## 3. The 7-Phase SDLC Architecture

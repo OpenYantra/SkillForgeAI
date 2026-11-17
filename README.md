@@ -24,7 +24,9 @@ flowchart LR
 
 ## 💻 The Unified `skillforge` CLI
 
-SkillForgeAI provides a unified master CLI (`node bin/skillforge.mjs` or `skillforge`) for developers and coding agents:
+SkillForgeAI provides a unified master CLI (`node bin/skillforge.mjs` or `skillforge`) for developers and coding agents.
+
+> Source checkout: run `npm ci` once before using the CLI. The published npm package installs its runtime dependencies automatically.
 
 ```bash
 # Run SDLC Quality Gates (All 10 gates or a specific phase)
