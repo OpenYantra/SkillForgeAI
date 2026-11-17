@@ -33,12 +33,18 @@ function loadJson(filePath, fallback = {}) {
 }
 
 export function generateScorecard(diffReport, gateReport) {
-  const isPassed = gateReport.status === 'PASSED';
+  const gateStatus = (gateReport && gateReport.status) || 'MISSING';
+  const isPassed = gateStatus === 'PASSED';
+  const isMissing = gateStatus === 'MISSING' || gateStatus === 'UNKNOWN';
   const statusEmoji = isPassed ? '✅' : '🚨';
-  const totalGates = gateReport.totalGates || (gateReport.gates ? gateReport.gates.length : 10);
+  const totalGates = (gateReport && gateReport.totalGates != null)
+    ? gateReport.totalGates
+    : (gateReport && gateReport.gates ? gateReport.gates.length : 0);
   const statusBadge = isPassed
     ? `**ALL ${totalGates} SDLC QUALITY GATES PASSED**`
-    : '**ONE OR MORE SDLC GATES FAILED**';
+    : isMissing
+      ? '**GATE REPORT MISSING — CANNOT CERTIFY**'
+      : '**ONE OR MORE SDLC GATES FAILED**';
 
   const semver = diffReport.highestSeverity || 'PATCH';
   const totalChanged = diffReport.totalChangedFiles ?? (diffReport.changedFiles ? diffReport.changedFiles.length : 0);
@@ -47,7 +53,7 @@ export function generateScorecard(diffReport, gateReport) {
   let md = `<!-- skillforge-pr-scorecard -->\n`;
   md += `## 🛡️ SkillForgeAI Quality Gate Report\n\n`;
   md += `> **Status:** ${statusEmoji} ${statusBadge}\n`;
-  md += `> **Recommended SemVer Bump:** \`${semver}\` | **Gates Evaluated:** ${gateReport.passed || 0}/${totalGates} Passing\n\n`;
+  md += `> **Recommended SemVer Bump:** \`${semver}\` | **Gates Evaluated:** ${isMissing ? '— (no report)' : `${gateReport.passed || 0}/${totalGates} Passing`}\n\n`;
 
   // Gate Matrix
   md += `### 📊 SDLC Phase Quality Gates Breakdown\n\n`;
@@ -56,12 +62,28 @@ export function generateScorecard(diffReport, gateReport) {
 
   if (gateReport.gates && gateReport.gates.length > 0) {
     for (const g of gateReport.gates) {
-      const gStatus = g.status === 'PASSED' ? '✅ PASSED' : '❌ FAILED';
-      const gNotes = g.warnings ? '⚠️ Completed with warnings' : (g.status === 'PASSED' ? 'Conforming' : 'Requires fix');
+      const gStatus = g.status === 'PASSED'
+        ? '✅ PASSED'
+        : g.status === 'SKIPPED'
+          ? '⏭️ SKIPPED'
+          : '❌ FAILED';
+      const gNotes = g.warnings
+        ? '⚠️ Completed with warnings'
+        : g.status === 'PASSED'
+          ? 'Conforming'
+          : g.status === 'SKIPPED'
+            ? 'Artifact not configured'
+            : 'Requires fix';
       md += `| **Phase ${g.phase}** | ${g.name} | ${gStatus} | ${gNotes} |\n`;
     }
   } else {
-    md += `| *All Phases* | Master Quality Gates | ${isPassed ? '✅ PASSED' : '❌ FAILED'} | Executed in CI |\n`;
+    const rowStatus = isPassed ? '✅ PASSED' : isMissing ? '🚨 MISSING' : '❌ FAILED';
+    const rowNotes = isMissing
+      ? 'gate-report.json was not produced'
+      : isPassed
+        ? 'Executed in CI'
+        : 'Requires fix';
+    md += `| *All Phases* | Master Quality Gates | ${rowStatus} | ${rowNotes} |\n`;
   }
 
   // Change Impact Analysis
@@ -90,6 +112,8 @@ export function generateScorecard(diffReport, gateReport) {
   md += `\n---\n`;
   if (isPassed) {
     md += `🎉 **Merge Status:** Architectural boundaries, tests, and contracts are verified. Pull request is safe to merge.\n`;
+  } else if (isMissing) {
+    md += `🛑 **Merge Blocked:** \`gate-report.json\` was not produced, so quality cannot be certified. Run \`node bin/skillforge.mjs gate --out gate-report.json\` locally and re-run CI.\n`;
   } else {
     md += `🛑 **Merge Blocked:** One or more SDLC quality gates failed. Run \`node bin/skillforge.mjs gate\` locally to reproduce and fix.\n`;
   }
@@ -101,7 +125,8 @@ function main() {
   const { diffFile, gateFile, outFile } = parseArgs();
 
   const diffReport = loadJson(diffFile, { highestSeverity: 'PATCH', totalChangedFiles: 0 });
-  const gateReport = loadJson(gateFile, { status: 'PASSED', totalGates: 9, passed: 9, failed: 0 });
+  // Fail closed: if the gate report is absent or unparseable, we must NOT claim success.
+  const gateReport = loadJson(gateFile, { status: 'MISSING', totalGates: 0, passed: 0, failed: 0, missing: true });
 
   const scorecard = generateScorecard(diffReport, gateReport);
 
@@ -113,6 +138,9 @@ function main() {
   } else {
     console.log(scorecard);
   }
+
+  // Exit non-zero unless the gates actually passed, so CI can trust this signal.
+  process.exit(gateReport.status === 'PASSED' ? 0 : 1);
 }
 
 if (process.argv[1] && process.argv[1].endsWith('generate-pr-scorecard.mjs')) {
