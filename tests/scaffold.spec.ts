@@ -68,4 +68,64 @@ describe('scaffold command', () => {
     assert.equal(missing.status, 2);
     assert.match(missing.stdout + missing.stderr, /Missing mandatory argument: --name/);
   });
+
+  it('skips existing files by default instead of overwriting them', () => {
+    const dir = makeTempDir('scaffold-guard');
+    try {
+      assert.equal(runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir]).status, 0);
+      const entity = path.join(dir, 'domain', 'entities', 'billing.entity.ts');
+      fs.writeFileSync(entity, '// custom implementation\n');
+
+      const rerun = runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir]);
+      assert.equal(rerun.status, 0, rerun.stderr);
+      assert.match(rerun.stdout, /Skipped existing/);
+      assert.equal(fs.readFileSync(entity, 'utf-8'), '// custom implementation\n');
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('backs up and overwrites existing files with --backup', () => {
+    const dir = makeTempDir('scaffold-backup');
+    try {
+      assert.equal(runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir]).status, 0);
+      const entity = path.join(dir, 'domain', 'entities', 'billing.entity.ts');
+      fs.writeFileSync(entity, '// custom implementation\n');
+
+      const rerun = runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir, '--backup']);
+      assert.equal(rerun.status, 0, rerun.stderr);
+      assert.match(fs.readFileSync(entity, 'utf-8'), /export class BillingEntity/);
+      assert.equal(fs.readFileSync(`${entity}.bak`, 'utf-8'), '// custom implementation\n');
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('overwrites existing files with --force', () => {
+    const dir = makeTempDir('scaffold-force');
+    try {
+      assert.equal(runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir]).status, 0);
+      const entity = path.join(dir, 'domain', 'entities', 'billing.entity.ts');
+      fs.writeFileSync(entity, '// custom implementation\n');
+
+      const rerun = runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir, '--force']);
+      assert.equal(rerun.status, 0, rerun.stderr);
+      assert.match(rerun.stdout, /Overwrote/);
+      assert.match(fs.readFileSync(entity, 'utf-8'), /export class BillingEntity/);
+      assert.equal(fs.existsSync(`${entity}.bak`), false);
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('rejects combining --force and --backup', () => {
+    const dir = makeTempDir('scaffold-flags');
+    try {
+      const result = runCli(['scaffold', '--name', 'billing', '--lang', 'ts', '--out', dir, '--force', '--backup']);
+      assert.equal(result.status, 2);
+      assert.match(result.stdout + result.stderr, /Cannot combine/);
+    } finally {
+      removeDir(dir);
+    }
+  });
 });

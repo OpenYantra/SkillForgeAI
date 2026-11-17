@@ -283,14 +283,18 @@ Usage:
 
 Options:
   --name <feature>      Name of the feature to scaffold (e.g. billing, catalog)
-  --lang <ts|dotnet|py> Target programming language (default: ts)
+  --lang <ts|dotnet>    Target programming language (default: ts)
   --out <dir>           Custom target directory (default: src/features/<name>)
   --dry-run             Preview files without writing to disk
+  --skip-existing       Keep existing files untouched (default)
+  --force               Overwrite existing files
+  --backup              Back up existing files to <file>.bak before overwriting
   --help, -h            Show this help message
 
 Examples:
   skillforge scaffold --name catalog --lang ts
   skillforge scaffold --name billing --lang dotnet --dry-run
+  skillforge scaffold --name billing --lang ts --backup
 `);
     process.exit(0);
   }
@@ -308,6 +312,13 @@ Examples:
   const outIndex = args.indexOf('--out');
   const targetDir = outIndex !== -1 ? args[outIndex + 1] : path.join('src', 'features', featureName);
   const isDryRun = args.includes('--dry-run');
+  const force = args.includes('--force');
+  const backup = args.includes('--backup');
+
+  if (force && backup) {
+    printError('Cannot combine --force and --backup. Choose one overwrite strategy.');
+    process.exit(2);
+  }
 
   printBanner(
     `🏗️  SkillForgeAI: Clean Architecture Scaffolder`,
@@ -326,22 +337,70 @@ Examples:
 
   console.log(`Target Directory: ${colors.bold}${targetDir}${colors.reset}\n`);
 
-  for (const t of templates) {
-    const fullPath = path.join(targetDir, t.subpath);
+  const plan = templates.map((template) => {
+    const fullPath = path.join(targetDir, template.subpath);
+    return { ...template, fullPath, exists: fs.existsSync(fullPath) };
+  });
+
+  let created = 0;
+  let overwritten = 0;
+  let skipped = 0;
+
+  for (const entry of plan) {
     if (isDryRun) {
-      console.log(`  📄 [DRY-RUN] Would create: ${colors.cyan}${fullPath}${colors.reset}`);
+      if (!entry.exists) {
+        console.log(`  📄 [DRY-RUN] Would create: ${colors.cyan}${entry.fullPath}${colors.reset}`);
+      } else if (force || backup) {
+        const action = backup ? 'Would back up and overwrite' : 'Would overwrite';
+        console.log(`  📄 [DRY-RUN] ${action}: ${colors.yellow}${entry.fullPath}${colors.reset}`);
+      } else {
+        console.log(`  📄 [DRY-RUN] Would skip existing: ${colors.yellow}${entry.fullPath}${colors.reset}`);
+      }
+      continue;
+    }
+
+    if (entry.exists && !force && !backup) {
+      console.log(`  ⏭ Skipped existing: ${colors.yellow}${entry.fullPath}${colors.reset}`);
+      skipped++;
+      continue;
+    }
+
+    if (entry.exists && backup) {
+      fs.copyFileSync(entry.fullPath, `${entry.fullPath}.bak`);
+      console.log(`  🗄  Backed up: ${colors.yellow}${entry.fullPath}.bak${colors.reset}`);
+    }
+
+    const dir = path.dirname(entry.fullPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(entry.fullPath, entry.content);
+
+    if (entry.exists) {
+      console.log(`  ♻️  Overwrote: ${colors.yellow}${entry.fullPath}${colors.reset}`);
+      overwritten++;
     } else {
-      const dir = path.dirname(fullPath);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(fullPath, t.content);
-      console.log(`  ✅ Created: ${colors.green}${fullPath}${colors.reset}`);
+      console.log(`  ✅ Created: ${colors.green}${entry.fullPath}${colors.reset}`);
+      created++;
     }
   }
 
   if (isDryRun) {
     console.log(`\n${colors.yellow}🔍 Dry run complete. No files were written.${colors.reset}\n`);
-  } else {
-    printSuccess(`\nFeature "${featureName}" scaffolded successfully with Clean Architecture layering!`);
-    console.log(`Next step: run "skillforge gate --phase 4" to verify boundary conformity.\n`);
+    return;
   }
+
+  if (skipped > 0) {
+    console.log(
+      `\n${colors.yellow}⚠️  ${skipped} existing file(s) were left untouched. Use --force to overwrite or --backup to back up first.${colors.reset}`,
+    );
+  }
+
+  if (created + overwritten === 0) {
+    console.log(`\n${colors.yellow}No files changed. Feature "${featureName}" already exists.${colors.reset}\n`);
+    return;
+  }
+
+  printSuccess(
+    `\nFeature "${featureName}" scaffolded: ${created} created, ${overwritten} overwritten, ${skipped} skipped.`,
+  );
+  console.log(`Next step: run "skillforge gate --phase 4" to verify boundary conformity.\n`);
 }

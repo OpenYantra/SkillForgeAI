@@ -11,7 +11,13 @@ function main() {
   console.log('⚡ SkillForgeAI: Semantic Breaking Change & Impact Tracker');
   console.log('======================================================\n');
 
-  const { changedFiles, affectedCallers, classifications, highestSeverity } = analyzeDiff();
+  const { changedFiles, affectedCallers, classifications, highestSeverity, errors } = analyzeDiff();
+
+  if (errors.length > 0) {
+    console.error(`⚠️  Git inspection reported ${errors.length} error(s):`);
+    errors.forEach((error) => console.error(`   - ${error.command}: ${error.message}`));
+    console.error('');
+  }
 
   if (changedFiles.length === 0) {
     console.log('✅ Working tree clean. No uncommitted changes detected.');

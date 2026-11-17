@@ -14,10 +14,14 @@ export function runGit(args, opts = {}) {
   return execFileSync('git', args, { encoding: 'utf-8', ...opts });
 }
 
-function tryGit(args) {
+function tryGit(args, errors = []) {
   try {
     return runGit(args);
-  } catch {
+  } catch (err) {
+    errors.push({
+      command: `git ${args.join(' ')}`,
+      message: err && err.message ? err.message : String(err),
+    });
     return '';
   }
 }
@@ -32,24 +36,25 @@ function splitLines(output) {
 /**
  * List changed files for the current working tree.
  * @param {{staged?: boolean, target?: string|null}} [options]
+ * @param {Array<{command: string, message: string}>} [errors]
  * @returns {string[]}
  */
-export function getGitChangedFiles(options = {}) {
+export function getGitChangedFiles(options = {}, errors = []) {
   if (options.staged) {
-    return [...new Set(splitLines(tryGit(['diff', '--name-only', '--cached'])))];
+    return [...new Set(splitLines(tryGit(['diff', '--name-only', '--cached'], errors)))];
   }
 
   let diffOutput;
   if (options.target) {
     diffOutput =
-      tryGit(['diff', '--name-only', `origin/${options.target}...HEAD`]) ||
-      tryGit(['diff', '--name-only', `${options.target}...HEAD`]);
+      tryGit(['diff', '--name-only', `origin/${options.target}...HEAD`], errors) ||
+      tryGit(['diff', '--name-only', `${options.target}...HEAD`], errors);
   } else {
-    diffOutput = tryGit(['diff', '--name-only', 'HEAD']);
+    diffOutput = tryGit(['diff', '--name-only', 'HEAD'], errors);
   }
 
-  const staged = tryGit(['diff', '--name-only', '--cached']);
-  const untracked = tryGit(['ls-files', '--others', '--exclude-standard']);
+  const staged = tryGit(['diff', '--name-only', '--cached'], errors);
+  const untracked = tryGit(['ls-files', '--others', '--exclude-standard'], errors);
 
   return [...new Set([...splitLines(diffOutput), ...splitLines(staged), ...splitLines(untracked)])];
 }
@@ -58,18 +63,20 @@ export function getGitChangedFiles(options = {}) {
  * Unified diff for a single file.
  * @param {string} file
  * @param {{target?: string|null}} [options]
+ * @param {Array<{command: string, message: string}>} [errors]
  */
-export function getDiffForFile(file, options = {}) {
+export function getDiffForFile(file, options = {}, errors = []) {
   const base = options.target ? `${options.target}...HEAD` : 'HEAD';
-  return tryGit(['diff', '-U0', base, '--', file]);
+  return tryGit(['diff', '-U0', base, '--', file], errors);
 }
 
 /**
  * @param {string[]} changedFiles
  * @param {{target?: string|null}} [options]
+ * @param {Array<{command: string, message: string}>} [errors]
  * @returns {{classifications: {destructive: object[], additive: object[], patch: object[]}, highestSeverity: string}}
  */
-export function classifyChanges(changedFiles, options = {}) {
+export function classifyChanges(changedFiles, options = {}, errors = []) {
   let highestSeverity = 'PATCH';
   const classifications = {
     destructive: [],
@@ -82,7 +89,7 @@ export function classifyChanges(changedFiles, options = {}) {
     const isContract = /openapi\.(yaml|json)|schema\.(json|yaml)|contracts?[\\/]/i.test(file);
 
     if (isInterfaceOrPort || isContract) {
-      const diff = getDiffForFile(file, options);
+      const diff = getDiffForFile(file, options, errors);
       const lines = diff.split('\n');
 
       const removedLines = lines.filter((l) => l.startsWith('-') && !l.startsWith('---'));
@@ -131,7 +138,8 @@ export function loadCachedGraph(graphPath = path.join('docs', 'context', 'code-g
  * @param {{staged?: boolean, target?: string|null}} [options]
  */
 export function analyzeDiff(options = {}) {
-  const changedFiles = getGitChangedFiles(options);
+  const errors = [];
+  const changedFiles = getGitChangedFiles(options, errors);
   const graph = loadCachedGraph();
 
   const affectedCallers = new Set();
@@ -142,7 +150,7 @@ export function analyzeDiff(options = {}) {
     }
   }
 
-  const { classifications, highestSeverity } = classifyChanges(changedFiles, options);
+  const { classifications, highestSeverity } = classifyChanges(changedFiles, options, errors);
 
   return {
     report: {
@@ -153,10 +161,12 @@ export function analyzeDiff(options = {}) {
       affectedCallers: [...affectedCallers],
       highestSeverity,
       classifications,
+      errors,
     },
     changedFiles,
     affectedCallers,
     classifications,
     highestSeverity,
+    errors,
   };
 }

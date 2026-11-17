@@ -282,10 +282,20 @@ function getGitDiffFiles(stagedOnly = false) {
   }
 }
 
-function collectFiles(targetPath, fileList = []) {
-  if (!fs.existsSync(targetPath)) return fileList;
+function collectFiles(targetPath, fileList = [], errors = []) {
+  if (!fs.existsSync(targetPath)) {
+    errors.push({ file: targetPath, kind: 'target', message: `Target not found: ${targetPath}` });
+    return fileList;
+  }
 
-  const stat = fs.statSync(targetPath);
+  let stat;
+  try {
+    stat = fs.statSync(targetPath);
+  } catch (err) {
+    errors.push({ file: targetPath, kind: 'read', message: err.message });
+    return fileList;
+  }
+
   if (stat.isFile()) {
     const ext = path.extname(targetPath).toLowerCase();
     const base = path.basename(targetPath).toLowerCase();
@@ -299,12 +309,18 @@ function collectFiles(targetPath, fileList = []) {
     const baseDir = path.basename(targetPath);
     if (IGNORE_DIRS.has(baseDir)) return fileList;
 
-    const entries = fs.readdirSync(targetPath, { withFileTypes: true });
+    let entries;
+    try {
+      entries = fs.readdirSync(targetPath, { withFileTypes: true });
+    } catch (err) {
+      errors.push({ file: targetPath, kind: 'read', message: err.message });
+      return fileList;
+    }
     for (const entry of entries) {
       if (IGNORE_DIRS.has(entry.name)) continue;
       const fullPath = path.join(targetPath, entry.name);
       if (entry.isDirectory()) {
-        collectFiles(fullPath, fileList);
+        collectFiles(fullPath, fileList, errors);
       } else {
         const ext = path.extname(entry.name).toLowerCase();
         const base = entry.name.toLowerCase();
@@ -318,13 +334,14 @@ function collectFiles(targetPath, fileList = []) {
   return fileList;
 }
 
-export function scanFile(filePath) {
+export function scanFile(filePath, errors = []) {
   const findings = [];
   let content;
 
   try {
     content = fs.readFileSync(filePath, 'utf-8');
-  } catch {
+  } catch (err) {
+    errors.push({ file: filePath, kind: 'read', message: err.message });
     return findings;
   }
 
@@ -364,25 +381,26 @@ export function runSecurityAudit(options = {}) {
   const emit = silent ? () => {} : (...args) => globalThis.console.log(...args);
 
   let filesToScan;
+  const scanErrors = [];
 
   if (diff || staged) {
     filesToScan = getGitDiffFiles(staged);
     if (filesToScan.length === 0) {
       if (json) {
-        emit(JSON.stringify({ status: 'PASSED', filesScanned: 0, findings: [] }));
+        emit(JSON.stringify({ status: 'PASSED', filesScanned: 0, findings: [], errors: [] }));
       } else {
         emit('✅ No modified files detected in Git diff. Working tree clean.');
       }
-      return { status: 'PASSED', findings: [], filesScanned: 0 };
+      return { status: 'PASSED', findings: [], filesScanned: 0, errors: [] };
     }
   } else {
-    filesToScan = collectFiles(path.resolve(target));
+    filesToScan = collectFiles(path.resolve(target), [], scanErrors);
   }
 
   const allFindings = [];
 
   for (const file of filesToScan) {
-    const fileFindings = scanFile(file);
+    const fileFindings = scanFile(file, scanErrors);
     allFindings.push(...fileFindings);
   }
 
@@ -391,7 +409,9 @@ export function runSecurityAudit(options = {}) {
   const mediums = allFindings.filter((f) => f.severity === SEVERITY.MEDIUM);
   const lows = allFindings.filter((f) => f.severity === SEVERITY.LOW);
 
-  const hasFailingFlaws = strict ? allFindings.length > 0 : criticals.length > 0 || highs.length > 0;
+  const hasScanFailure = scanErrors.some((error) => error.kind === 'target');
+  const hasFailingFlaws =
+    hasScanFailure || (strict ? allFindings.length > 0 : criticals.length > 0 || highs.length > 0);
 
   const status = hasFailingFlaws ? 'FAILED' : 'PASSED';
 
@@ -409,6 +429,7 @@ export function runSecurityAudit(options = {}) {
         low: lows.length,
       },
       findings: allFindings,
+      errors: scanErrors,
     };
     emit(JSON.stringify(report, null, 2));
     return report;
@@ -424,9 +445,14 @@ export function runSecurityAudit(options = {}) {
     `Findings Summary : ${criticals.length} Critical, ${highs.length} High, ${mediums.length} Medium, ${lows.length} Low\n`,
   );
 
-  if (allFindings.length === 0) {
+  if (scanErrors.length > 0) {
+    emit(`\n⚠️  SCAN ERRORS (${scanErrors.length}):`);
+    for (const error of scanErrors) emit(`   - ${error.file}: ${error.message}`);
+  }
+
+  if (allFindings.length === 0 && scanErrors.length === 0) {
     emit('✅ PASSED: No software security weaknesses or vulnerabilities detected!\n');
-    return { status: 'PASSED', findings: [], filesScanned: filesToScan.length };
+    return { status: 'PASSED', findings: [], filesScanned: filesToScan.length, errors: scanErrors };
   }
 
   for (const finding of allFindings) {
@@ -454,5 +480,5 @@ export function runSecurityAudit(options = {}) {
     emit(`⚠️  AUDIT PASSED WITH WARNINGS: Review medium/low findings.\n`);
   }
 
-  return { status, findings: allFindings, filesScanned: filesToScan.length };
+  return { status, findings: allFindings, filesScanned: filesToScan.length, errors: scanErrors };
 }

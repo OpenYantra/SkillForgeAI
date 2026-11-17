@@ -104,6 +104,21 @@ describe('diff command', () => {
       removeDir(graphDir);
     }
   });
+
+  it('returns structured git diagnostics when Git is unavailable', () => {
+    const dir = makeTempDir('diff-nogit');
+    try {
+      const result = runCli(['diff', '--json'], dir);
+      assert.equal(result.status, 0, result.stderr);
+      const report = JSON.parse(result.stdout);
+      assert.equal(report.totalChangedFiles, 0);
+      assert.ok(Array.isArray(report.errors));
+      assert.ok(report.errors.length > 0);
+      assert.match(report.errors[0].command, /git/);
+    } finally {
+      removeDir(dir);
+    }
+  });
 });
 
 describe('detect-breaking-changes script', () => {

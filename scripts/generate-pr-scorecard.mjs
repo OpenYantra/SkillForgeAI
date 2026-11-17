@@ -21,18 +21,19 @@ function parseArgs() {
   };
 }
 
-function loadJson(filePath, fallback = {}) {
+function loadJson(filePath, fallback = {}, errors = [], label = path.basename(filePath)) {
   if (fs.existsSync(filePath)) {
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    } catch {
+    } catch (err) {
+      errors.push(`${label} is not valid JSON (${err.message}); treating it as missing.`);
       return fallback;
     }
   }
   return fallback;
 }
 
-export function generateScorecard(diffReport, gateReport) {
+export function generateScorecard(diffReport, gateReport, errors = []) {
   const gateStatus = (gateReport && gateReport.status) || 'MISSING';
   const isPassed = gateStatus === 'PASSED';
   const isMissing = gateStatus === 'MISSING' || gateStatus === 'UNKNOWN';
@@ -57,6 +58,9 @@ export function generateScorecard(diffReport, gateReport) {
   md += `## 🛡️ SkillForgeAI Quality Gate Report\n\n`;
   md += `> **Status:** ${statusEmoji} ${statusBadge}\n`;
   md += `> **Recommended SemVer Bump:** \`${semver}\` | **Gates Evaluated:** ${isMissing ? '— (no report)' : `${gateReport.passed || 0}/${totalGates} Passing`}\n\n`;
+  if (errors.length > 0) {
+    md += `> ⚠️ **Report Integrity:** ${errors.length} report error(s): ${errors.join(' ')}\n\n`;
+  }
 
   // Gate Matrix
   md += `### 📊 SDLC Phase Quality Gates Breakdown\n\n`;
@@ -118,12 +122,23 @@ export function generateScorecard(diffReport, gateReport) {
 
 function main() {
   const { diffFile, gateFile, outFile } = parseArgs();
+  const errors = [];
 
-  const diffReport = loadJson(diffFile, { highestSeverity: 'PATCH', totalChangedFiles: 0 });
+  const diffReport = loadJson(diffFile, { highestSeverity: 'PATCH', totalChangedFiles: 0 }, errors, diffFile);
   // Fail closed: if the gate report is absent or unparseable, we must NOT claim success.
-  const gateReport = loadJson(gateFile, { status: 'MISSING', totalGates: 0, passed: 0, failed: 0, missing: true });
+  const gateReport = loadJson(
+    gateFile,
+    { status: 'MISSING', totalGates: 0, passed: 0, failed: 0, missing: true },
+    errors,
+    gateFile,
+  );
 
-  const scorecard = generateScorecard(diffReport, gateReport);
+  const scorecard = generateScorecard(diffReport, gateReport, errors);
+
+  if (errors.length > 0) {
+    console.error(`⚠️  Report integrity errors (${errors.length}):`);
+    errors.forEach((error) => console.error(`   - ${error}`));
+  }
 
   if (outFile) {
     const dir = path.dirname(outFile);

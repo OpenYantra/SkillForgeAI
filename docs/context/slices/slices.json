@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-17T17:42:30.750Z",
+  "generatedAt": "2026-11-17T17:53:21.146Z",
   "globalStats": {
-    "monolithicTokens": 1896,
+    "monolithicTokens": 1972,
     "avgSliceTokens": 255,
-    "tokenSavingsPct": "86.6",
+    "tokenSavingsPct": "87.1",
     "totalSlices": 4
   },
   "slices": [
@@ -148,7 +148,7 @@
       "root": "src/core",
       "container": "src",
       "primaryStack": "typescript",
-      "filesCount": 24,
+      "filesCount": 25,
       "tokenEstimate": 214,
       "mapPath": "docs/context/slices/core-map.md",
       "symbols": {
@@ -172,7 +172,10 @@
           "buildMermaidDiagram",
           "generateRepoMapMarkdown",
           "writeGraphArtifacts",
+          "resolveCommand",
           "runNode",
+          "runCommand",
+          "runCommandOrThrow",
           "loadGateConfig",
           "isSelfTest",
           "applyGateConfig",
@@ -188,6 +191,13 @@
           "makeGitRunner",
           "getSignoffCommitInfo",
           "isExpired",
+          "toPosix",
+          "detectTestProject",
+          "discoverTestProjects",
+          "extractDiagnostics",
+          "runFixer",
+          "runHealLoop",
+          "writeIncidentPackage",
           "stripFencedCode",
           "parseHeadings",
           "hasHeading",

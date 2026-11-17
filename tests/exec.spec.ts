@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { runNode } from '../src/core/exec.mjs';
+import { runCommand, runCommandOrThrow, runNode } from '../src/core/exec.mjs';
 import { makeTempDir, removeDir } from './helpers/workspace.ts';
 
 describe('runNode', () => {
@@ -37,5 +37,33 @@ describe('runNode', () => {
     } finally {
       removeDir(dir);
     }
+  });
+});
+
+describe('runCommand', () => {
+  it('passes arguments containing spaces without a shell', () => {
+    const result = runCommand(process.execPath, [
+      '-e',
+      "process.stdout.write(process.argv.slice(1).join('|'))",
+      'a b',
+      'c"d',
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, 'a b|c"d');
+  });
+
+  it('returns non-zero status instead of throwing', () => {
+    const result = runCommand(process.execPath, ['-e', 'process.exit(3)']);
+    assert.equal(result.status, 3);
+  });
+
+  it('throws a structured error via runCommandOrThrow', () => {
+    assert.throws(
+      () => runCommandOrThrow(process.execPath, ['-e', "process.stderr.write('bad'); process.exit(4)"]),
+      (error: unknown) => {
+        const commandError = error as { status?: number; stderr?: string };
+        return commandError.status === 4 && String(commandError.stderr).includes('bad');
+      },
+    );
   });
 });

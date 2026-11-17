@@ -38,7 +38,7 @@ Examples:
   const outFile = outIndex !== -1 ? args[outIndex + 1] : null;
 
   const options = { staged: isStaged, target: targetBranch };
-  const { report, changedFiles, affectedCallers, classifications, highestSeverity } = analyzeDiff(options);
+  const { report, changedFiles, affectedCallers, classifications, highestSeverity, errors } = analyzeDiff(options);
 
   if (isJson || outFile) {
     const jsonStr = JSON.stringify(report, null, 2);
@@ -54,6 +54,12 @@ Examples:
   }
 
   printBanner('⚡ SkillForgeAI: Semantic Breaking Change & Impact Tracker');
+
+  if (errors.length > 0) {
+    console.error(`${colors.yellow}⚠️  Git inspection reported ${errors.length} error(s):${colors.reset}`);
+    errors.forEach((error) => console.error(`   - ${error.command}: ${error.message}`));
+    console.error('');
+  }
 
   if (changedFiles.length === 0) {
     printSuccess('Working tree clean. No uncommitted or modified changes detected.\n');

@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-17T17:42:30.506Z",
-  "totalFiles": 76,
+  "generatedAt": "2026-11-17T17:53:20.852Z",
+  "totalFiles": 78,
   "languages": {
-    "typescript": 68,
+    "typescript": 70,
     "csharp": 8
   },
   "parsers": {
-    "tree-sitter": 76
+    "tree-sitter": 78
   },
   "nodes": {
     "eslint.config.mjs": {
@@ -304,6 +304,8 @@
         "interfaces": [],
         "types": [],
         "functions": [
+          "runNodeScript",
+          "runNodeWithErrorCapture",
           "handleToolCall",
           "processMessage",
           "startServer"
@@ -320,11 +322,14 @@
         "interfaces": [],
         "types": [],
         "functions": [
-          "detectTestRunnerCommand",
-          "runSelfHealingLoop"
+          "parseArgs",
+          "fail",
+          "main"
         ]
       },
-      "imports": [],
+      "imports": [
+        "src/core/heal.mjs"
+      ],
       "importedBy": []
     },
     "scripts/sync-editors.mjs": {
@@ -595,11 +600,15 @@
         "interfaces": [],
         "types": [],
         "functions": [
-          "runNode"
+          "resolveCommand",
+          "runNode",
+          "runCommand",
+          "runCommandOrThrow"
         ]
       },
       "imports": [],
       "importedBy": [
+        "src/core/heal.mjs",
         "tests/exec.spec.ts"
       ]
     },
@@ -687,6 +696,31 @@
       "importedBy": [
         "src/core/signoff-verify.mjs",
         "tests/signoff-governance.spec.ts"
+      ]
+    },
+    "src/core/heal.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "toPosix",
+          "detectTestProject",
+          "discoverTestProjects",
+          "extractDiagnostics",
+          "runFixer",
+          "runHealLoop",
+          "writeIncidentPackage"
+        ]
+      },
+      "imports": [
+        "src/core/exec.mjs"
+      ],
+      "importedBy": [
+        "scripts/self-heal-loop.mjs",
+        "tests/heal.spec.ts"
       ]
     },
     "src/core/markdown.mjs": {
@@ -1144,6 +1178,23 @@
       ],
       "importedBy": []
     },
+    "tests/heal.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "inDir"
+        ]
+      },
+      "imports": [
+        "src/core/heal.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
     "tests/helpers/workspace.ts": {
       "language": "typescript",
       "parser": "tree-sitter",
@@ -1172,6 +1223,7 @@
         "tests/exec.spec.ts",
         "tests/gate-runner.spec.ts",
         "tests/graph.spec.ts",
+        "tests/heal.spec.ts",
         "tests/mcp-server.spec.ts",
         "tests/openapi-parse.spec.ts",
         "tests/parsers.spec.ts",
@@ -1416,5 +1468,6 @@
   ],
   "unresolvedImports": [
     "../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs"
-  ]
+  ],
+  "errors": []
 }
