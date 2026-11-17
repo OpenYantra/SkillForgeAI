@@ -50,7 +50,7 @@ fi
 # SkillForgeAI Pre-Push Quality Gate
 echo ""
 echo "🛡️  [SkillForgeAI] Running full SDLC quality gates before push..."
-node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs
+node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then

@@ -1,5 +1,5 @@
 ---
-name: system-architecture-adr
+name: sfa-system-architecture-adr
 description: >-
   Generates system architecture specifications, C4 model diagrams, and Architecture Decision
   Records (ADRs). Use in SDLC Phase 3 to evaluate design trade-offs, define service boundaries,
@@ -45,7 +45,7 @@ Populate the [Architecture Specification Template](./templates/architecture-spec
 ### Step 4: Automated Verification
 Run the architecture verification script:
 ```bash
-node .agents/skills/system-architecture-adr/scripts/validate-architecture.mjs <path-to-architecture.md>
+node .agents/skills/sfa-system-architecture-adr/scripts/validate-architecture.mjs <path-to-architecture.md>
 ```
 
 ---

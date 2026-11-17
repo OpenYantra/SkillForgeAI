@@ -6,7 +6,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { scanFile, runSecurityAudit } from '../.agents/skills/security-vulnerability-auditor/scripts/audit-security.mjs';
+import { scanFile, runSecurityAudit } from '../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';

@@ -1,5 +1,5 @@
 ---
-name: incident-root-cause-analyzer
+name: sfa-incident-root-cause-analyzer
 description: >-
   Analyzes production incidents, parses error traces, reproduces defects via regression tests,
   and synthesizes hotfix patches. Use in SDLC Phase 7 (Maintenance & Operations) to diagnose
@@ -55,7 +55,7 @@ Populate the [RCA Report Template](./templates/rca-report-template.md) in `docs/
 
 ### Step 5: Validate RCA Document
 ```bash
-node .agents/skills/incident-root-cause-analyzer/scripts/validate-rca.mjs <path-to-rca-report.md>
+node .agents/skills/sfa-incident-root-cause-analyzer/scripts/validate-rca.mjs <path-to-rca-report.md>
 ```
 
 ---

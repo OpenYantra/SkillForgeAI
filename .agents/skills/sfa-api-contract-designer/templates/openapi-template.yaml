@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample Service API
   version: 1.0.0
-  description: Contract-first specification generated via SkillForgeAI api-contract-designer.
+  description: Contract-first specification generated via SkillForgeAI sfa-api-contract-designer.
 servers:
   - url: https://api.example.com/v1
     description: Production Server

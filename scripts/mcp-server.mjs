@@ -74,7 +74,7 @@ const TOOLS = [
       properties: {
         skillName: {
           type: 'string',
-          description: 'Name of the skill (e.g., prd-generator-validator, feature-scaffolder, unit-test-synthesizer)',
+          description: 'Name of the skill (e.g., sfa-prd-generator-validator, sfa-feature-scaffolder, sfa-unit-test-synthesizer)',
         },
       },
       required: ['skillName'],
@@ -147,7 +147,7 @@ function handleToolCall(name, args = {}) {
     case 'run_quality_gate': {
       const phaseFlag = args.phase ? `--phase ${args.phase}` : '';
       try {
-        const out = execSync(`node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs ${phaseFlag}`, { encoding: 'utf-8' });
+        const out = execSync(`node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs ${phaseFlag}`, { encoding: 'utf-8' });
         return out;
       } catch (err) {
         return err.stdout || err.message;

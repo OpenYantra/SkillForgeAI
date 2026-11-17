@@ -6,7 +6,7 @@
       "type": "shell",
       "command": "node",
       "args": [
-        ".agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs"
+        ".agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs"
       ],
       "group": {
         "kind": "test",

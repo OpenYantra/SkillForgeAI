@@ -1,5 +1,5 @@
 ---
-name: project-planner-estimator
+name: sfa-project-planner-estimator
 description: >-
   Develops project execution roadmaps, milestone breakdowns, effort estimations, and risk registers.
   Use in SDLC Phase 1 (Planning & Feasibility) to convert high-level product goals into an actionable,
@@ -21,7 +21,7 @@ flowchart TD
     C --> D["Dependency & Critical Path Mapping"]
     D --> E["Risk Register & Mitigation Strategies"]
     E --> F["Verify Plan via validate-plan.mjs"]
-    F --> G["Hand-off to Phase 2: prd-generator-validator"]
+    F --> G["Hand-off to Phase 2: sfa-prd-generator-validator"]
 ```
 
 ---
@@ -45,7 +45,7 @@ Document potential risks in the Risk Register:
 ### Step 4: Plan Validation
 Run the plan validation script:
 ```bash
-node .agents/skills/project-planner-estimator/scripts/validate-plan.mjs <path-to-project-plan.md>
+node .agents/skills/sfa-project-planner-estimator/scripts/validate-plan.mjs <path-to-project-plan.md>
 ```
 
 ---

@@ -1,5 +1,5 @@
 ---
-name: api-contract-designer
+name: sfa-api-contract-designer
 description: >-
   Designs, specifies, and validates OpenAPI 3.1 and JSON Schema API contracts before code is written.
   Use in SDLC Phase 2/3 for Contract-First development to lock down endpoints, request/response DTOs,
@@ -51,7 +51,7 @@ Using the [OpenAPI Template](./templates/openapi-template.yaml):
 ### Step 4: Validate Contract
 Run the OpenAPI contract validation script:
 ```bash
-node .agents/skills/api-contract-designer/scripts/validate-openapi.mjs <path-to-openapi.yaml-or-json>
+node .agents/skills/sfa-api-contract-designer/scripts/validate-openapi.mjs <path-to-openapi.yaml-or-json>
 ```
 
 ---

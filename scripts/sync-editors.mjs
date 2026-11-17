@@ -47,12 +47,12 @@ always invoke the appropriate specialized skill from \`.agents/skills/<skill-nam
 ${skillsListMarkdown}
 
 ## Core Rules for All Agents & Models
-1. **Never Guess Requirements:** For new features, execute \`prd-generator-validator\` first.
+1. **Never Guess Requirements:** For new features, execute \`sfa-prd-generator-validator\` first.
 2. **Architecture Boundaries:** Enforce Clean Architecture. Domain entities must not import infrastructure frameworks.
 3. **Traceability:** All tests must cite requirement IDs (e.g. \`FR-001\`, \`EC-001\`).
 4. **Automated Quality Gate:** Before finishing a task or opening a PR, always run:
    \`\`\`bash
-   node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs
+   node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
    \`\`\`
 `;
 
@@ -96,7 +96,7 @@ ${skillsListMarkdown}
         label: 'SkillForge: Run All Quality Gates',
         type: 'shell',
         command: 'node',
-        args: ['.agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs'],
+        args: ['.agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs'],
         group: {
           kind: 'test',
           isDefault: true,

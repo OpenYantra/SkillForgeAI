@@ -83,7 +83,7 @@ function validatePrd(filePath) {
   } else {
     console.log('\n✅ PASSED: PRD meets all Wave 1 specification standards!');
     console.log(`   Functional Requirements Identified: ${frMatches ? [...new Set(frMatches)].join(', ') : 'None'}`);
-    console.log('   Ready for Phase 4: `feature-scaffolder`.\n');
+    console.log('   Ready for Phase 4: `sfa-feature-scaffolder`.\n');
     process.exit(0);
   }
 }

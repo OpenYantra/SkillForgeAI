@@ -1,5 +1,5 @@
 ---
-name: unit-test-synthesizer
+name: sfa-unit-test-synthesizer
 description: >-
   Synthesizes comprehensive, deterministic unit and component test suites based on specifications
   and source code. Use to write isolated tests following the Arrange-Act-Assert (AAA) pattern,
@@ -72,7 +72,7 @@ Read the [Mocking Guidelines](./references/mocking-guidelines.md):
 ### Step 6: Verify Test Suite Standards
 Run the test criteria verification script:
 ```bash
-node .agents/skills/unit-test-synthesizer/scripts/verify-coverage-criteria.mjs <path-to-test-dir-or-file>
+node .agents/skills/sfa-unit-test-synthesizer/scripts/verify-coverage-criteria.mjs <path-to-test-dir-or-file>
 ```
 
 ---
