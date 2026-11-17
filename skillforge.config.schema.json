@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SkillForgeAI Project Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "mode"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "enum": [1] },
+    "mode": {
+      "type": "string",
+      "enum": ["project", "self-test"],
+      "description": "project: validate the adopter's own artifacts. self-test: validate framework example/template artifacts."
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Maps each gate's artifact key to a path, glob, or array of paths.",
+      "additionalProperties": false,
+      "properties": {
+        "plan": { "$ref": "#/definitions/target" },
+        "prd": { "$ref": "#/definitions/target" },
+        "openapi": { "$ref": "#/definitions/target" },
+        "architecture": { "$ref": "#/definitions/target" },
+        "signoff": { "$ref": "#/definitions/target" },
+        "src": { "$ref": "#/definitions/target" },
+        "tests": { "$ref": "#/definitions/target" },
+        "dockerfile": { "$ref": "#/definitions/target" },
+        "rca": { "$ref": "#/definitions/target" }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowedReviewers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Reviewer email addresses permitted to authorize HITL sign-offs."
+        },
+        "requireSignedCommits": { "type": "boolean" },
+        "signoffTtlDays": { "type": "integer", "minimum": 1 },
+        "allowAgentIdentities": { "type": "boolean" }
+      }
+    }
+  },
+  "definitions": {
+    "target": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    }
+  }
+}

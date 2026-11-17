@@ -30,7 +30,7 @@ ${colors.bold}Usage:${colors.reset}
   node bin/skillforge.mjs <command> [options]
 
 ${colors.bold}Core SDLC Commands:${colors.reset}
-  ${colors.green}gate${colors.reset} [options]        Evaluate SDLC quality gates (10 gates, or --phase <1-7>)
+  ${colors.green}gate${colors.reset} [options]        Evaluate SDLC quality gates against project artifacts (--phase <1-7>)
   ${colors.green}security${colors.reset} [options]    Audit code changes & application for vulnerabilities (CWE/OWASP)
   ${colors.green}diff${colors.reset} [options]        Analyze Git diff for semantic breaking changes (SemVer)
   ${colors.green}graph${colors.reset} [options]       Generate symbol-level code graph (C#, Python, TS, Go)
@@ -44,8 +44,14 @@ ${colors.bold}Core SDLC Commands:${colors.reset}
   ${colors.green}version${colors.reset}               Display SkillForgeAI platform version
   ${colors.green}help${colors.reset}                  Display this help message
 
+${colors.bold}Configuration:${colors.reset}
+  Gates read "skillforge.config.json" (mode: project | self-test).
+  Copy "skillforge.config.example.json" to target your own artifacts.
+
 ${colors.bold}Examples:${colors.reset}
   skillforge gate --phase 6
+  skillforge gate --config skillforge.config.json
+  skillforge gate --self-test
   skillforge security --diff
   skillforge security --path src/
   skillforge diff --json

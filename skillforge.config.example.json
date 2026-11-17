@@ -1,0 +1,22 @@
+{
+  "$schema": "./skillforge.config.schema.json",
+  "version": 1,
+  "mode": "project",
+  "artifacts": {
+    "plan": "docs/plan.md",
+    "prd": "docs/**/*.prd.md",
+    "openapi": "openapi.yaml",
+    "architecture": "docs/ARCHITECTURE.md",
+    "signoff": "docs/approvals/*.md",
+    "src": "src",
+    "tests": "tests",
+    "dockerfile": "Dockerfile",
+    "rca": "docs/incidents/RCA-*.md"
+  },
+  "governance": {
+    "allowedReviewers": ["you@your-company.com"],
+    "requireSignedCommits": true,
+    "signoffTtlDays": 30,
+    "allowAgentIdentities": false
+  }
+}
