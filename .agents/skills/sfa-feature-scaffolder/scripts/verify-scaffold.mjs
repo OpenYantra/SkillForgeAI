@@ -97,7 +97,7 @@ function verifyScaffold(targetDir) {
     process.exit(1);
   } else {
     console.log('\n✅ PASSED: Feature structure conforms to clean architectural boundary standards.');
-    console.log('   Ready for Phase 5: `unit-test-synthesizer`.\n');
+    console.log('   Ready for Phase 5: `sfa-unit-test-synthesizer`.\n');
     process.exit(0);
   }
 }

@@ -8,15 +8,15 @@
 
 ```mermaid
 flowchart LR
-    P1["1. Planning<br/><code>project-planner-estimator</code>"]
-    --> P2["2. Requirements<br/><code>prd-generator-validator</code><br/><code>api-contract-designer</code>"]
-    --> P3["3. Architecture<br/><code>system-architecture-adr</code>"]
-    --> P4["4. Development<br/><code>feature-scaffolder</code>"]
-    --> P5["5. Testing & QA<br/><code>unit-test-synthesizer</code>"]
-    --> P6["6. Deployment & Security<br/><code>cicd-container-automator</code><br/><code>security-vulnerability-auditor</code>"]
-    --> P7["7. Maintenance<br/><code>incident-root-cause-analyzer</code>"]
+    P1["1. Planning<br/><code>sfa-project-planner-estimator</code>"]
+    --> P2["2. Requirements<br/><code>sfa-prd-generator-validator</code><br/><code>sfa-api-contract-designer</code>"]
+    --> P3["3. Architecture<br/><code>sfa-system-architecture-adr</code>"]
+    --> P4["4. Development<br/><code>sfa-feature-scaffolder</code>"]
+    --> P5["5. Testing & QA<br/><code>sfa-unit-test-synthesizer</code>"]
+    --> P6["6. Deployment & Security<br/><code>sfa-cicd-container-automator</code><br/><code>sfa-security-vulnerability-auditor</code>"]
+    --> P7["7. Maintenance<br/><code>sfa-incident-root-cause-analyzer</code>"]
 
-    QG["Cross-Cutting Quality Gate<br/><code>quality-gate-orchestrator</code>"]
+    QG["Cross-Cutting Quality Gate<br/><code>sfa-quality-gate-orchestrator</code>"]
     QG -.-> P1 & P2 & P3 & P4 & P5 & P6 & P7
 ```
 
@@ -74,7 +74,7 @@ SkillForgeAI is **language-agnostic** and **database-agnostic**. The core skills
 
 ### Supported Programming Languages
 
-| Language / Platform | Architecture Pattern (`feature-scaffolder`) | Test Framework (`unit-test-synthesizer`) | Native Build & Test Command |
+| Language / Platform | Architecture Pattern (`sfa-feature-scaffolder`) | Test Framework (`sfa-unit-test-synthesizer`) | Native Build & Test Command |
 | :--- | :--- | :--- | :--- |
 | **C# / .NET** (8 / 9 / 10) | Clean Architecture (`Domain`, `Application`, `Infrastructure`, `WebApi`) | `xUnit` (v2/v3) or `NUnit` with `Moq` | `dotnet run --project ...` / `dotnet test` |
 | **TypeScript / Node** | Vertical Slice / Layered (`domain`, `services`, `repositories`) | `Vitest`, `Jest`, or `node:test` | `npm test` |
@@ -97,16 +97,16 @@ Because all data access is abstracted behind domain repository ports, any storag
 
 | SDLC Phase | Skill Name | Role & Responsibility | Location |
 | :--- | :--- | :--- | :--- |
-| **Phase 1: Planning** | **`project-planner-estimator`** | WBS, sprint milestones, complexity estimation, and risk mitigation registers. | [`.agents/skills/project-planner-estimator/`](.agents/skills/project-planner-estimator/SKILL.md) |
-| **Phase 2: Requirements** | **`prd-generator-validator`** | Converts user ideas into unambiguous PRDs with numbered requirements (`FR-XXX`), edge cases (`EC-XXX`), and BDD criteria. | [`.agents/skills/prd-generator-validator/`](.agents/skills/prd-generator-validator/SKILL.md) |
-| **Phase 2/3: Contracts** | **`api-contract-designer`** | Drafts OpenAPI 3.1 specifications, RFC 7807 problem details, and security schemas before coding. | [`.agents/skills/api-contract-designer/`](.agents/skills/api-contract-designer/SKILL.md) |
-| **Phase 3: Architecture** | **`system-architecture-adr`** | Generates C4 Context & Container diagrams, defines layer boundaries, and records ADRs. | [`.agents/skills/system-architecture-adr/`](.agents/skills/system-architecture-adr/SKILL.md) |
-| **Phase 4: Development** | **`feature-scaffolder`** | Scaffolds Clean / Layered Architecture (Domain Entities $\rightarrow$ Port Interfaces $\rightarrow$ Application Services). | [`.agents/skills/feature-scaffolder/`](.agents/skills/feature-scaffolder/SKILL.md) |
-| **Phase 5: Testing & QA** | **`unit-test-synthesizer`** | Generates deterministic, isolated unit tests following AAA pattern with in-memory fakes. | [`.agents/skills/unit-test-synthesizer/`](.agents/skills/unit-test-synthesizer/SKILL.md) |
-| **Phase 6: Deployment** | **`cicd-container-automator`** | Multi-stage, hardened Dockerfiles (non-root runner) and GitHub Actions CI pipelines. | [`.agents/skills/cicd-container-automator/`](.agents/skills/cicd-container-automator/SKILL.md) |
-| **Phase 6: Security & Auditing** | **`security-vulnerability-auditor`** | Static security analysis, secret detection, and hacker-targetable weakness audit (OWASP/CWE). | [`.agents/skills/security-vulnerability-auditor/`](.agents/skills/security-vulnerability-auditor/SKILL.md) |
-| **Phase 7: Maintenance** | **`incident-root-cause-analyzer`** | Diagnoses production errors, synthesizes reproduction regression tests, and authors 5-Whys post-mortems. | [`.agents/skills/incident-root-cause-analyzer/`](.agents/skills/incident-root-cause-analyzer/SKILL.md) |
-| **Cross-Cutting** | **`quality-gate-orchestrator`** | Automated verification runner that evaluates gates across all 7 phases. | [`.agents/skills/quality-gate-orchestrator/`](.agents/skills/quality-gate-orchestrator/SKILL.md) |
+| **Phase 1: Planning** | **`sfa-project-planner-estimator`** | WBS, sprint milestones, complexity estimation, and risk mitigation registers. | [`.agents/skills/sfa-project-planner-estimator/`](.agents/skills/sfa-project-planner-estimator/SKILL.md) |
+| **Phase 2: Requirements** | **`sfa-prd-generator-validator`** | Converts user ideas into unambiguous PRDs with numbered requirements (`FR-XXX`), edge cases (`EC-XXX`), and BDD criteria. | [`.agents/skills/sfa-prd-generator-validator/`](.agents/skills/sfa-prd-generator-validator/SKILL.md) |
+| **Phase 2/3: Contracts** | **`sfa-api-contract-designer`** | Drafts OpenAPI 3.1 specifications, RFC 7807 problem details, and security schemas before coding. | [`.agents/skills/sfa-api-contract-designer/`](.agents/skills/sfa-api-contract-designer/SKILL.md) |
+| **Phase 3: Architecture** | **`sfa-system-architecture-adr`** | Generates C4 Context & Container diagrams, defines layer boundaries, and records ADRs. | [`.agents/skills/sfa-system-architecture-adr/`](.agents/skills/sfa-system-architecture-adr/SKILL.md) |
+| **Phase 4: Development** | **`sfa-feature-scaffolder`** | Scaffolds Clean / Layered Architecture (Domain Entities $\rightarrow$ Port Interfaces $\rightarrow$ Application Services). | [`.agents/skills/sfa-feature-scaffolder/`](.agents/skills/sfa-feature-scaffolder/SKILL.md) |
+| **Phase 5: Testing & QA** | **`sfa-unit-test-synthesizer`** | Generates deterministic, isolated unit tests following AAA pattern with in-memory fakes. | [`.agents/skills/sfa-unit-test-synthesizer/`](.agents/skills/sfa-unit-test-synthesizer/SKILL.md) |
+| **Phase 6: Deployment** | **`sfa-cicd-container-automator`** | Multi-stage, hardened Dockerfiles (non-root runner) and GitHub Actions CI pipelines. | [`.agents/skills/sfa-cicd-container-automator/`](.agents/skills/sfa-cicd-container-automator/SKILL.md) |
+| **Phase 6: Security & Auditing** | **`sfa-security-vulnerability-auditor`** | Static security analysis, secret detection, and hacker-targetable weakness audit (OWASP/CWE). | [`.agents/skills/sfa-security-vulnerability-auditor/`](.agents/skills/sfa-security-vulnerability-auditor/SKILL.md) |
+| **Phase 7: Maintenance** | **`sfa-incident-root-cause-analyzer`** | Diagnoses production errors, synthesizes reproduction regression tests, and authors 5-Whys post-mortems. | [`.agents/skills/sfa-incident-root-cause-analyzer/`](.agents/skills/sfa-incident-root-cause-analyzer/SKILL.md) |
+| **Cross-Cutting** | **`sfa-quality-gate-orchestrator`** | Automated verification runner that evaluates gates across all 7 phases. | [`.agents/skills/sfa-quality-gate-orchestrator/`](.agents/skills/sfa-quality-gate-orchestrator/SKILL.md) |
 
 ---
 

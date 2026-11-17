@@ -1,5 +1,5 @@
 ---
-name: prd-generator-validator
+name: sfa-prd-generator-validator
 description: >-
   Generates, refines, and validates Product Requirement Documents (PRDs) for features or services.
   Use when transforming high-level, vague, or complex feature requests into structured functional
@@ -53,9 +53,9 @@ Write Acceptance Criteria using the **Given-When-Then** (BDD) structure for each
 ### Step 5: Automated Validation
 Run the built-in validation script against the drafted PRD markdown:
 ```bash
-node .agents/skills/prd-generator-validator/scripts/validate-prd.mjs <path-to-prd.md>
+node .agents/skills/sfa-prd-generator-validator/scripts/validate-prd.mjs <path-to-prd.md>
 ```
-Ensure all required sections pass validation with 0 errors before handing off to the **`feature-scaffolder`** skill.
+Ensure all required sections pass validation with 0 errors before handing off to the **`sfa-feature-scaffolder`** skill.
 
 ---
 

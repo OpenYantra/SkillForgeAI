@@ -1,5 +1,5 @@
 ---
-name: quality-gate-orchestrator
+name: sfa-quality-gate-orchestrator
 description: >-
   Orchestrates and enforces automated quality gates across all 7 phases of the SDLC.
   Use as a cross-cutting gatekeeper to verify whether deliverables (PRDs, architecture specs,
@@ -32,12 +32,12 @@ Run the master orchestrator script to check a specific gate or the entire projec
 
 ```bash
 # Run all quality gates on the repository
-node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs
+node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
 
 # Or invoke a specific phase gate:
-node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 2
-node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 4
-node .agents/skills/quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 5
+node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 2
+node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 4
+node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs --phase 5
 ```
 
 ---

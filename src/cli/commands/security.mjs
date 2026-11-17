@@ -5,7 +5,7 @@
  */
 
 import path from 'node:path';
-import { runSecurityAudit } from '../../../.agents/skills/security-vulnerability-auditor/scripts/audit-security.mjs';
+import { runSecurityAudit } from '../../../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
 import { printBanner, printError, colors } from '../ui.mjs';
 
 export function executeSecurity(args = []) {

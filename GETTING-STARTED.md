@@ -64,20 +64,20 @@ dotnet --version  # Optional — only for .NET projects
 
 ```mermaid
 flowchart LR
-    P1["① Planning<br/><code>project-planner-estimator</code>"]
-    --> P2["② Requirements<br/><code>prd-generator-validator</code><br/><code>api-contract-designer</code>"]
-    --> P3["③ Architecture<br/><code>system-architecture-adr</code>"]
-    --> P4["④ Development<br/><code>feature-scaffolder</code>"]
-    --> P5["⑤ Testing & QA<br/><code>unit-test-synthesizer</code>"]
-    --> P6["⑥ Deployment & Security<br/><code>cicd-container-automator</code><br/><code>security-vulnerability-auditor</code>"]
-    --> P7["⑦ Maintenance<br/><code>incident-root-cause-analyzer</code>"]
+    P1["① Planning<br/><code>sfa-project-planner-estimator</code>"]
+    --> P2["② Requirements<br/><code>sfa-prd-generator-validator</code><br/><code>sfa-api-contract-designer</code>"]
+    --> P3["③ Architecture<br/><code>sfa-system-architecture-adr</code>"]
+    --> P4["④ Development<br/><code>sfa-feature-scaffolder</code>"]
+    --> P5["⑤ Testing & QA<br/><code>sfa-unit-test-synthesizer</code>"]
+    --> P6["⑥ Deployment & Security<br/><code>sfa-cicd-container-automator</code><br/><code>sfa-security-vulnerability-auditor</code>"]
+    --> P7["⑦ Maintenance<br/><code>sfa-incident-root-cause-analyzer</code>"]
 
-    QG["🛡️ Cross-Cutting<br/><code>quality-gate-orchestrator</code>"]
+    QG["🛡️ Cross-Cutting<br/><code>sfa-quality-gate-orchestrator</code>"]
     QG -.->|"validates every phase"| P1 & P2 & P3 & P4 & P5 & P6 & P7
 ```
 
 > [!NOTE]
-> The `quality-gate-orchestrator` is a cross-cutting skill — it runs automated validation scripts at **every phase transition**, preventing you from progressing with incomplete or non-conforming artifacts.
+> The `sfa-quality-gate-orchestrator` is a cross-cutting skill — it runs automated validation scripts at **every phase transition**, preventing you from progressing with incomplete or non-conforming artifacts.
 
 ---
 
@@ -116,10 +116,10 @@ The `sync` command auto-generates:
 
 ### Step 2 — Phase 1: Plan the Project
 
-**Skill:** `project-planner-estimator`
+**Skill:** `sfa-project-planner-estimator`
 
 **Prompt your AI agent:**
-> *"Use the project-planner-estimator skill to create a project plan for [your app / feature idea]."*
+> *"Use the sfa-project-planner-estimator skill to create a project plan for [your app / feature idea]."*
 
 **What the agent produces:**
 - Work Breakdown Structure (WBS) with milestones
@@ -133,13 +133,13 @@ The `sync` command auto-generates:
 
 ### Step 3 — Phase 2: Write Requirements (PRD)
 
-**Skill:** `prd-generator-validator`
+**Skill:** `sfa-prd-generator-validator`
 
 > [!IMPORTANT]
 > This is the most critical step. All future tests, code, and architecture decisions trace back to this document. Never write code without an approved PRD.
 
 **Prompt your AI agent:**
-> *"Use the prd-generator-validator skill to convert this idea into a PRD: [describe your feature]."*
+> *"Use the sfa-prd-generator-validator skill to convert this idea into a PRD: [describe your feature]."*
 
 **The agent will:**
 1. Ask targeted clarifying questions (scope, auth mechanism, database, scale, out-of-scope items)
@@ -163,10 +163,10 @@ See the reference example: [`examples/order-service/order-service.prd.md`](examp
 
 ### Step 4 — Phase 2/3: Design API Contracts
 
-**Skill:** `api-contract-designer`
+**Skill:** `sfa-api-contract-designer`
 
 **Prompt your AI agent:**
-> *"Use the api-contract-designer skill to draft an OpenAPI 3.1 contract from the approved PRD."*
+> *"Use the sfa-api-contract-designer skill to draft an OpenAPI 3.1 contract from the approved PRD."*
 
 **What the agent produces:**
 - Full OpenAPI 3.1 YAML with typed request/response schemas
@@ -182,10 +182,10 @@ See the reference example: [`examples/order-service/order-service.prd.md`](examp
 
 ### Step 5 — Phase 3: Architecture & ADRs
 
-**Skill:** `system-architecture-adr`
+**Skill:** `sfa-system-architecture-adr`
 
 **Prompt your AI agent:**
-> *"Use the system-architecture-adr skill to generate C4 diagrams and Architecture Decision Records for this system."*
+> *"Use the sfa-system-architecture-adr skill to generate C4 diagrams and Architecture Decision Records for this system."*
 
 **What the agent produces:**
 - **C4 Context Diagram** — actors, users, external systems
@@ -206,7 +206,7 @@ docs/adr/
 
 ### Step 6 — Phase 4: Scaffold Code
 
-**Skill:** `feature-scaffolder`
+**Skill:** `sfa-feature-scaffolder`
 **CLI:** `node bin/skillforge.mjs scaffold`
 
 ```bash
@@ -218,7 +218,7 @@ node bin/skillforge.mjs scaffold --name "order" --lang "dotnet"
 ```
 
 Or prompt your AI agent:
-> *"Use the feature-scaffolder skill to scaffold the order domain from the approved PRD."*
+> *"Use the sfa-feature-scaffolder skill to scaffold the order domain from the approved PRD."*
 
 **Architecture enforced:**
 
@@ -248,10 +248,10 @@ src/
 
 ### Step 7 — Phase 5: Synthesize Tests
 
-**Skill:** `unit-test-synthesizer`
+**Skill:** `sfa-unit-test-synthesizer`
 
 **Prompt your AI agent:**
-> *"Use the unit-test-synthesizer skill to generate a full test suite for the order service. Cite FR-001, FR-002, EC-001 from the PRD."*
+> *"Use the sfa-unit-test-synthesizer skill to generate a full test suite for the order service. Cite FR-001, FR-002, EC-001 from the PRD."*
 
 **Test matrix produced:**
 
@@ -282,10 +282,10 @@ it('should create order in PENDING state (FR-001)', async () => {
 
 ### Step 8 — Phase 6: Container & CI/CD
 
-**Skill:** `cicd-container-automator`
+**Skill:** `sfa-cicd-container-automator`
 
 **Prompt your AI agent:**
-> *"Use the cicd-container-automator skill to create a hardened Dockerfile and GitHub Actions CI pipeline."*
+> *"Use the sfa-cicd-container-automator skill to create a hardened Dockerfile and GitHub Actions CI pipeline."*
 
 **What the agent produces:**
 - **Multi-stage Dockerfile** with Alpine/Slim base, build stage, and non-root runner stage
@@ -297,11 +297,11 @@ it('should create order in PENDING state (FR-001)', async () => {
 
 ### Step 9 — Phase 6: Security & Vulnerability Audit
 
-**Skill:** `security-vulnerability-auditor`
+**Skill:** `sfa-security-vulnerability-auditor`
 **CLI:** `node bin/skillforge.mjs security`
 
 **Prompt your AI agent:**
-> *"Use the security-vulnerability-auditor skill to audit code changes and application source for vulnerabilities, leaked secrets, and OWASP Top 10 / CWE weaknesses."*
+> *"Use the sfa-security-vulnerability-auditor skill to audit code changes and application source for vulnerabilities, leaked secrets, and OWASP Top 10 / CWE weaknesses."*
 
 ```bash
 # Audit full application workspace
@@ -400,9 +400,9 @@ This tells you exactly which SDLC phases are **failing** vs **passing**, giving 
 
 | What you already have | SkillForgeAI equivalent | Remediation action |
 |:---|:---|:---|
-| Confluence doc / Jira ticket | Phase 2 PRD | Migrate to `.prd.md` via `prd-generator-validator` |
+| Confluence doc / Jira ticket | Phase 2 PRD | Migrate to `.prd.md` via `sfa-prd-generator-validator` |
 | Existing Swagger / OpenAPI file | Phase 2/3 Contract | Validate with `validate-openapi.mjs` |
-| Design doc / architecture diagram | Phase 3 ADR | Formalize with `system-architecture-adr` → `docs/adr/` |
+| Design doc / architecture diagram | Phase 3 ADR | Formalize with `sfa-system-architecture-adr` → `docs/adr/` |
 | Existing source folders | Phase 4 Scaffold | Run `skillforge graph` to map it; refactor to Clean Architecture |
 | Existing test files | Phase 5 Quality | Run `skillforge gate --phase 5` for AAA and `FR-XXX` traceability |
 | Existing Dockerfile | Phase 6 Container | Run `skillforge gate --phase 6` to audit non-root, multi-stage hardening |
@@ -434,22 +434,22 @@ Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
 
 | Phase | Skill Name | Trigger Prompt | Key Output | Validator Script |
 |:---|:---|:---|:---|:---|
-| **Phase 1** | `project-planner-estimator` | *"Use project-planner-estimator to plan [feature]"* | `docs/plan.md` (WBS, milestones, risks) | `validate-plan.mjs` |
-| **Phase 2** | `prd-generator-validator` | *"Use prd-generator-validator to write a PRD for [feature]"* | `docs/<feature>.prd.md` with `FR-XXX`, `EC-XXX` | `validate-prd.mjs` |
-| **Phase 2/3** | `api-contract-designer` | *"Use api-contract-designer to design the API contract from the PRD"* | `openapi.yaml` (OpenAPI 3.1 + RFC 7807) | `validate-openapi.mjs` |
-| **Phase 3** | `system-architecture-adr` | *"Use system-architecture-adr to generate C4 diagrams and ADRs"* | `ARCHITECTURE.md`, `docs/adr/*.md` | `validate-architecture.mjs` |
-| **Phase 4** | `feature-scaffolder` | *"Use feature-scaffolder to scaffold the [domain] feature"* | `src/domain/`, `src/services/`, `src/repositories/` | `verify-scaffold.mjs` |
-| **Phase 5** | `unit-test-synthesizer` | *"Use unit-test-synthesizer to write tests citing FR-001, EC-001"* | `tests/*.spec.ts` or `*Tests.cs` (AAA pattern) | `verify-coverage-criteria.mjs` |
-| **Phase 6** | `cicd-container-automator` | *"Use cicd-container-automator to create a Dockerfile and CI pipeline"* | `Dockerfile`, `.github/workflows/*.yml` | `validate-ci-container.mjs` |
-| **Phase 6** | `security-vulnerability-auditor` | *"Use security-vulnerability-auditor to audit changes and app for OWASP/CWE flaws"* | `docs/security/audit-report.md`, threat matrix | `audit-security.mjs` |
-| **Phase 7** | `incident-root-cause-analyzer` | *"Use incident-root-cause-analyzer to diagnose this error: [stack trace]"* | `docs/incidents/RCA-*.md`, regression test | `validate-rca.mjs` |
-| **Cross-Cutting** | `quality-gate-orchestrator` | *(runs automatically via CLI)* | Gate pass/fail report | `run-all-gates.mjs` |
+| **Phase 1** | `sfa-project-planner-estimator` | *"Use sfa-project-planner-estimator to plan [feature]"* | `docs/plan.md` (WBS, milestones, risks) | `validate-plan.mjs` |
+| **Phase 2** | `sfa-prd-generator-validator` | *"Use sfa-prd-generator-validator to write a PRD for [feature]"* | `docs/<feature>.prd.md` with `FR-XXX`, `EC-XXX` | `validate-prd.mjs` |
+| **Phase 2/3** | `sfa-api-contract-designer` | *"Use sfa-api-contract-designer to design the API contract from the PRD"* | `openapi.yaml` (OpenAPI 3.1 + RFC 7807) | `validate-openapi.mjs` |
+| **Phase 3** | `sfa-system-architecture-adr` | *"Use sfa-system-architecture-adr to generate C4 diagrams and ADRs"* | `ARCHITECTURE.md`, `docs/adr/*.md` | `validate-architecture.mjs` |
+| **Phase 4** | `sfa-feature-scaffolder` | *"Use sfa-feature-scaffolder to scaffold the [domain] feature"* | `src/domain/`, `src/services/`, `src/repositories/` | `verify-scaffold.mjs` |
+| **Phase 5** | `sfa-unit-test-synthesizer` | *"Use sfa-unit-test-synthesizer to write tests citing FR-001, EC-001"* | `tests/*.spec.ts` or `*Tests.cs` (AAA pattern) | `verify-coverage-criteria.mjs` |
+| **Phase 6** | `sfa-cicd-container-automator` | *"Use sfa-cicd-container-automator to create a Dockerfile and CI pipeline"* | `Dockerfile`, `.github/workflows/*.yml` | `validate-ci-container.mjs` |
+| **Phase 6** | `sfa-security-vulnerability-auditor` | *"Use sfa-security-vulnerability-auditor to audit changes and app for OWASP/CWE flaws"* | `docs/security/audit-report.md`, threat matrix | `audit-security.mjs` |
+| **Phase 7** | `sfa-incident-root-cause-analyzer` | *"Use sfa-incident-root-cause-analyzer to diagnose this error: [stack trace]"* | `docs/incidents/RCA-*.md`, regression test | `validate-rca.mjs` |
+| **Cross-Cutting** | `sfa-quality-gate-orchestrator` | *(runs automatically via CLI)* | Gate pass/fail report | `run-all-gates.mjs` |
 
 ---
 
 ## 7. The Quality Gate System
 
-The `quality-gate-orchestrator` runs **10 automated gates** that map to SDLC phase transitions:
+The `sfa-quality-gate-orchestrator` runs **10 automated gates** that map to SDLC phase transitions:
 
 ```mermaid
 flowchart TD
@@ -595,12 +595,12 @@ node bin/skillforge.mjs sync
 
 ```mermaid
 flowchart TD
-    A["💡 New Feature Request"] --> B["prd-generator-validator\n→ docs/feature.prd.md"]
-    B --> C["api-contract-designer\n→ openapi.yaml"]
-    C --> D["system-architecture-adr\n→ docs/adr/*.md"]
-    D --> E["feature-scaffolder\n→ src/domain/, src/services/"]
-    E --> F["unit-test-synthesizer\n→ tests/*.spec.ts"]
-    F --> SEC["security-vulnerability-auditor\n→ skillforge security --diff"]
+    A["💡 New Feature Request"] --> B["sfa-prd-generator-validator\n→ docs/feature.prd.md"]
+    B --> C["sfa-api-contract-designer\n→ openapi.yaml"]
+    C --> D["sfa-system-architecture-adr\n→ docs/adr/*.md"]
+    D --> E["sfa-feature-scaffolder\n→ src/domain/, src/services/"]
+    E --> F["sfa-unit-test-synthesizer\n→ tests/*.spec.ts"]
+    F --> SEC["sfa-security-vulnerability-auditor\n→ skillforge security --diff"]
     SEC --> G["skillforge gate\n✅ 10/10 gates pass"]
     G --> H["Open PR → GitHub Actions CI scorecard"]
     H --> I["Merge ✅"]
@@ -611,13 +611,13 @@ flowchart TD
 For every new feature, use this sequence of agent prompts:
 
 ```
-1. "Use the project-planner-estimator skill to plan [feature]."
-2. "Use the prd-generator-validator skill to write a PRD for [feature]."
-3. "Use the api-contract-designer skill to design the API from the PRD."
-4. "Use the system-architecture-adr skill to generate C4 diagrams and ADRs."
-5. "Use the feature-scaffolder skill to scaffold the [domain] from the PRD."
-6. "Use the unit-test-synthesizer skill to write tests citing all FR-XXX and EC-XXX."
-7. "Use the security-vulnerability-auditor skill to audit changes: node bin/skillforge.mjs security --diff"
+1. "Use the sfa-project-planner-estimator skill to plan [feature]."
+2. "Use the sfa-prd-generator-validator skill to write a PRD for [feature]."
+3. "Use the sfa-api-contract-designer skill to design the API from the PRD."
+4. "Use the sfa-system-architecture-adr skill to generate C4 diagrams and ADRs."
+5. "Use the sfa-feature-scaffolder skill to scaffold the [domain] from the PRD."
+6. "Use the sfa-unit-test-synthesizer skill to write tests citing all FR-XXX and EC-XXX."
+7. "Use the sfa-security-vulnerability-auditor skill to audit changes: node bin/skillforge.mjs security --diff"
 8. "Run the quality gate: node bin/skillforge.mjs gate"
 ```
 
@@ -626,7 +626,7 @@ For every new feature, use this sequence of agent prompts:
 When a production incident occurs:
 
 ```
-1. "Use the incident-root-cause-analyzer skill to diagnose this error: [paste stack trace]."
+1. "Use the sfa-incident-root-cause-analyzer skill to diagnose this error: [paste stack trace]."
 2. Agent writes a failing regression test → confirms it reproduces the bug
 3. Agent applies the minimal hotfix → confirms all tests pass
 4. Agent drafts the RCA post-mortem in docs/incidents/RCA-YYYY-MM-DD-[title].md
@@ -641,7 +641,7 @@ When a production incident occurs:
 > These are enforced by the automated quality gates. Breaking any of them causes the CI bot to block your PR.
 
 ### Rule 1: Never Guess Requirements
-Always run `prd-generator-validator` first for any new feature. Never start coding from a vague prompt.
+Always run `sfa-prd-generator-validator` first for any new feature. Never start coding from a vague prompt.
 
 ### Rule 2: Enforce Architecture Boundaries
 Domain entities and business logic **MUST NOT** import database drivers, ORMs, web frameworks, or infrastructure packages. Dependency flows inward only:
@@ -711,16 +711,16 @@ dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/Orde
 ```
 SkillForgeAI/
 ├── .agents/skills/                  ← All 10 SDLC skill instruction files (SKILL.md)
-│   ├── prd-generator-validator/
-│   ├── api-contract-designer/
-│   ├── system-architecture-adr/
-│   ├── feature-scaffolder/
-│   ├── unit-test-synthesizer/
-│   ├── cicd-container-automator/
-│   ├── security-vulnerability-auditor/
-│   ├── incident-root-cause-analyzer/
-│   ├── project-planner-estimator/
-│   └── quality-gate-orchestrator/
+│   ├── sfa-prd-generator-validator/
+│   ├── sfa-api-contract-designer/
+│   ├── sfa-system-architecture-adr/
+│   ├── sfa-feature-scaffolder/
+│   ├── sfa-unit-test-synthesizer/
+│   ├── sfa-cicd-container-automator/
+│   ├── sfa-security-vulnerability-auditor/
+│   ├── sfa-incident-root-cause-analyzer/
+│   ├── sfa-project-planner-estimator/
+│   └── sfa-quality-gate-orchestrator/
 ├── bin/skillforge.mjs               ← Unified CLI entry point
 ├── scripts/                         ← Editor sync, code graph, PR scorecard, self-heal
 ├── templates/                       ← Phase sign-off template

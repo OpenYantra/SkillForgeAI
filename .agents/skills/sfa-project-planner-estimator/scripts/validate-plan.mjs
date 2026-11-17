@@ -67,7 +67,7 @@ function validatePlan(filePath) {
     process.exit(1);
   } else {
     console.log('\n✅ PASSED: Project Plan satisfies Phase 1 planning standards!');
-    console.log('   Ready for Phase 2: `prd-generator-validator`.\n');
+    console.log('   Ready for Phase 2: `sfa-prd-generator-validator`.\n');
     process.exit(0);
   }
 }

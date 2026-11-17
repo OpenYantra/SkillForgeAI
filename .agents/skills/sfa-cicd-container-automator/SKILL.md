@@ -1,5 +1,5 @@
 ---
-name: cicd-container-automator
+name: sfa-cicd-container-automator
 description: >-
   Scaffolds hardened container images (multi-stage Dockerfiles) and automated CI/CD pipeline workflows.
   Use in SDLC Phase 6 to ensure consistent builds, automated test execution on pull requests,
@@ -51,7 +51,7 @@ Use [templates/ci-workflow-template.yml](./templates/ci-workflow-template.yml):
 ### Step 4: Validate CI/CD & Container Configs
 Run the verification script:
 ```bash
-node .agents/skills/cicd-container-automator/scripts/validate-ci-container.mjs <repo-or-config-dir>
+node .agents/skills/sfa-cicd-container-automator/scripts/validate-ci-container.mjs <repo-or-config-dir>
 ```
 
 ---

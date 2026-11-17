@@ -1,5 +1,5 @@
 ---
-name: feature-scaffolder
+name: sfa-feature-scaffolder
 description: >-
   Scaffolds modular, production-ready code structures, domain models, services, and controllers
   according to established architectural patterns (Clean Architecture, Hexagonal, Modular MVC).
@@ -41,7 +41,7 @@ flowchart TD
 ## Step-by-Step Scaffolding Procedure
 
 ### Step 1: Read and Bind to the PRD
-1. Read the target PRD (produced by `prd-generator-validator`).
+1. Read the target PRD (produced by `sfa-prd-generator-validator`).
 2. Identify all `FR-XXX` requirements and Data Models.
 3. Establish the module/domain name (e.g., `billing`, `auth`, `order-fulfillment`).
 
@@ -78,9 +78,9 @@ flowchart TD
 ### Step 6: Verify Structure
 Run the scaffold verification helper:
 ```bash
-node .agents/skills/feature-scaffolder/scripts/verify-scaffold.mjs <feature-directory>
+node .agents/skills/sfa-feature-scaffolder/scripts/verify-scaffold.mjs <feature-directory>
 ```
-Once verified, proceed to **Phase 5: `unit-test-synthesizer`**.
+Once verified, proceed to **Phase 5: `sfa-unit-test-synthesizer`**.
 
 ---
 
