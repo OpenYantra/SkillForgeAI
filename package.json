@@ -18,7 +18,7 @@
     "sync": "node bin/skillforge.mjs sync",
     "mcp": "node bin/skillforge.mjs mcp",
     "pr:scorecard": "node scripts/generate-pr-scorecard.mjs",
-    "test:ts": "node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts",
+    "test:ts": "node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts tests/**/*.spec.ts",
     "test:dotnet": "dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/OrderService.Tests.csproj --no-restore",
     "test": "npm run test:ts && npm run test:dotnet"
   },

@@ -11,7 +11,7 @@
 3. [The 7-Phase SDLC Architecture](#3-the-7-phase-sdlc-architecture)
 4. [Path A — Brand-New Project](#4-path-a--brand-new-project)
 5. [Path B — Adopting Into an Existing Repo](#5-path-b--adopting-into-an-existing-repo)
-6. [The 9 SDLC Skills — Reference Card](#6-the-9-sdlc-skills--reference-card)
+6. [The 10 SDLC Skills — Reference Card](#6-the-10-sdlc-skills--reference-card)
 7. [The Quality Gate System](#7-the-quality-gate-system)
 8. [The `skillforge` CLI — Full Command Reference](#8-the-skillforge-cli--full-command-reference)
 9. [Monorepo Domain Slicing](#9-monorepo-domain-slicing)
@@ -69,7 +69,7 @@ flowchart LR
     --> P3["③ Architecture<br/><code>system-architecture-adr</code>"]
     --> P4["④ Development<br/><code>feature-scaffolder</code>"]
     --> P5["⑤ Testing & QA<br/><code>unit-test-synthesizer</code>"]
-    --> P6["⑥ Deployment<br/><code>cicd-container-automator</code>"]
+    --> P6["⑥ Deployment & Security<br/><code>cicd-container-automator</code><br/><code>security-vulnerability-auditor</code>"]
     --> P7["⑦ Maintenance<br/><code>incident-root-cause-analyzer</code>"]
 
     QG["🛡️ Cross-Cutting<br/><code>quality-gate-orchestrator</code>"]
@@ -295,21 +295,50 @@ it('should create order in PENDING state (FR-001)', async () => {
 
 ---
 
-### Step 9 — Run Quality Gate Before Every PR
+### Step 9 — Phase 6: Security & Vulnerability Audit
+
+**Skill:** `security-vulnerability-auditor`
+**CLI:** `node bin/skillforge.mjs security`
+
+**Prompt your AI agent:**
+> *"Use the security-vulnerability-auditor skill to audit code changes and application source for vulnerabilities, leaked secrets, and OWASP Top 10 / CWE weaknesses."*
 
 ```bash
-# Run all 9 SDLC quality gates
+# Audit full application workspace
+node bin/skillforge.mjs security
+
+# Audit only uncommitted Git diff changes (pre-commit / PR)
+node bin/skillforge.mjs security --diff
+
+# Audit specific directory
+node bin/skillforge.mjs security --path "src/"
+```
+
+**What the agent verifies:**
+- No leaked private keys, AWS tokens, GitHub PATs, or JWT secrets (`CWE-798`)
+- Parameterized queries protecting against SQL Injection (`CWE-89`)
+- Safe execution avoiding OS Command Injection (`CWE-78`) and Code Injection (`CWE-94`)
+- Secure path handling preventing Path Traversal (`CWE-22`)
+- Modern cryptography (`SHA-256`, Argon2) instead of broken algorithms (`MD5`, `SHA-1`)
+- Production hardening: TLS validation active, strict CORS without wildcard credentials
+
+---
+
+### Step 10 — Run Quality Gate Before Every PR
+
+```bash
+# Run all 10 SDLC quality gates
 node bin/skillforge.mjs gate
 
 # Check a specific phase only
-node bin/skillforge.mjs gate --phase 4
+node bin/skillforge.mjs gate --phase 6
 
 # Output JSON for CI tooling
 node bin/skillforge.mjs gate --json
 ```
 
 > [!CAUTION]
-> Never merge a PR without all 9 gates passing. The included GitHub Actions bot (`.github/workflows/skillforge-gate.yml`) automatically blocks merges if any gate fails.
+> Never merge a PR without all 10 gates passing. The included GitHub Actions bot (`.github/workflows/skillforge-gate.yml`) automatically blocks merges if any gate fails.
 
 ---
 
@@ -339,6 +368,7 @@ Then add the npm scripts to your `package.json`:
   "scripts": {
     "skillforge": "node bin/skillforge.mjs",
     "gate":       "node bin/skillforge.mjs gate",
+    "security":   "node bin/skillforge.mjs security",
     "diff":       "node bin/skillforge.mjs diff",
     "graph":      "node bin/skillforge.mjs graph",
     "slice":      "node bin/skillforge.mjs slice",
@@ -360,7 +390,7 @@ node bin/skillforge.mjs sync   # Auto-generate all editor instruction files
 ### Step 3 — Baseline Audit: Find Your Red Gates
 
 ```bash
-# Run all 9 gates and export a JSON baseline
+# Run all 10 gates and export a JSON baseline
 node bin/skillforge.mjs gate --json > baseline-audit.json
 ```
 
@@ -376,6 +406,7 @@ This tells you exactly which SDLC phases are **failing** vs **passing**, giving 
 | Existing source folders | Phase 4 Scaffold | Run `skillforge graph` to map it; refactor to Clean Architecture |
 | Existing test files | Phase 5 Quality | Run `skillforge gate --phase 5` for AAA and `FR-XXX` traceability |
 | Existing Dockerfile | Phase 6 Container | Run `skillforge gate --phase 6` to audit non-root, multi-stage hardening |
+| Security configs / SAST scans | Phase 6 Security | Run `skillforge security` to audit secrets, SAST, and OWASP/CWE weaknesses |
 
 ### Step 5 — Generate a Code Graph of What Exists
 
@@ -392,14 +423,14 @@ node bin/skillforge.mjs slice --list
 ### Step 6 — Enable the GitHub Actions CI Bot
 
 Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
-1. Run all 9 quality gates
+1. Run all 10 quality gates
 2. Post a detailed scorecard comment directly on the PR
 3. Update the comment in-place (anti-spam)
 4. **Block merging** if any gate fails
 
 ---
 
-## 6. The 9 SDLC Skills — Reference Card
+## 6. The 10 SDLC Skills — Reference Card
 
 | Phase | Skill Name | Trigger Prompt | Key Output | Validator Script |
 |:---|:---|:---|:---|:---|
@@ -410,6 +441,7 @@ Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
 | **Phase 4** | `feature-scaffolder` | *"Use feature-scaffolder to scaffold the [domain] feature"* | `src/domain/`, `src/services/`, `src/repositories/` | `verify-scaffold.mjs` |
 | **Phase 5** | `unit-test-synthesizer` | *"Use unit-test-synthesizer to write tests citing FR-001, EC-001"* | `tests/*.spec.ts` or `*Tests.cs` (AAA pattern) | `verify-coverage-criteria.mjs` |
 | **Phase 6** | `cicd-container-automator` | *"Use cicd-container-automator to create a Dockerfile and CI pipeline"* | `Dockerfile`, `.github/workflows/*.yml` | `validate-ci-container.mjs` |
+| **Phase 6** | `security-vulnerability-auditor` | *"Use security-vulnerability-auditor to audit changes and app for OWASP/CWE flaws"* | `docs/security/audit-report.md`, threat matrix | `audit-security.mjs` |
 | **Phase 7** | `incident-root-cause-analyzer` | *"Use incident-root-cause-analyzer to diagnose this error: [stack trace]"* | `docs/incidents/RCA-*.md`, regression test | `validate-rca.mjs` |
 | **Cross-Cutting** | `quality-gate-orchestrator` | *(runs automatically via CLI)* | Gate pass/fail report | `run-all-gates.mjs` |
 
@@ -417,7 +449,7 @@ Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
 
 ## 7. The Quality Gate System
 
-The `quality-gate-orchestrator` runs **9 automated gates** that map to SDLC phase transitions:
+The `quality-gate-orchestrator` runs **10 automated gates** that map to SDLC phase transitions:
 
 ```mermaid
 flowchart TD
@@ -425,8 +457,9 @@ flowchart TD
     G2 --> G3["Gate 3: Architecture & ADR Validation"]
     G3 --> G4["Gate 4: Code Scaffolding & Layer Boundaries"]
     G4 --> G5["Gate 5: Test Criteria, AAA Structure & FR Traceability"]
-    G5 --> G6["Gate 6: Container Hardening & CI/CD Pipeline"]
-    G6 --> G7["Gate 7: RCA & Incident Prevention Check"]
+    G5 --> G6A["Gate 6: Container Hardening & CI/CD Pipeline"]
+    G6A --> G6B["Gate 6: Security Weakness & Vulnerability Audit"]
+    G6B --> G7["Gate 7: RCA & Incident Prevention Check"]
 ```
 
 ### Sample PR Scorecard Output (GitHub Actions)
@@ -434,8 +467,8 @@ flowchart TD
 ```
 🛡️ SkillForgeAI Quality Gate Report
 
-> Status: ✅ ALL 9 SDLC QUALITY GATES PASSED
-> Recommended SemVer Bump: PATCH | Gates Evaluated: 9/9 Passing
+> Status: ✅ ALL 10 SDLC QUALITY GATES PASSED
+> Recommended SemVer Bump: PATCH | Gates Evaluated: 10/10 Passing
 
 | SDLC Phase | Gate Name                            | Status     |
 |:-----------|:-------------------------------------|:-----------|
@@ -447,6 +480,7 @@ flowchart TD
 | Phase 4    | Code Scaffolding Boundaries          | ✅ PASSED  |
 | Phase 5    | Test Criteria & AAA Structure        | ✅ PASSED  |
 | Phase 6    | Container Hardening & CI/CD          | ✅ PASSED  |
+| Phase 6    | Security Weakness & Vulnerability Audit | ✅ PASSED  |
 | Phase 7    | Maintenance & Incident RCA           | ✅ PASSED  |
 ```
 
@@ -456,9 +490,16 @@ flowchart TD
 
 ```bash
 # ── Quality Gates ─────────────────────────────────────────────────
-node bin/skillforge.mjs gate                     # Run all 9 SDLC gates
-node bin/skillforge.mjs gate --phase 4           # Run a specific phase gate
+node bin/skillforge.mjs gate                     # Run all 10 SDLC gates
+node bin/skillforge.mjs gate --phase 6           # Run a specific phase gate
 node bin/skillforge.mjs gate --json              # Output JSON for CI tooling
+
+# ── Security & Vulnerability Audit ────────────────────────────────
+node bin/skillforge.mjs security                 # Audit workspace for secrets & CWEs
+node bin/skillforge.mjs security --diff          # Audit uncommitted Git changes
+node bin/skillforge.mjs security --staged        # Audit staged changes only
+node bin/skillforge.mjs security --path "src/"   # Audit specific directory or file
+node bin/skillforge.mjs security --strict        # Fail on medium/low warnings
 
 # ── Breaking Change & SemVer Analysis ─────────────────────────────
 node bin/skillforge.mjs diff                     # Compare working tree vs HEAD
@@ -559,7 +600,8 @@ flowchart TD
     C --> D["system-architecture-adr\n→ docs/adr/*.md"]
     D --> E["feature-scaffolder\n→ src/domain/, src/services/"]
     E --> F["unit-test-synthesizer\n→ tests/*.spec.ts"]
-    F --> G["skillforge gate\n✅ 9/9 gates pass"]
+    F --> SEC["security-vulnerability-auditor\n→ skillforge security --diff"]
+    SEC --> G["skillforge gate\n✅ 10/10 gates pass"]
     G --> H["Open PR → GitHub Actions CI scorecard"]
     H --> I["Merge ✅"]
 ```
@@ -575,7 +617,8 @@ For every new feature, use this sequence of agent prompts:
 4. "Use the system-architecture-adr skill to generate C4 diagrams and ADRs."
 5. "Use the feature-scaffolder skill to scaffold the [domain] from the PRD."
 6. "Use the unit-test-synthesizer skill to write tests citing all FR-XXX and EC-XXX."
-7. "Run the quality gate: node bin/skillforge.mjs gate"
+7. "Use the security-vulnerability-auditor skill to audit changes: node bin/skillforge.mjs security --diff"
+8. "Run the quality gate: node bin/skillforge.mjs gate"
 ```
 
 ### Maintenance Workflow (Phase 7)
@@ -615,7 +658,7 @@ it('should reject duplicate order', ...)                               // ❌ Ga
 ```
 
 ### Rule 4: Gate Before Every PR
-Run `node bin/skillforge.mjs gate` and pass all 9 gates before opening any pull request. The GitHub Actions CI bot enforces this automatically — it comments a scorecard on every PR and blocks merging on failure.
+Run `node bin/skillforge.mjs gate` and pass all 10 gates before opening any pull request. The GitHub Actions CI bot enforces this automatically — it comments a scorecard on every PR and blocks merging on failure.
 
 ---
 
@@ -667,13 +710,14 @@ dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/Orde
 
 ```
 SkillForgeAI/
-├── .agents/skills/                  ← All 9 SDLC skill instruction files (SKILL.md)
+├── .agents/skills/                  ← All 10 SDLC skill instruction files (SKILL.md)
 │   ├── prd-generator-validator/
 │   ├── api-contract-designer/
 │   ├── system-architecture-adr/
 │   ├── feature-scaffolder/
 │   ├── unit-test-synthesizer/
 │   ├── cicd-container-automator/
+│   ├── security-vulnerability-auditor/
 │   ├── incident-root-cause-analyzer/
 │   ├── project-planner-estimator/
 │   └── quality-gate-orchestrator/

@@ -15,6 +15,7 @@ import { executeGraph } from '../src/cli/commands/graph.mjs';
 import { executeSlice } from '../src/cli/commands/slice.mjs';
 import { executeScaffold } from '../src/cli/commands/scaffold.mjs';
 import { executeSignoff } from '../src/cli/commands/signoff.mjs';
+import { executeSecurity } from '../src/cli/commands/security.mjs';
 
 const VERSION = '1.1.0';
 
@@ -29,7 +30,8 @@ ${colors.bold}Usage:${colors.reset}
   node bin/skillforge.mjs <command> [options]
 
 ${colors.bold}Core SDLC Commands:${colors.reset}
-  ${colors.green}gate${colors.reset} [options]        Evaluate SDLC quality gates (9 gates, or --phase <1-7>)
+  ${colors.green}gate${colors.reset} [options]        Evaluate SDLC quality gates (10 gates, or --phase <1-7>)
+  ${colors.green}security${colors.reset} [options]    Audit code changes & application for vulnerabilities (CWE/OWASP)
   ${colors.green}diff${colors.reset} [options]        Analyze Git diff for semantic breaking changes (SemVer)
   ${colors.green}graph${colors.reset} [options]       Generate symbol-level code graph (C#, Python, TS, Go)
   ${colors.green}slice${colors.reset} [options]       Generate token-efficient monorepo vertical slice maps (docs/context/slices/)
@@ -43,7 +45,9 @@ ${colors.bold}Core SDLC Commands:${colors.reset}
   ${colors.green}help${colors.reset}                  Display this help message
 
 ${colors.bold}Examples:${colors.reset}
-  skillforge gate --phase 4
+  skillforge gate --phase 6
+  skillforge security --diff
+  skillforge security --path src/
   skillforge diff --json
   skillforge graph --format mermaid
   skillforge scaffold --name catalog --lang dotnet
@@ -71,6 +75,11 @@ function main() {
   switch (command.toLowerCase()) {
     case 'gate':
       executeGate(args);
+      break;
+
+    case 'security':
+    case 'audit':
+      executeSecurity(args);
       break;
 
     case 'diff':

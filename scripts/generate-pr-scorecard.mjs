@@ -35,8 +35,9 @@ function loadJson(filePath, fallback = {}) {
 export function generateScorecard(diffReport, gateReport) {
   const isPassed = gateReport.status === 'PASSED';
   const statusEmoji = isPassed ? '✅' : '🚨';
+  const totalGates = gateReport.totalGates || (gateReport.gates ? gateReport.gates.length : 10);
   const statusBadge = isPassed
-    ? '**ALL 9 SDLC QUALITY GATES PASSED**'
+    ? `**ALL ${totalGates} SDLC QUALITY GATES PASSED**`
     : '**ONE OR MORE SDLC GATES FAILED**';
 
   const semver = diffReport.highestSeverity || 'PATCH';
@@ -46,7 +47,7 @@ export function generateScorecard(diffReport, gateReport) {
   let md = `<!-- skillforge-pr-scorecard -->\n`;
   md += `## 🛡️ SkillForgeAI Quality Gate Report\n\n`;
   md += `> **Status:** ${statusEmoji} ${statusBadge}\n`;
-  md += `> **Recommended SemVer Bump:** \`${semver}\` | **Gates Evaluated:** ${gateReport.passed || 0}/${gateReport.totalGates || 9} Passing\n\n`;
+  md += `> **Recommended SemVer Bump:** \`${semver}\` | **Gates Evaluated:** ${gateReport.passed || 0}/${totalGates} Passing\n\n`;
 
   // Gate Matrix
   md += `### 📊 SDLC Phase Quality Gates Breakdown\n\n`;

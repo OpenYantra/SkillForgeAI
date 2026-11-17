@@ -58,6 +58,12 @@ const GATES = [
     target: '.agents/skills/cicd-container-automator/templates/Dockerfile.template',
   },
   {
+    phase: 6,
+    name: 'Phase 6: Security Weakness & Vulnerability Audit',
+    script: '.agents/skills/security-vulnerability-auditor/scripts/audit-security.mjs',
+    target: 'examples/order-service/src',
+  },
+  {
     phase: 7,
     name: 'Phase 7: Maintenance & Incident RCA',
     script: '.agents/skills/incident-root-cause-analyzer/scripts/validate-rca.mjs',
