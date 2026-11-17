@@ -61,8 +61,10 @@ const projectConfig = (gov: Record<string, unknown> = {}) => ({
   },
 });
 
-const commitLine = (email = 'human@corp.com', sig = 'G', hash = 'abc123', date = '2026-11-15T00:00:00Z') =>
-  () => `${hash}|${email}|${sig}|${date}`;
+const commitLine =
+  (email = 'human@corp.com', sig = 'G', hash = 'abc123', date = '2026-11-15T00:00:00Z') =>
+  () =>
+    `${hash}|${email}|${sig}|${date}`;
 
 describe('governance helpers', () => {
   it('detects agent/bot identities and allow-list membership', () => {
@@ -143,7 +145,10 @@ describe('verifySignOff — project governance', () => {
   it('rejects a mismatched recorded hash', () => {
     const file = writeSignoff({ hash: 'deadbeef' });
     try {
-      const result = verifySignOff(file, { config: projectConfig(), runGit: commitLine('human@corp.com', 'G', 'abc123') });
+      const result = verifySignOff(file, {
+        config: projectConfig(),
+        runGit: commitLine('human@corp.com', 'G', 'abc123'),
+      });
       assert.equal(result.passed, false);
       assert.ok(result.errors.some((e) => /does not match/i.test(e)));
     } finally {

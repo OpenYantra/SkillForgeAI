@@ -10,12 +10,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  GATE_REGISTRY,
-  loadGateConfig,
-  isSelfTest,
-  resolveGateTargets,
-} from '../src/core/gate-registry.mjs';
+import { GATE_REGISTRY, loadGateConfig, isSelfTest, resolveGateTargets } from '../src/core/gate-registry.mjs';
 import { expandGlob } from '../src/core/glob.mjs';
 
 const BIN = path.resolve('bin/skillforge.mjs');
@@ -42,7 +37,11 @@ describe('gate config loading', () => {
   });
 
   it('loads a project config and rejects invalid modes', () => {
-    const projectConfig = writeTempConfig({ version: 1, mode: 'project', artifacts: { src: 'examples/order-service/src' } });
+    const projectConfig = writeTempConfig({
+      version: 1,
+      mode: 'project',
+      artifacts: { src: 'examples/order-service/src' },
+    });
     const invalidConfig = writeTempConfig({ version: 1, mode: 'bogus' });
     try {
       const loaded = loadGateConfig(projectConfig);
@@ -124,6 +123,12 @@ describe('expandGlob', () => {
     assert.deepEqual(expandGlob('**/*.prd.md', dir), ['a/one.prd.md', 'a/two.prd.md']);
     assert.deepEqual(expandGlob('a/*.prd.md', dir), ['a/one.prd.md', 'a/two.prd.md']);
   });
+
+  it('ignores dependency and build directories', () => {
+    fs.mkdirSync(path.join(dir, 'node_modules', 'pkg'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'node_modules', 'pkg', 'ignored.prd.md'), 'x');
+    assert.deepEqual(expandGlob('**/*.prd.md', dir), ['a/one.prd.md', 'a/two.prd.md']);
+  });
 });
 
 describe('gate CLI project mode (fail closed)', () => {
@@ -161,5 +166,55 @@ describe('gate CLI project mode (fail closed)', () => {
     const report = JSON.parse(result.stdout);
     assert.equal(report.mode, 'self-test');
     assert.equal(report.status, 'PASSED');
+  });
+
+  it('flags warnings as failures in strict mode', () => {
+    const srcDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sfa-gate-strict-'));
+    fs.mkdirSync(path.join(srcDir, 'domain'), { recursive: true });
+    fs.writeFileSync(
+      path.join(srcDir, 'domain', 'entity.ts'),
+      'export class Entity { static create(): void { throw new Error("generic"); } }\n',
+    );
+    const cfg = writeTempConfig({
+      version: 1,
+      mode: 'project',
+      artifacts: { src: srcDir },
+    });
+    try {
+      const normal = runGate(['--phase', '4', '--config', cfg, '--json']);
+      assert.equal(normal.status, 0);
+      const normalReport = JSON.parse(normal.stdout);
+      assert.equal(normalReport.status, 'PASSED');
+      assert.equal(normalReport.gates[0].warnings, true);
+
+      const strict = runGate(['--phase', '4', '--config', cfg, '--json', '--strict']);
+      assert.equal(strict.status, 1);
+      const strictReport = JSON.parse(strict.stdout);
+      assert.equal(strictReport.status, 'FAILED');
+      assert.match(strictReport.gates[0].reason, /Strict mode warning/);
+    } finally {
+      fs.unlinkSync(cfg);
+      fs.rmSync(srcDir, { recursive: true, force: true });
+    }
+  });
+
+  it('writes JSON output to --out', () => {
+    const out = path.join(os.tmpdir(), `sfa-gate-out-${Date.now()}.json`);
+    try {
+      const result = runGate(['--phase', '1', '--self-test', '--json', '--out', out]);
+      assert.equal(result.status, 0);
+      const report = JSON.parse(fs.readFileSync(out, 'utf-8'));
+      assert.equal(report.status, 'PASSED');
+      assert.deepEqual(JSON.parse(result.stdout), report);
+    } finally {
+      if (fs.existsSync(out)) fs.unlinkSync(out);
+    }
+  });
+
+  it('rejects invalid phase numbers with exit code 2', () => {
+    const result = runGate(['--phase', '8', '--json']);
+    assert.equal(result.status, 2);
+    const report = JSON.parse(result.stdout);
+    assert.match(report.error, /Invalid phase/);
   });
 });
