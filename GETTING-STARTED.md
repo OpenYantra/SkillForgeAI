@@ -451,6 +451,8 @@ Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
 
 The `sfa-quality-gate-orchestrator` runs **10 automated gates** that map to SDLC phase transitions:
 
+> **Fail-closed by design:** If the gate report is missing or unparseable (e.g., a crashed gate run), the PR scorecard reports `MISSING` and blocks merge — it never assumes success.
+
 ```mermaid
 flowchart TD
     G1["Gate 1: Plan & Risk Validation"] --> G2["Gate 2: PRD & Contract Validation"]

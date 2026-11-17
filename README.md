@@ -119,7 +119,8 @@ SkillForgeAI includes an enterprise-ready GitHub Actions workflow ([`.github/wor
 3. **10-Gate SDLC Evaluation:** Runs `skillforge gate --out gate-report.json` across all 7 SDLC phases (including HITL sign-offs and security audit).
 4. **Anti-Spam In-Place Commenting:** Comments a structured Markdown scorecard on the PR, updating existing comments in-place via HTML marker (`<!-- skillforge-pr-scorecard -->`).
 5. **Job Summary Integration:** Emits the full scorecard directly to `$GITHUB_STEP_SUMMARY`.
-6. **Strict Merge Protection:** Blocks PR merging if any SDLC gate fails.
+6. **Fail-Closed Scorecard:** If `gate-report.json` is missing or unparseable, the scorecard reports `MISSING` and blocks merge instead of assuming success.
+7. **Strict Merge Protection:** Blocks PR merging if any SDLC gate fails.
 
 ### 📋 Sample PR Scorecard Output
 

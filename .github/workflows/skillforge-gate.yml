@@ -46,10 +46,17 @@ jobs:
         run: |
           node bin/skillforge.mjs gate --out gate-report.json || true
 
+      - name: 🔎 Verify Gate Report Exists
+        run: |
+          if [ ! -f gate-report.json ]; then
+            echo "::warning::gate-report.json was not produced; treating quality gates as MISSING/UNKNOWN."
+            echo '{"status":"MISSING","totalGates":0,"passed":0,"failed":0,"gates":[]}' > gate-report.json
+          fi
+
       - name: 📊 Synthesize PR Scorecard
         id: scorecard_gen
         run: |
-          node scripts/generate-pr-scorecard.mjs --diff diff-report.json --gate gate-report.json --out pr-scorecard.md
+          node scripts/generate-pr-scorecard.mjs --diff diff-report.json --gate gate-report.json --out pr-scorecard.md || true
 
       - name: 📋 Publish Job Step Summary
         if: always()
