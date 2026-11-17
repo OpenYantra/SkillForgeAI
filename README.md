@@ -13,7 +13,7 @@ flowchart LR
     --> P3["3. Architecture<br/><code>system-architecture-adr</code>"]
     --> P4["4. Development<br/><code>feature-scaffolder</code>"]
     --> P5["5. Testing & QA<br/><code>unit-test-synthesizer</code>"]
-    --> P6["6. Deployment<br/><code>cicd-container-automator</code>"]
+    --> P6["6. Deployment & Security<br/><code>cicd-container-automator</code><br/><code>security-vulnerability-auditor</code>"]
     --> P7["7. Maintenance<br/><code>incident-root-cause-analyzer</code>"]
 
     QG["Cross-Cutting Quality Gate<br/><code>quality-gate-orchestrator</code>"]
@@ -27,10 +27,16 @@ flowchart LR
 SkillForgeAI provides a unified, zero-dependency master CLI (`node bin/skillforge.mjs` or `skillforge`) for developers and coding agents:
 
 ```bash
-# Run SDLC Quality Gates (All 9 gates or a specific phase)
+# Run SDLC Quality Gates (All 10 gates or a specific phase)
 node bin/skillforge.mjs gate
-node bin/skillforge.mjs gate --phase 4
+node bin/skillforge.mjs gate --phase 6
 node bin/skillforge.mjs gate --json
+
+# Security Vulnerability & Weakness Audit (OWASP Top 10, CWEs, Secrets)
+node bin/skillforge.mjs security
+node bin/skillforge.mjs security --diff
+node bin/skillforge.mjs security --path "examples/order-service/src"
+node bin/skillforge.mjs security --strict
 
 # Semantic Breaking Change & SemVer Analysis
 node bin/skillforge.mjs diff
@@ -98,6 +104,7 @@ Because all data access is abstracted behind domain repository ports, any storag
 | **Phase 4: Development** | **`feature-scaffolder`** | Scaffolds Clean / Layered Architecture (Domain Entities $\rightarrow$ Port Interfaces $\rightarrow$ Application Services). | [`.agents/skills/feature-scaffolder/`](.agents/skills/feature-scaffolder/SKILL.md) |
 | **Phase 5: Testing & QA** | **`unit-test-synthesizer`** | Generates deterministic, isolated unit tests following AAA pattern with in-memory fakes. | [`.agents/skills/unit-test-synthesizer/`](.agents/skills/unit-test-synthesizer/SKILL.md) |
 | **Phase 6: Deployment** | **`cicd-container-automator`** | Multi-stage, hardened Dockerfiles (non-root runner) and GitHub Actions CI pipelines. | [`.agents/skills/cicd-container-automator/`](.agents/skills/cicd-container-automator/SKILL.md) |
+| **Phase 6: Security & Auditing** | **`security-vulnerability-auditor`** | Static security analysis, secret detection, and hacker-targetable weakness audit (OWASP/CWE). | [`.agents/skills/security-vulnerability-auditor/`](.agents/skills/security-vulnerability-auditor/SKILL.md) |
 | **Phase 7: Maintenance** | **`incident-root-cause-analyzer`** | Diagnoses production errors, synthesizes reproduction regression tests, and authors 5-Whys post-mortems. | [`.agents/skills/incident-root-cause-analyzer/`](.agents/skills/incident-root-cause-analyzer/SKILL.md) |
 | **Cross-Cutting** | **`quality-gate-orchestrator`** | Automated verification runner that evaluates gates across all 7 phases. | [`.agents/skills/quality-gate-orchestrator/`](.agents/skills/quality-gate-orchestrator/SKILL.md) |
 
@@ -109,7 +116,7 @@ SkillForgeAI includes an enterprise-ready GitHub Actions workflow ([`.github/wor
 
 1. **Dual SDK Support:** Configures Node.js 24 and .NET 10 runners.
 2. **Breaking Change Audit:** Executes `skillforge diff --out diff-report.json` to analyze changes against the base branch and assign SemVer impact (`MAJOR`, `MINOR`, `PATCH`).
-3. **9-Gate SDLC Evaluation:** Runs `skillforge gate --out gate-report.json` across all 7 SDLC phases (including HITL sign-offs).
+3. **10-Gate SDLC Evaluation:** Runs `skillforge gate --out gate-report.json` across all 7 SDLC phases (including HITL sign-offs and security audit).
 4. **Anti-Spam In-Place Commenting:** Comments a structured Markdown scorecard on the PR, updating existing comments in-place via HTML marker (`<!-- skillforge-pr-scorecard -->`).
 5. **Job Summary Integration:** Emits the full scorecard directly to `$GITHUB_STEP_SUMMARY`.
 6. **Strict Merge Protection:** Blocks PR merging if any SDLC gate fails.
@@ -120,8 +127,8 @@ SkillForgeAI includes an enterprise-ready GitHub Actions workflow ([`.github/wor
 <!-- skillforge-pr-scorecard -->
 ## 🛡️ SkillForgeAI Quality Gate Report
 
-> **Status:** ✅ **ALL 9 SDLC QUALITY GATES PASSED**
-> **Recommended SemVer Bump:** `PATCH` | **Gates Evaluated:** 9/9 Passing
+> **Status:** ✅ **ALL 10 SDLC QUALITY GATES PASSED**
+> **Recommended SemVer Bump:** `PATCH` | **Gates Evaluated:** 10/10 Passing
 
 ### 📊 SDLC Phase Quality Gates Breakdown
 
@@ -135,6 +142,7 @@ SkillForgeAI includes an enterprise-ready GitHub Actions workflow ([`.github/wor
 | **Phase 4** | Phase 4: Code Scaffolding Boundaries | ✅ PASSED | Conforming |
 | **Phase 5** | Phase 5: Test Criteria & AAA Structure | ✅ PASSED | Conforming |
 | **Phase 6** | Phase 6: Container Hardening & CI/CD | ✅ PASSED | Conforming |
+| **Phase 6** | Phase 6: Security Weakness & Vulnerability Audit | ✅ PASSED | Conforming |
 | **Phase 7** | Phase 7: Maintenance & Incident RCA | ✅ PASSED | Conforming |
 
 ### ⚡ Change Impact & SemVer Classification

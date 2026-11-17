@@ -119,6 +119,17 @@ ${skillsListMarkdown}
         problemMatcher: [],
       },
       {
+        label: 'SkillForge: Run Security & Vulnerability Audit',
+        type: 'shell',
+        command: 'node',
+        args: ['bin/skillforge.mjs', 'security'],
+        presentation: {
+          reveal: 'always',
+          panel: 'dedicated',
+        },
+        problemMatcher: [],
+      },
+      {
         label: 'SkillForge: Generate Code Graph & Repo Map',
         type: 'shell',
         command: 'node',

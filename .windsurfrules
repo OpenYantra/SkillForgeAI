@@ -10,6 +10,7 @@ always invoke the appropriate specialized skill from `.agents/skills/<skill-name
 - **`prd-generator-validator`**: Generates, refines, and validates Product Requirement Documents (PRDs) for features or services.
 - **`project-planner-estimator`**: Develops project execution roadmaps, milestone breakdowns, effort estimations, and risk registers.
 - **`quality-gate-orchestrator`**: Orchestrates and enforces automated quality gates across all 7 phases of the SDLC.
+- **`security-vulnerability-auditor`**: Audits source code changes and application architecture for security vulnerabilities,
 - **`system-architecture-adr`**: Generates system architecture specifications, C4 model diagrams, and Architecture Decision
 - **`unit-test-synthesizer`**: Synthesizes comprehensive, deterministic unit and component test suites based on specifications
 

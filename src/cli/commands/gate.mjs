@@ -58,6 +58,12 @@ const GATES = [
     target: '.agents/skills/cicd-container-automator/templates/Dockerfile.template',
   },
   {
+    phase: 6,
+    name: 'Phase 6: Security Weakness & Vulnerability Audit',
+    script: '.agents/skills/security-vulnerability-auditor/scripts/audit-security.mjs',
+    target: 'examples/order-service/src',
+  },
+  {
     phase: 7,
     name: 'Phase 7: Maintenance & Incident RCA',
     script: '.agents/skills/incident-root-cause-analyzer/scripts/validate-rca.mjs',
@@ -110,7 +116,7 @@ Examples:
   if (!isJson) {
     printBanner(
       '🛡️  SkillForgeAI: Unified SDLC Quality Gate Evaluation',
-      selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : 'Evaluating All 7 SDLC Phases (9 Gates)'
+      selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : 'Evaluating All 7 SDLC Phases (10 Gates)'
     );
   }
 

@@ -102,6 +102,27 @@ const TOOLS = [
       required: ['name'],
     },
   },
+  {
+    name: 'audit_security',
+    description: 'Audits code changes or application codebases for vulnerabilities, secrets, and hacker-targetable weaknesses (OWASP Top 10, CWE Top 25).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Optional path to file or directory to scan. Defaults to repository root.',
+        },
+        diff: {
+          type: 'boolean',
+          description: 'If true, scans only files modified in Git diff.',
+        },
+        strict: {
+          type: 'boolean',
+          description: 'If true, flags medium and low warnings as failures.',
+        },
+      },
+    },
+  },
 ];
 
 function handleToolCall(name, args = {}) {
@@ -174,6 +195,18 @@ function handleToolCall(name, args = {}) {
         return `Domain slice "${args.name}" not found. Available slices:\n` + files.filter(f => f.endsWith('-map.md')).map(f => `- ${f.replace('-map.md', '')}`).join('\n');
       }
       return 'Domain slices directory not found. Run "skillforge slice" first.';
+    }
+
+    case 'audit_security': {
+      const target = args.path || '.';
+      const isDiff = Boolean(args.diff);
+      const isStrict = Boolean(args.strict);
+      const flagDiff = isDiff ? '--diff' : '';
+      const flagStrict = isStrict ? '--strict' : '';
+      return execSync(`node bin/skillforge.mjs security --json ${flagDiff} ${flagStrict} --path "${target}"`, {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      });
     }
 
     default:
