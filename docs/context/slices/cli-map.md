@@ -1,18 +1,17 @@
 <!-- skillforge-slice: cli -->
 # Vertical Slice: `cli`
-> **Est. Tokens:** ~347 | **Root:** `src/cli` | **Stack:** typescript | **Files:** 7
+> **Est. Tokens:** ~294 | **Root:** `src/cli` | **Stack:** typescript | **Files:** 9
 
 ### 🏛️ Architecture & Exported Symbols
 - **Domain Entities:** None
-- **Ports / Interfaces:** `I`
+- **Ports / Interfaces:** None
 - **Application Services:** None
 - **Persistence & Adapters:** None
-- **Commands & Handlers:** `getGitChangedFiles`, `getDiffForFile`, `classifyChanges`, `executeDiff`, `executeGate`, `scanFiles`, `detectLanguage`, `extractSymbolsAndImports`, `buildMermaidDiagram`, `buildCodeGraph`, `generateRepoMapMarkdown`, `executeGraph`, `toPascalCase`, `toCamelCase`, `generateTypeScriptTemplates`, `generateDotnetTemplates`, `executeScaffold`, `getCurrentGitSha`, `executeSignoff`, `hasSourceFiles`, `discoverSlices`, `classifySliceSymbols`, `analyzeSlice`, `renderSliceMap`, `renderSliceIndex`, `generateSliceMaps`, `executeSlice`, `printBanner`, `printSection`, `printSuccess`, `printError`, `printWarning`, `printInfo`
-- **Additional Components:** `InMemory`
+- **Commands & Handlers:** `executeDiff`, `executeGate`, `executeGraph`, `toPascalCase`, `toCamelCase`, `generateTypeScriptTemplates`, `generateDotnetTemplates`, `executeScaffold`, `executeSecurity`, `getCurrentGitSha`, `executeSignoff`, `hasSourceFiles`, `discoverSlices`, `classifySliceSymbols`, `analyzeSlice`, `renderSliceMap`, `renderSliceIndex`, `generateSliceMaps`, `executeSlice`, `printBanner`, `printSection`, `printSuccess`, `printError`, `printWarning`, `printInfo`, `printValidatorReport`, `runValidatorCli`
 
 ### 🔗 Cross-Slice Dependencies
-- **Inbound Dependents:** None (Self-contained root slice)
-- **Outbound Imports:** None (Zero external slice dependencies)
+- **Inbound Dependents:** `Root / External`
+- **Outbound Imports:** `core`
 
 ### 🧪 Test Suite
 - *No tests registered directly in slice root.*

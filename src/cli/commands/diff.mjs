@@ -3,84 +3,10 @@
  * Semantic Breaking Change & Impact Tracker with JSON support.
  */
 
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { printBanner, printSection, printSuccess, colors } from '../ui.mjs';
-
-function getGitChangedFiles(options = {}) {
-  try {
-    let diffCmd = 'git diff --name-only HEAD';
-    if (options.staged) {
-      diffCmd = 'git diff --name-only --cached';
-    } else if (options.target) {
-      diffCmd = `git diff --name-only origin/${options.target}...HEAD || git diff --name-only ${options.target}...HEAD`;
-    }
-
-    const diffOutput = execSync(diffCmd, { encoding: 'utf-8' });
-    const stagedOutput = options.staged ? '' : execSync('git diff --name-only --cached', { encoding: 'utf-8' });
-    const untracked = options.staged ? '' : execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' });
-
-    const all = [...diffOutput.split('\n'), ...stagedOutput.split('\n'), ...untracked.split('\n')]
-      .map((f) => f.trim().replace(/\\/g, '/'))
-      .filter((f) => f.length > 0);
-    return [...new Set(all)];
-  } catch {
-    return [];
-  }
-}
-
-function getDiffForFile(file, options = {}) {
-  try {
-    const base = options.target ? `${options.target}...HEAD` : 'HEAD';
-    return execSync(`git diff -U0 ${base} -- "${file}"`, { encoding: 'utf-8' });
-  } catch {
-    return '';
-  }
-}
-
-function classifyChanges(changedFiles, options = {}) {
-  let highestSeverity = 'PATCH';
-  const classifications = {
-    destructive: [],
-    additive: [],
-    patch: [],
-  };
-
-  for (const file of changedFiles) {
-    const isInterfaceOrPort = /ports?[\\/]|repository\.(ts|cs|go|py)|interfaces?[\\/]/i.test(file);
-    const isContract = /openapi\.(yaml|json)|schema\.(json|yaml)|contracts?[\\/]/i.test(file);
-
-    if (isInterfaceOrPort || isContract) {
-      const diff = getDiffForFile(file, options);
-      const lines = diff.split('\n');
-
-      const removedLines = lines.filter((l) => l.startsWith('-') && !l.startsWith('---'));
-      const addedLines = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++'));
-
-      if (removedLines.length > 0) {
-        classifications.destructive.push({
-          file,
-          reason: `Detected ${removedLines.length} deleted/modified line(s) in contract or interface.`,
-        });
-        highestSeverity = 'MAJOR';
-      } else if (addedLines.length > 0) {
-        classifications.additive.push({
-          file,
-          reason: `Detected ${addedLines.length} newly added interface/contract capability.`,
-        });
-        if (highestSeverity !== 'MAJOR') highestSeverity = 'MINOR';
-      }
-    } else {
-      classifications.patch.push({
-        file,
-        reason: 'Internal implementation, documentation, or test modification.',
-      });
-    }
-  }
-
-  return { classifications, highestSeverity };
-}
+import { analyzeDiff } from '../../core/breaking-changes.mjs';
 
 export function executeDiff(args = []) {
   if (args.includes('--help') || args.includes('-h')) {
@@ -112,36 +38,9 @@ Examples:
   const outFile = outIndex !== -1 ? args[outIndex + 1] : null;
 
   const options = { staged: isStaged, target: targetBranch };
-  const changedFiles = getGitChangedFiles(options);
-
-  const graphPath = path.join('docs', 'context', 'code-graph.json');
-  let graph = { nodes: {} };
-  if (fs.existsSync(graphPath)) {
-    try {
-      graph = JSON.parse(fs.readFileSync(graphPath, 'utf-8'));
-    } catch {}
-  }
-
-  const affectedCallers = new Set();
-  for (const file of changedFiles) {
-    if (graph.nodes[file]) {
-      const callers = graph.nodes[file].importedBy || [];
-      callers.forEach((c) => affectedCallers.add(c));
-    }
-  }
-
-  const { classifications, highestSeverity } = classifyChanges(changedFiles, options);
+  const { report, changedFiles, affectedCallers, classifications, highestSeverity } = analyzeDiff(options);
 
   if (isJson || outFile) {
-    const report = {
-      timestamp: new Date().toISOString(),
-      target: targetBranch || 'HEAD',
-      totalChangedFiles: changedFiles.length,
-      changedFiles,
-      affectedCallers: [...affectedCallers],
-      highestSeverity,
-      classifications,
-    };
     const jsonStr = JSON.stringify(report, null, 2);
     if (outFile) {
       const dir = path.dirname(outFile);

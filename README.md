@@ -24,7 +24,7 @@ flowchart LR
 
 ## 💻 The Unified `skillforge` CLI
 
-SkillForgeAI provides a unified, zero-dependency master CLI (`node bin/skillforge.mjs` or `skillforge`) for developers and coding agents:
+SkillForgeAI provides a unified master CLI (`node bin/skillforge.mjs` or `skillforge`) for developers and coding agents:
 
 ```bash
 # Run SDLC Quality Gates (All 10 gates or a specific phase)
@@ -43,6 +43,8 @@ node bin/skillforge.mjs diff
 node bin/skillforge.mjs diff --staged
 
 # Symbol-Level Code Graph & Visual Mermaid Export
+# Parsed with tree-sitter (TypeScript/JavaScript, C#, Python, Go); falls back to
+# a documented heuristic scan when a grammar binding is unavailable.
 node bin/skillforge.mjs graph
 node bin/skillforge.mjs graph --format mermaid
 

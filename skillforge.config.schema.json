@@ -28,6 +28,35 @@
         "rca": { "$ref": "#/definitions/target" }
       }
     },
+    "gates": {
+      "type": "object",
+      "description": "Optional gate-registry overrides (disable a phase gate or remap its in-process validator).",
+      "additionalProperties": false,
+      "properties": {
+        "disable": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "plan",
+              "prd",
+              "openapi",
+              "architecture",
+              "signoff",
+              "scaffold",
+              "tests",
+              "container",
+              "security",
+              "rca"
+            ]
+          }
+        },
+        "validators": {
+          "type": "object",
+          "description": "Maps a gate id to a custom validator key.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
     "governance": {
       "type": "object",
       "additionalProperties": false,

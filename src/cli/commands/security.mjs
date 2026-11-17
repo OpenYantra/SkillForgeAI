@@ -4,7 +4,7 @@
  * and hacker-targeted software weaknesses (OWASP Top 10, CWE Top 25).
  */
 
-import { runSecurityAudit } from '../../../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
+import { runSecurityAudit } from '../../core/security-audit.mjs';
 import { printError, colors } from '../ui.mjs';
 
 export function executeSecurity(args = []) {
