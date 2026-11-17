@@ -5,17 +5,9 @@
  * code graph analysis, breaking change tracking, scaffolding, and MCP tooling.
  */
 
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import { printBanner, printError, colors } from '../src/cli/ui.mjs';
-
-import { executeGate } from '../src/cli/commands/gate.mjs';
-import { executeDiff } from '../src/cli/commands/diff.mjs';
-import { executeGraph } from '../src/cli/commands/graph.mjs';
-import { executeSlice } from '../src/cli/commands/slice.mjs';
-import { executeScaffold } from '../src/cli/commands/scaffold.mjs';
-import { executeSignoff } from '../src/cli/commands/signoff.mjs';
-import { executeSecurity } from '../src/cli/commands/security.mjs';
 
 const VERSION = '1.1.0';
 
@@ -63,8 +55,7 @@ ${colors.bold}Examples:${colors.reset}
 
 function runScript(scriptPath, args = []) {
   try {
-    const fullPath = path.resolve(scriptPath);
-    execSync(`node "${fullPath}" ${args.join(' ')}`, { stdio: 'inherit' });
+    execFileSync(process.execPath, [path.resolve(scriptPath), ...args], { stdio: 'inherit' });
   } catch (err) {
     process.exit(err.status || 1);
   }
@@ -79,40 +70,55 @@ async function main() {
   }
 
   switch (command.toLowerCase()) {
-    case 'gate':
+    case 'gate': {
+      const { executeGate } = await import('../src/cli/commands/gate.mjs');
       await executeGate(args);
       break;
+    }
 
     case 'security':
-    case 'audit':
+    case 'audit': {
+      const { executeSecurity } = await import('../src/cli/commands/security.mjs');
       executeSecurity(args);
       break;
+    }
 
-    case 'diff':
+    case 'diff': {
+      const { executeDiff } = await import('../src/cli/commands/diff.mjs');
       executeDiff(args);
       break;
+    }
 
-    case 'graph':
+    case 'graph': {
+      const { executeGraph } = await import('../src/cli/commands/graph.mjs');
       executeGraph(args);
       break;
+    }
 
-    case 'slice':
+    case 'slice': {
+      const { executeSlice } = await import('../src/cli/commands/slice.mjs');
       executeSlice(args);
       break;
+    }
 
-    case 'scaffold':
+    case 'scaffold': {
+      const { executeScaffold } = await import('../src/cli/commands/scaffold.mjs');
       executeScaffold(args);
       break;
+    }
 
-    case 'signoff':
+    case 'signoff': {
+      const { executeSignoff } = await import('../src/cli/commands/signoff.mjs');
       executeSignoff(args);
       break;
+    }
 
     case 'init': {
       printBanner('🚀 Initializing SkillForgeAI Environment');
       runScript('scripts/install-git-hooks.mjs');
       runScript('scripts/sync-editors.mjs');
       runScript('scripts/generate-code-graph.mjs');
+      const { executeSlice } = await import('../src/cli/commands/slice.mjs');
       executeSlice([]);
       console.log(`\n${colors.green}🎉 SkillForgeAI initialized successfully across all editors!${colors.reset}\n`);
       break;

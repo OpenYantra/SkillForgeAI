@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-17T17:22:59.767Z",
+  "generatedAt": "2026-11-17T17:42:30.750Z",
   "globalStats": {
-    "monolithicTokens": 1920,
+    "monolithicTokens": 1896,
     "avgSliceTokens": 255,
-    "tokenSavingsPct": "86.7",
+    "tokenSavingsPct": "86.6",
     "totalSlices": 4
   },
   "slices": [
@@ -148,7 +148,7 @@
       "root": "src/core",
       "container": "src",
       "primaryStack": "typescript",
-      "filesCount": 25,
+      "filesCount": 24,
       "tokenEstimate": 214,
       "mapPath": "docs/context/slices/core-map.md",
       "symbols": {
@@ -177,6 +177,7 @@
           "isSelfTest",
           "applyGateConfig",
           "resolveGateTargets",
+          "loadValidator",
           "normalizeValidatorResult",
           "runGates",
           "hasGlob",

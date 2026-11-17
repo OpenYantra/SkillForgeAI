@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T17:22:59.498Z",
+  "generatedAt": "2026-11-17T17:42:30.506Z",
   "totalFiles": 76,
   "languages": {
     "typescript": 68,
@@ -636,13 +636,13 @@
         "interfaces": [],
         "types": [],
         "functions": [
+          "loadValidator",
           "normalizeValidatorResult",
           "runGates"
         ]
       },
       "imports": [
-        "src/core/gate-registry.mjs",
-        "src/core/validators/index.mjs"
+        "src/core/gate-registry.mjs"
       ],
       "importedBy": [
         "src/cli/commands/gate.mjs",
@@ -840,8 +840,7 @@
         "src/core/governance.mjs"
       ],
       "importedBy": [
-        "scripts/verify-human-signoff.mjs",
-        "src/core/validators/index.mjs"
+        "scripts/verify-human-signoff.mjs"
       ]
     },
     "src/core/validators/architecture.mjs": {
@@ -859,9 +858,7 @@
         "src/core/validators/common.mjs",
         "src/core/markdown.mjs"
       ],
-      "importedBy": [
-        "src/core/validators/index.mjs"
-      ]
+      "importedBy": []
     },
     "src/core/validators/ci-container.mjs": {
       "language": "typescript",
@@ -883,7 +880,6 @@
         "src/core/validators/common.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -935,33 +931,7 @@
         "src/core/parsers/tree-sitter-loader.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/validator-parsers.spec.ts"
-      ]
-    },
-    "src/core/validators/index.mjs": {
-      "language": "typescript",
-      "parser": "tree-sitter",
-      "symbols": {
-        "classes": [],
-        "interfaces": [],
-        "types": [],
-        "functions": []
-      },
-      "imports": [
-        "src/core/validators/plan.mjs",
-        "src/core/validators/prd.mjs",
-        "src/core/validators/openapi.mjs",
-        "src/core/validators/architecture.mjs",
-        "src/core/validators/rca.mjs",
-        "src/core/validators/ci-container.mjs",
-        "src/core/validators/scaffold.mjs",
-        "src/core/validators/coverage.mjs",
-        "src/core/validators/security.mjs",
-        "src/core/signoff-verify.mjs"
-      ],
-      "importedBy": [
-        "src/core/gate-runner.mjs"
       ]
     },
     "src/core/validators/openapi.mjs": {
@@ -982,7 +952,6 @@
         "src/core/validators/common.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/openapi-parse.spec.ts"
       ]
     },
@@ -1002,7 +971,6 @@
         "src/core/markdown.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -1022,7 +990,6 @@
         "src/core/markdown.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -1041,9 +1008,7 @@
         "src/core/validators/common.mjs",
         "src/core/markdown.mjs"
       ],
-      "importedBy": [
-        "src/core/validators/index.mjs"
-      ]
+      "importedBy": []
     },
     "src/core/validators/scaffold.mjs": {
       "language": "typescript",
@@ -1063,7 +1028,6 @@
         "src/core/parsers/symbols.mjs"
       ],
       "importedBy": [
-        "src/core/validators/index.mjs",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -1082,9 +1046,7 @@
         "src/core/validators/common.mjs",
         "src/core/security-audit.mjs"
       ],
-      "importedBy": [
-        "src/core/validators/index.mjs"
-      ]
+      "importedBy": []
     },
     "tests/cli.spec.ts": {
       "language": "typescript",
@@ -1218,7 +1180,8 @@
         "tests/slice.spec.ts",
         "tests/sync-editors.spec.ts",
         "tests/validator-parsers.spec.ts",
-        "tests/validators.spec.ts"
+        "tests/validators.spec.ts",
+        "tests/workflows.spec.ts"
       ]
     },
     "tests/markdown.spec.ts": {
@@ -1422,6 +1385,24 @@
         "types": [],
         "functions": [
           "validator"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/workflows.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "loadWorkflow",
+          "stepsOf",
+          "runStepIndex"
         ]
       },
       "imports": [
