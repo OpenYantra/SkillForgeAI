@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-17T17:53:20.852Z",
-  "totalFiles": 78,
+  "generatedAt": "2026-11-17T18:01:02.548Z",
+  "totalFiles": 82,
   "languages": {
-    "typescript": 70,
+    "typescript": 74,
     "csharp": 8
   },
   "parsers": {
-    "tree-sitter": 78
+    "tree-sitter": 82
   },
   "nodes": {
     "eslint.config.mjs": {
@@ -311,7 +311,9 @@
           "startServer"
         ]
       },
-      "imports": [],
+      "imports": [
+        "src/core/version.mjs"
+      ],
       "importedBy": []
     },
     "scripts/self-heal-loop.mjs": {
@@ -412,6 +414,7 @@
       "imports": [
         "src/cli/ui.mjs",
         "src/cli/commands/slice.mjs",
+        "src/cli/context-check.mjs",
         "src/core/code-graph.mjs"
       ],
       "importedBy": [
@@ -498,7 +501,32 @@
       ],
       "importedBy": [
         "src/cli/commands/graph.mjs",
+        "src/cli/context-check.mjs",
         "tests/slice.spec.ts"
+      ]
+    },
+    "src/cli/context-check.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "toPosix",
+          "normalize",
+          "firstDifference",
+          "listMapFiles",
+          "checkContextArtifacts"
+        ]
+      },
+      "imports": [
+        "src/core/code-graph.mjs",
+        "src/cli/commands/slice.mjs"
+      ],
+      "importedBy": [
+        "src/cli/commands/graph.mjs",
+        "tests/context-check.spec.ts"
       ]
     },
     "src/cli/ui.mjs": {
@@ -589,6 +617,7 @@
       "importedBy": [
         "scripts/generate-code-graph.mjs",
         "src/cli/commands/graph.mjs",
+        "src/cli/context-check.mjs",
         "tests/parsers.spec.ts"
       ]
     },
@@ -1082,6 +1111,20 @@
       ],
       "importedBy": []
     },
+    "src/core/version.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": [
+        "scripts/mcp-server.mjs"
+      ]
+    },
     "tests/cli.spec.ts": {
       "language": "typescript",
       "parser": "tree-sitter",
@@ -1092,6 +1135,23 @@
         "functions": []
       },
       "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/context-check.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "generate"
+        ]
+      },
+      "imports": [
+        "src/cli/context-check.mjs",
         "tests/helpers/workspace.ts"
       ],
       "importedBy": []
@@ -1219,6 +1279,7 @@
       "imports": [],
       "importedBy": [
         "tests/cli.spec.ts",
+        "tests/context-check.spec.ts",
         "tests/diff.spec.ts",
         "tests/exec.spec.ts",
         "tests/gate-runner.spec.ts",
@@ -1233,6 +1294,7 @@
         "tests/sync-editors.spec.ts",
         "tests/validator-parsers.spec.ts",
         "tests/validators.spec.ts",
+        "tests/version.spec.ts",
         "tests/workflows.spec.ts"
       ]
     },
@@ -1437,6 +1499,22 @@
         "types": [],
         "functions": [
           "validator"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/version.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "readJson"
         ]
       },
       "imports": [

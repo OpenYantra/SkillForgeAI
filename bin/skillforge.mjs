@@ -8,8 +8,7 @@
 import { execFileSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import { printBanner, printError, colors } from '../src/cli/ui.mjs';
-
-const VERSION = '1.1.0';
+import { VERSION } from '../src/core/version.mjs';
 
 const HELP_TEXT = `
 ${colors.cyan}══════════════════════════════════════════════════════════════${colors.reset}

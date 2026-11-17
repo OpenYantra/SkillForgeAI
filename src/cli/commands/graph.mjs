@@ -6,6 +6,7 @@
 import path from 'node:path';
 import { printBanner, printSuccess, colors } from '../ui.mjs';
 import { generateSliceMaps } from './slice.mjs';
+import { checkContextArtifacts } from '../context-check.mjs';
 import {
   IGNORED_DIRS,
   scanFiles,
@@ -37,6 +38,7 @@ Options:
   --format <md|json|mermaid>  Output format (default: all saved to docs/context/)
   --output <path>             Custom output file destination
   --detect-orphans            Highlight unreferenced classes/interfaces
+  --check                     Verify docs/context is up to date without writing
   --help, -h                  Show this help message
 
 Parsing:
@@ -54,6 +56,25 @@ Examples:
 
   const formatIndex = args.indexOf('--format');
   const format = formatIndex !== -1 ? args[formatIndex + 1]?.toLowerCase() : 'all';
+
+  if (args.includes('--check')) {
+    const result = checkContextArtifacts('.');
+    if (result.ok) {
+      printSuccess(`Context artifacts are up to date (${result.checked} files checked).`);
+      process.exit(0);
+    }
+
+    console.error(`${colors.red}❌ Generated context is stale (${result.stale.length} file(s)):${colors.reset}`);
+    for (const entry of result.stale) {
+      console.error(`   - ${entry.file}: ${entry.reason}`);
+      if (entry.expected !== undefined || entry.actual !== undefined) {
+        console.error(`     committed: ${entry.expected}`);
+        console.error(`     generated: ${entry.actual}`);
+      }
+    }
+    console.error('\nRun "node bin/skillforge.mjs graph" to regenerate docs/context.\n');
+    process.exit(1);
+  }
 
   const { graph, files } = buildCodeGraph('.');
 

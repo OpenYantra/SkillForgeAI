@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-17T17:53:21.146Z",
+  "generatedAt": "2026-11-17T18:01:02.864Z",
   "globalStats": {
-    "monolithicTokens": 1972,
-    "avgSliceTokens": 255,
-    "tokenSavingsPct": "87.1",
+    "monolithicTokens": 2043,
+    "avgSliceTokens": 260,
+    "tokenSavingsPct": "87.3",
     "totalSlices": 4
   },
   "slices": [
@@ -93,8 +93,8 @@
       "root": "src/cli",
       "container": "src",
       "primaryStack": "typescript",
-      "filesCount": 9,
-      "tokenEstimate": 294,
+      "filesCount": 10,
+      "tokenEstimate": 315,
       "mapPath": "docs/context/slices/cli-map.md",
       "symbols": {
         "entities": [],
@@ -122,6 +122,11 @@
           "renderSliceIndex",
           "generateSliceMaps",
           "executeSlice",
+          "toPosix",
+          "normalize",
+          "firstDifference",
+          "listMapFiles",
+          "checkContextArtifacts",
           "printBanner",
           "printSection",
           "printSuccess",
@@ -148,7 +153,7 @@
       "root": "src/core",
       "container": "src",
       "primaryStack": "typescript",
-      "filesCount": 25,
+      "filesCount": 26,
       "tokenEstimate": 214,
       "mapPath": "docs/context/slices/core-map.md",
       "symbols": {

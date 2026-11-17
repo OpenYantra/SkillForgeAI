@@ -1,6 +1,6 @@
 <!-- skillforge-slice: core -->
 # Vertical Slice: `core`
-> **Est. Tokens:** ~214 | **Root:** `src/core` | **Stack:** typescript | **Files:** 25
+> **Est. Tokens:** ~214 | **Root:** `src/core` | **Stack:** typescript | **Files:** 26
 
 ### 🏛️ Architecture & Exported Symbols
 - **Domain Entities:** None

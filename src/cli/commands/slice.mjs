@@ -315,8 +315,8 @@ export function renderSliceIndex(slices, globalStats) {
   return md;
 }
 
-export function generateSliceMaps(existingGraph = null, targetDir = '.') {
-  const contextDir = path.join(targetDir, 'docs', 'context');
+export function generateSliceMaps(existingGraph = null, targetDir = '.', outputDir = null) {
+  const contextDir = outputDir || path.join(targetDir, 'docs', 'context');
   const slicesDir = path.join(contextDir, 'slices');
   if (!fs.existsSync(slicesDir)) fs.mkdirSync(slicesDir, { recursive: true });
 
