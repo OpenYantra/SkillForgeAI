@@ -9,7 +9,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const IGNORED_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', 'coverage', 'obj', '.vs', '.next', '.svelte-kit',
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'coverage',
+  'obj',
+  '.vs',
+  '.next',
+  '.svelte-kit',
 ]);
 
 export function hasGlob(pattern) {

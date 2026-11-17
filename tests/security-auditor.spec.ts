@@ -6,7 +6,10 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { scanFile, runSecurityAudit } from '../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
+import {
+  scanFile,
+  runSecurityAudit,
+} from '../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -33,7 +36,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const sqli = findings.find(f => f.cwe === 'CWE-89');
+      const sqli = findings.find((f) => f.cwe === 'CWE-89');
       assert.ok(sqli, 'Expected CWE-89 SQL Injection finding');
       assert.equal(sqli.severity, 'CRITICAL');
     } finally {
@@ -53,7 +56,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const cmdi = findings.find(f => f.cwe === 'CWE-78');
+      const cmdi = findings.find((f) => f.cwe === 'CWE-78');
       assert.ok(cmdi, 'Expected CWE-78 Command Injection finding');
       assert.equal(cmdi.severity, 'CRITICAL');
     } finally {
@@ -72,7 +75,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const evalFinding = findings.find(f => f.cwe === 'CWE-94');
+      const evalFinding = findings.find((f) => f.cwe === 'CWE-94');
       assert.ok(evalFinding, 'Expected CWE-94 Code Execution finding');
       assert.equal(evalFinding.severity, 'CRITICAL');
     } finally {
@@ -90,7 +93,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const secretFindings = findings.filter(f => f.cwe === 'CWE-798');
+      const secretFindings = findings.filter((f) => f.cwe === 'CWE-798');
       assert.ok(secretFindings.length >= 2, 'Expected at least 2 CWE-798 secret findings');
     } finally {
       if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
@@ -109,7 +112,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const md5Finding = findings.find(f => f.cwe === 'CWE-328');
+      const md5Finding = findings.find((f) => f.cwe === 'CWE-328');
       assert.ok(md5Finding, 'Expected CWE-328 Broken Hash finding');
       assert.equal(md5Finding.severity, 'MEDIUM');
     } finally {
@@ -127,7 +130,7 @@ describe('Security Vulnerability Auditor', () => {
 
     try {
       const findings = scanFile(tempFile);
-      const tlsFinding = findings.find(f => f.cwe === 'CWE-295');
+      const tlsFinding = findings.find((f) => f.cwe === 'CWE-295');
       assert.ok(tlsFinding, 'Expected CWE-295 Disabled TLS finding');
       assert.equal(tlsFinding.severity, 'CRITICAL');
     } finally {

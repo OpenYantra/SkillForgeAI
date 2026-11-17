@@ -8,7 +8,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { printBanner, printSuccess, printError, printWarning, colors } from '../ui.mjs';
+import { printBanner, printError, printWarning, colors } from '../ui.mjs';
 
 function getCurrentGitSha() {
   try {

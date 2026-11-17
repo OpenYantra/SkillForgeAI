@@ -6,12 +6,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { printBanner, printSuccess, printError, printWarning, colors } from '../ui.mjs';
+import { printBanner, printSuccess, printError, colors } from '../ui.mjs';
 
 function toPascalCase(str) {
-  return str
-    .replace(/(?:^\w|[A-Z]|\b\w)/g, (letter) => letter.toUpperCase())
-    .replace(/[\s-_]+/g, '');
+  return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (letter) => letter.toUpperCase()).replace(/[\s-_]+/g, '');
 }
 
 function toCamelCase(str) {
@@ -143,7 +141,6 @@ describe('${Pascal}Service Unit Tests', () => {
 
 function generateDotnetTemplates(featureName) {
   const Pascal = toPascalCase(featureName);
-  const camel = toCamelCase(featureName);
 
   return [
     {
@@ -312,7 +309,10 @@ Examples:
   const targetDir = outIndex !== -1 ? args[outIndex + 1] : path.join('src', 'features', featureName);
   const isDryRun = args.includes('--dry-run');
 
-  printBanner(`🏗️  SkillForgeAI: Clean Architecture Scaffolder`, `Feature: "${featureName}" | Stack: ${lang.toUpperCase()}`);
+  printBanner(
+    `🏗️  SkillForgeAI: Clean Architecture Scaffolder`,
+    `Feature: "${featureName}" | Stack: ${lang.toUpperCase()}`,
+  );
 
   let templates = [];
   if (lang === 'ts' || lang === 'typescript' || lang === 'node') {

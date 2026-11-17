@@ -17,12 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadGateConfig } from '../src/core/gate-registry.mjs';
-import {
-  getSignoffCommitInfo,
-  isAllowedReviewer,
-  isAgentIdentity,
-  isExpired,
-} from '../src/core/governance.mjs';
+import { getSignoffCommitInfo, isAllowedReviewer, isAgentIdentity, isExpired } from '../src/core/governance.mjs';
 
 export function verifySignOff(signOffPath, options = {}) {
   const errors = [];
@@ -36,7 +31,9 @@ export function verifySignOff(signOffPath, options = {}) {
 
   const resolved = path.resolve(signOffPath);
   if (!fs.existsSync(resolved)) {
-    errors.push(`Sign-off file not found at "${resolved}". To create one, copy templates/phase-signoff-template.md to docs/approvals/.`);
+    errors.push(
+      `Sign-off file not found at "${resolved}". To create one, copy templates/phase-signoff-template.md to docs/approvals/.`,
+    );
     printReport(signOffPath, errors, warnings, {});
     return { passed: false, errors, warnings };
   }
@@ -82,10 +79,16 @@ export function verifySignOff(signOffPath, options = {}) {
 
   const selfTest = options.selfTest != null ? options.selfTest : config.mode !== 'project';
   const gov = config.governance || {};
-  const summary = { reviewer: reviewerText, date: dateMatch ? dateMatch[1] : '', mode: selfTest ? 'self-test' : 'project' };
+  const summary = {
+    reviewer: reviewerText,
+    date: dateMatch ? dateMatch[1] : '',
+    mode: selfTest ? 'self-test' : 'project',
+  };
 
   if (selfTest) {
-    warnings.push('Self-test mode: HITL signature/identity checks are skipped (demo attestation, not production-valid).');
+    warnings.push(
+      'Self-test mode: HITL signature/identity checks are skipped (demo attestation, not production-valid).',
+    );
   } else {
     const info = getSignoffCommitInfo(resolved, options.runGit);
 
@@ -101,15 +104,21 @@ export function verifySignOff(signOffPath, options = {}) {
       }
 
       if (gov.allowAgentIdentities !== true && isAgentIdentity(info.authorEmail)) {
-        errors.push(`Sign-off commit author "${info.authorEmail}" looks like an automated/agent identity. A human reviewer is required.`);
+        errors.push(
+          `Sign-off commit author "${info.authorEmail}" looks like an automated/agent identity. A human reviewer is required.`,
+        );
       }
 
       if (gov.requireSignedCommits === true && info.signature !== 'G') {
-        errors.push(`Sign-off commit is not a validly signed commit (git signature status: "${info.signature || 'N'}"). Use "git commit -S".`);
+        errors.push(
+          `Sign-off commit is not a validly signed commit (git signature status: "${info.signature || 'N'}"). Use "git commit -S".`,
+        );
       }
 
       if (recordedHash && !info.hash.startsWith(recordedHash) && !recordedHash.startsWith(info.hash)) {
-        errors.push(`Recorded Commit/Artifact Hash "${recordedHash}" does not match the sign-off commit "${info.hash}".`);
+        errors.push(
+          `Recorded Commit/Artifact Hash "${recordedHash}" does not match the sign-off commit "${info.hash}".`,
+        );
       }
 
       if (isExpired(info.committedAt, gov.signoffTtlDays)) {
@@ -140,7 +149,9 @@ function printReport(target, errors, warnings, summary = {}) {
   if (errors.length > 0) {
     console.log('\n❌ FAILED - Human Sign-Off Missing, Incomplete, or Unauthorized:');
     errors.forEach((e) => console.log(`   - ${e}`));
-    console.log('\n🛑 Agent Execution Halted: AI coding agents must not proceed to implementation without a verified human approval.\n');
+    console.log(
+      '\n🛑 Agent Execution Halted: AI coding agents must not proceed to implementation without a verified human approval.\n',
+    );
   } else {
     console.log('\n✅ PASSED: Human-in-the-Loop sign-off verified!');
     console.log('   AI Coding Agent is authorized to proceed to the next phase.\n');

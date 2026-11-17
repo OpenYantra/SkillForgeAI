@@ -19,15 +19,11 @@ function getGitChangedFiles() {
     const diffOutput = execSync('git diff --name-only HEAD', { encoding: 'utf-8' });
     const stagedOutput = execSync('git diff --name-only --cached', { encoding: 'utf-8' });
     const untracked = execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' });
-    const all = [
-      ...diffOutput.split('\n'),
-      ...stagedOutput.split('\n'),
-      ...untracked.split('\n'),
-    ]
-      .map(f => f.trim().replace(/\\/g, '/'))
-      .filter(f => f.length > 0);
+    const all = [...diffOutput.split('\n'), ...stagedOutput.split('\n'), ...untracked.split('\n')]
+      .map((f) => f.trim().replace(/\\/g, '/'))
+      .filter((f) => f.length > 0);
     return [...new Set(all)];
-  } catch (err) {
+  } catch {
     return [];
   }
 }
@@ -35,7 +31,7 @@ function getGitChangedFiles() {
 function getDiffForFile(file) {
   try {
     return execSync(`git diff -U0 HEAD -- "${file}"`, { encoding: 'utf-8' });
-  } catch (err) {
+  } catch {
     return '';
   }
 }
@@ -57,8 +53,8 @@ function classifyChanges(changedFiles) {
       const lines = diff.split('\n');
 
       // Check for removed lines (starting with '-' but not '---')
-      const removedLines = lines.filter(l => l.startsWith('-') && !l.startsWith('---'));
-      const addedLines = lines.filter(l => l.startsWith('+') && !l.startsWith('+++'));
+      const removedLines = lines.filter((l) => l.startsWith('-') && !l.startsWith('---'));
+      const addedLines = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++'));
 
       if (removedLines.length > 0) {
         // High likelihood of signature deletion or route mutation
@@ -99,7 +95,7 @@ function analyzeImpact() {
   }
 
   console.log(`Detected ${changedFiles.length} modified / new file(s):`);
-  changedFiles.forEach(f => console.log(`   📝 ${f}`));
+  changedFiles.forEach((f) => console.log(`   📝 ${f}`));
 
   let graph = { nodes: {} };
   if (fs.existsSync(graphPath)) {
@@ -110,7 +106,7 @@ function analyzeImpact() {
   for (const file of changedFiles) {
     if (graph.nodes[file]) {
       const callers = graph.nodes[file].importedBy || [];
-      callers.forEach(c => affectedCallers.add(c));
+      callers.forEach((c) => affectedCallers.add(c));
     }
   }
 
@@ -121,7 +117,7 @@ function analyzeImpact() {
   console.log('------------------------------------------------------');
   if (affectedCallers.size > 0) {
     console.log('The following downstream files are affected and require testing:');
-    affectedCallers.forEach(caller => console.log(`   ⚠️  ${caller}`));
+    affectedCallers.forEach((caller) => console.log(`   ⚠️  ${caller}`));
   } else {
     console.log('No registered downstream dependencies affected.');
   }
@@ -132,12 +128,12 @@ function analyzeImpact() {
 
   if (classifications.destructive.length > 0) {
     console.log('🚨 DESTRUCTIVE (Breaking Changes):');
-    classifications.destructive.forEach(d => console.log(`   💥 [MAJOR] ${d.file} — ${d.reason}`));
+    classifications.destructive.forEach((d) => console.log(`   💥 [MAJOR] ${d.file} — ${d.reason}`));
   }
 
   if (classifications.additive.length > 0) {
     console.log('✨ ADDITIVE (Backward-Compatible Changes):');
-    classifications.additive.forEach(a => console.log(`   🌱 [MINOR] ${a.file} — ${a.reason}`));
+    classifications.additive.forEach((a) => console.log(`   🌱 [MINOR] ${a.file} — ${a.reason}`));
   }
 
   if (classifications.destructive.length === 0 && classifications.additive.length === 0) {

@@ -75,7 +75,7 @@ function runGates(options = {}) {
       console.log('✅ PASSED');
       results.push({ name: gate.name, status: 'PASSED' });
       passed++;
-    } catch (err) {
+    } catch {
       console.log('❌ FAILED');
       results.push({ name: gate.name, status: 'FAILED' });
       failed++;

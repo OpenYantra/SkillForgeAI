@@ -71,7 +71,7 @@ function runScript(scriptPath, args = []) {
 }
 
 function main() {
-  const [,, command, ...args] = process.argv;
+  const [, , command, ...args] = process.argv;
 
   if (!command || command === 'help' || command === '--help' || command === '-h') {
     console.log(HELP_TEXT);

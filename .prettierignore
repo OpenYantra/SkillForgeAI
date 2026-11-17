@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+.agents/
+docs/
+templates/
+examples/dotnet-order-service/
+package-lock.json
+*.md

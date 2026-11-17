@@ -129,7 +129,7 @@ export function loadGateConfig(configPath) {
   try {
     raw = JSON.parse(fs.readFileSync(resolved, 'utf-8'));
   } catch (err) {
-    throw new Error(`Invalid JSON in ${resolved}: ${err.message}`);
+    throw new Error(`Invalid JSON in ${resolved}: ${err.message}`, { cause: err });
   }
 
   const mode = raw.mode || 'self-test';
