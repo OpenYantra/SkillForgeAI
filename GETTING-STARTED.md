@@ -340,6 +340,36 @@ node bin/skillforge.mjs gate --json
 > [!CAUTION]
 > Never merge a PR without all 10 gates passing. The included GitHub Actions bot (`.github/workflows/skillforge-gate.yml`) automatically blocks merges if any gate fails.
 
+#### Configure which artifacts each gate validates
+
+Gates read `skillforge.config.json` at the repo root. Copy [`skillforge.config.example.json`](skillforge.config.example.json) and point each key at your own artifacts:
+
+```jsonc
+{
+  "version": 1,
+  "mode": "project",
+  "artifacts": {
+    "plan": "docs/plan.md",
+    "prd": "docs/**/*.prd.md",
+    "openapi": "openapi.yaml",
+    "architecture": "docs/ARCHITECTURE.md",
+    "signoff": "docs/approvals/*.md",
+    "src": "src",
+    "tests": "tests",
+    "dockerfile": "Dockerfile",
+    "rca": "docs/incidents/RCA-*.md"
+  }
+}
+```
+
+```bash
+node bin/skillforge.mjs gate --config skillforge.config.json
+node bin/skillforge.mjs gate --self-test      # validate the framework's own examples
+node bin/skillforge.mjs gate --allow-missing  # report missing artifacts as SKIPPED
+```
+
+In `project` mode a missing **required** artifact fails the gate (fail closed) so a PR can never be certified against framework templates by accident.
+
 ---
 
 ## 5. Path B — Adopting Into an Existing Repo

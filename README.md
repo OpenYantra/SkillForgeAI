@@ -66,6 +66,36 @@ node bin/skillforge.mjs init
 node bin/skillforge.mjs sync
 ```
 
+### ⚙️ Project Gate Configuration
+
+Quality gates validate **your project's** artifacts via `skillforge.config.json` (at the repo root):
+
+```jsonc
+{
+  "version": 1,
+  "mode": "project",            // "project" (your artifacts) | "self-test" (framework examples)
+  "artifacts": {
+    "plan": "docs/plan.md",
+    "prd": "docs/**/*.prd.md",  // strings, globs, or arrays
+    "openapi": "openapi.yaml",
+    "architecture": "docs/ARCHITECTURE.md",
+    "signoff": "docs/approvals/*.md",
+    "src": "src",
+    "tests": "tests",
+    "dockerfile": "Dockerfile",
+    "rca": "docs/incidents/RCA-*.md"
+  }
+}
+```
+
+```bash
+node bin/skillforge.mjs gate --config skillforge.config.json  # explicit config
+node bin/skillforge.mjs gate --self-test                       # validate framework examples
+node bin/skillforge.mjs gate --allow-missing                   # missing artifacts -> SKIPPED
+```
+
+If a **required** artifact is missing in `project` mode, the gate **fails closed**. Copy [`skillforge.config.example.json`](skillforge.config.example.json) to get started.
+
 ---
 
 ## 🌐 Polyglot Language & Database Support

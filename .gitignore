@@ -16,6 +16,13 @@ TestResults/
 .env.*
 *.log
 
+# SkillForgeAI generated reports
+gate-report.json
+diff-report.json
+pr-scorecard.md
+baseline-audit.json
+docs/context/LATEST-TEST-FAILURE.json
+
 # OS & Editor
 .DS_Store
 Thumbs.db

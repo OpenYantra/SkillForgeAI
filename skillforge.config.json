@@ -1,0 +1,22 @@
+{
+  "$schema": "./skillforge.config.schema.json",
+  "version": 1,
+  "mode": "self-test",
+  "artifacts": {
+    "plan": ".agents/skills/sfa-project-planner-estimator/templates/project-plan-template.md",
+    "prd": "examples/order-service/order-service.prd.md",
+    "openapi": ".agents/skills/sfa-api-contract-designer/templates/openapi-template.yaml",
+    "architecture": ".agents/skills/sfa-system-architecture-adr/templates/architecture-spec-template.md",
+    "signoff": "examples/order-service/docs/approvals/order-service-signoff.md",
+    "src": "examples/order-service/src",
+    "tests": "examples/order-service/tests/order.service.spec.ts",
+    "dockerfile": ".agents/skills/sfa-cicd-container-automator/templates/Dockerfile.template",
+    "rca": ".agents/skills/sfa-incident-root-cause-analyzer/templates/rca-report-template.md"
+  },
+  "governance": {
+    "allowedReviewers": ["rishikesh-net@users.noreply.github.com"],
+    "requireSignedCommits": true,
+    "signoffTtlDays": 30,
+    "allowAgentIdentities": false
+  }
+}
