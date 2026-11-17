@@ -37,9 +37,12 @@ export function generateScorecard(diffReport, gateReport) {
   const isPassed = gateStatus === 'PASSED';
   const isMissing = gateStatus === 'MISSING' || gateStatus === 'UNKNOWN';
   const statusEmoji = isPassed ? '✅' : '🚨';
-  const totalGates = (gateReport && gateReport.totalGates != null)
-    ? gateReport.totalGates
-    : (gateReport && gateReport.gates ? gateReport.gates.length : 0);
+  const totalGates =
+    gateReport && gateReport.totalGates != null
+      ? gateReport.totalGates
+      : gateReport && gateReport.gates
+        ? gateReport.gates.length
+        : 0;
   const statusBadge = isPassed
     ? `**ALL ${totalGates} SDLC QUALITY GATES PASSED**`
     : isMissing
@@ -62,11 +65,7 @@ export function generateScorecard(diffReport, gateReport) {
 
   if (gateReport.gates && gateReport.gates.length > 0) {
     for (const g of gateReport.gates) {
-      const gStatus = g.status === 'PASSED'
-        ? '✅ PASSED'
-        : g.status === 'SKIPPED'
-          ? '⏭️ SKIPPED'
-          : '❌ FAILED';
+      const gStatus = g.status === 'PASSED' ? '✅ PASSED' : g.status === 'SKIPPED' ? '⏭️ SKIPPED' : '❌ FAILED';
       const gNotes = g.warnings
         ? '⚠️ Completed with warnings'
         : g.status === 'PASSED'
@@ -78,11 +77,7 @@ export function generateScorecard(diffReport, gateReport) {
     }
   } else {
     const rowStatus = isPassed ? '✅ PASSED' : isMissing ? '🚨 MISSING' : '❌ FAILED';
-    const rowNotes = isMissing
-      ? 'gate-report.json was not produced'
-      : isPassed
-        ? 'Executed in CI'
-        : 'Requires fix';
+    const rowNotes = isMissing ? 'gate-report.json was not produced' : isPassed ? 'Executed in CI' : 'Requires fix';
     md += `| *All Phases* | Master Quality Gates | ${rowStatus} | ${rowNotes} |\n`;
   }
 

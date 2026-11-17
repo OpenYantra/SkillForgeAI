@@ -77,17 +77,17 @@ Examples:
 
   const selfTest = isSelfTest(config, { selfTest: forceSelfTest });
 
-  const activeGates = selectedPhase !== null
-    ? GATE_REGISTRY.filter((g) => g.phase === selectedPhase)
-    : GATE_REGISTRY;
+  const activeGates = selectedPhase !== null ? GATE_REGISTRY.filter((g) => g.phase === selectedPhase) : GATE_REGISTRY;
 
   if (!isJson) {
     printBanner(
       '🛡️  SkillForgeAI: Unified SDLC Quality Gate Evaluation',
-      `${selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : `Evaluating All 7 SDLC Phases (${activeGates.length} Gates)`} · mode: ${selfTest ? 'self-test' : 'project'}`
+      `${selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : `Evaluating All 7 SDLC Phases (${activeGates.length} Gates)`} · mode: ${selfTest ? 'self-test' : 'project'}`,
     );
     if (selfTest && config.source === 'default') {
-      console.log(`${colors.yellow}⚠️  No skillforge.config.json found — running in self-test mode against framework example artifacts.${colors.reset}\n`);
+      console.log(
+        `${colors.yellow}⚠️  No skillforge.config.json found — running in self-test mode against framework example artifacts.${colors.reset}\n`,
+      );
     }
   }
 
@@ -200,7 +200,9 @@ Examples:
   }
 
   console.log(`\n${colors.dim}${'─'.repeat(60)}${colors.reset}`);
-  console.log(`Summary: ${passed} Passed, ${failed} Failed, ${skipped} Skipped out of ${activeGates.length} Total Gates`);
+  console.log(
+    `Summary: ${passed} Passed, ${failed} Failed, ${skipped} Skipped out of ${activeGates.length} Total Gates`,
+  );
   console.log(`${colors.dim}${'─'.repeat(60)}${colors.reset}\n`);
 
   if (failed > 0) {

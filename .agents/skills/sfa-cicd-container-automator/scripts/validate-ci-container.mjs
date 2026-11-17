@@ -25,7 +25,7 @@ function validateCiAndContainer(targetPath) {
   const errors = [];
   const warnings = [];
 
-  let content = '';
+  let content;
   const isDirectory = fs.statSync(resolved).isDirectory();
 
   if (!isDirectory) {

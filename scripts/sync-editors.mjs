@@ -17,9 +17,10 @@ const SKILLS_DIR = '.agents/skills';
 
 function getInstalledSkills() {
   if (!fs.existsSync(SKILLS_DIR)) return [];
-  return fs.readdirSync(SKILLS_DIR, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => {
+  return fs
+    .readdirSync(SKILLS_DIR, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => {
       const skillPath = path.join(SKILLS_DIR, dirent.name, 'SKILL.md');
       let description = 'SDLC Skill';
       if (fs.existsSync(skillPath)) {
@@ -35,9 +36,7 @@ function generateEditorConfigs() {
   const skills = getInstalledSkills();
   console.log(`\n🔄 Syncing ${skills.length} SkillForgeAI skills across agentic code editors...`);
 
-  const skillsListMarkdown = skills
-    .map(s => `- **\`${s.name}\`**: ${s.description}`)
-    .join('\n');
+  const skillsListMarkdown = skills.map((s) => `- **\`${s.name}\`**: ${s.description}`).join('\n');
 
   const baseInstructions = `# SkillForgeAI Unified Agent Instructions
 This codebase uses the SkillForgeAI SDLC framework. When executing software engineering tasks,

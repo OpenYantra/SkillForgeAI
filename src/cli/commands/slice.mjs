@@ -7,7 +7,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { printBanner, printSection, printSuccess, printError, printWarning, colors } from '../ui.mjs';
+import { printBanner, printSection, printSuccess, printError, colors } from '../ui.mjs';
 import { buildCodeGraph } from './graph.mjs';
 
 const CANDIDATE_CONTAINERS = [
@@ -91,11 +91,29 @@ function classifySliceSymbols(nodePath, data) {
 
   // 1. Entities
   for (const c of allClasses) {
-    if (norm.includes('entity') || norm.includes('entities') || c.endsWith('Entity') || c.endsWith('Model') || c === 'Order' || c === 'OrderItem') {
+    if (
+      norm.includes('entity') ||
+      norm.includes('entities') ||
+      c.endsWith('Entity') ||
+      c.endsWith('Model') ||
+      c === 'Order' ||
+      c === 'OrderItem'
+    ) {
       classified.entities.push(c);
-    } else if (c.endsWith('Service') || c.endsWith('ApplicationService') || c.endsWith('Handler') || c.endsWith('UseCase')) {
+    } else if (
+      c.endsWith('Service') ||
+      c.endsWith('ApplicationService') ||
+      c.endsWith('Handler') ||
+      c.endsWith('UseCase')
+    ) {
       classified.services.push(c);
-    } else if (c.endsWith('Repository') || c.endsWith('Store') || c.endsWith('Adapter') || norm.includes('persistence') || norm.includes('repositories')) {
+    } else if (
+      c.endsWith('Repository') ||
+      c.endsWith('Store') ||
+      c.endsWith('Adapter') ||
+      norm.includes('persistence') ||
+      norm.includes('repositories')
+    ) {
       classified.repositories.push(c);
     } else if (c.endsWith('Exception') || c.endsWith('Error') || norm.includes('exception')) {
       classified.exceptions.push(c);
@@ -168,13 +186,13 @@ export function analyzeSlice(slice, graph, allSlices) {
       }
 
       const classified = classifySliceSymbols(nodePath, nodeData);
-      classified.entities.forEach(s => symbols.entities.add(s));
-      classified.ports.forEach(s => symbols.ports.add(s));
-      classified.services.forEach(s => symbols.services.add(s));
-      classified.repositories.forEach(s => symbols.repositories.add(s));
-      classified.exceptions.forEach(s => symbols.exceptions.add(s));
-      classified.commands.forEach(s => symbols.commands.add(s));
-      classified.other.forEach(s => symbols.other.add(s));
+      classified.entities.forEach((s) => symbols.entities.add(s));
+      classified.ports.forEach((s) => symbols.ports.add(s));
+      classified.services.forEach((s) => symbols.services.add(s));
+      classified.repositories.forEach((s) => symbols.repositories.add(s));
+      classified.exceptions.forEach((s) => symbols.exceptions.add(s));
+      classified.commands.forEach((s) => symbols.commands.add(s));
+      classified.other.forEach((s) => symbols.other.add(s));
 
       // Check Outbound Imports
       for (const target of nodeData.imports) {
@@ -229,7 +247,7 @@ export function analyzeSlice(slice, graph, allSlices) {
 }
 
 export function renderSliceMap(slice) {
-  const formatList = (arr) => arr.length > 0 ? arr.map(s => `\`${s}\``).join(', ') : 'None';
+  const formatList = (arr) => (arr.length > 0 ? arr.map((s) => `\`${s}\``).join(', ') : 'None');
 
   let md = `<!-- skillforge-slice: ${slice.name} -->\n`;
   md += `# Vertical Slice: \`${slice.name}\`\n`;
@@ -252,12 +270,12 @@ export function renderSliceMap(slice) {
   }
 
   md += `\n### 🔗 Cross-Slice Dependencies\n`;
-  md += `- **Inbound Dependents:** ${slice.dependencies.inbound.length > 0 ? slice.dependencies.inbound.map(d => `\`${d}\``).join(', ') : 'None (Self-contained root slice)'}\n`;
-  md += `- **Outbound Imports:** ${slice.dependencies.outbound.length > 0 ? slice.dependencies.outbound.map(d => `\`${d}\``).join(', ') : 'None (Zero external slice dependencies)'}\n`;
+  md += `- **Inbound Dependents:** ${slice.dependencies.inbound.length > 0 ? slice.dependencies.inbound.map((d) => `\`${d}\``).join(', ') : 'None (Self-contained root slice)'}\n`;
+  md += `- **Outbound Imports:** ${slice.dependencies.outbound.length > 0 ? slice.dependencies.outbound.map((d) => `\`${d}\``).join(', ') : 'None (Zero external slice dependencies)'}\n`;
 
   md += `\n### 🧪 Test Suite\n`;
   if (slice.testFiles.length > 0) {
-    slice.testFiles.forEach(t => {
+    slice.testFiles.forEach((t) => {
       md += `- \`${t}\`\n`;
     });
   } else {
@@ -342,9 +360,7 @@ export function generateSliceMaps(existingGraph = null, targetDir = '.') {
   }
 
   const avgSliceTokens = analyzedSlices.length > 0 ? Math.round(totalSliceTokens / analyzedSlices.length) : 0;
-  const tokenSavingsPct = monolithicTokens > 0
-    ? ((1 - (avgSliceTokens / monolithicTokens)) * 100).toFixed(1)
-    : '0.0';
+  const tokenSavingsPct = monolithicTokens > 0 ? ((1 - avgSliceTokens / monolithicTokens) * 100).toFixed(1) : '0.0';
 
   const globalStats = {
     monolithicTokens,
@@ -361,7 +377,7 @@ export function generateSliceMaps(existingGraph = null, targetDir = '.') {
   const registry = {
     generatedAt: new Date().toISOString(),
     globalStats,
-    slices: analyzedSlices.map(s => ({
+    slices: analyzedSlices.map((s) => ({
       name: s.name,
       root: s.root,
       container: s.container,
@@ -408,11 +424,11 @@ Examples:
   const { analyzedSlices, globalStats, registry } = generateSliceMaps();
 
   if (targetName) {
-    const exactMatched = analyzedSlices.find(s => s.name.toLowerCase() === targetName);
-    const matched = exactMatched || analyzedSlices.find(s => s.name.toLowerCase().includes(targetName));
+    const exactMatched = analyzedSlices.find((s) => s.name.toLowerCase() === targetName);
+    const matched = exactMatched || analyzedSlices.find((s) => s.name.toLowerCase().includes(targetName));
     if (!matched) {
       printError(`Domain slice "${targetName}" not found.`);
-      console.log(`Available slices: ${analyzedSlices.map(s => `"${s.name}"`).join(', ')}`);
+      console.log(`Available slices: ${analyzedSlices.map((s) => `"${s.name}"`).join(', ')}`);
       process.exit(1);
     }
     console.log(matched.markdown);
@@ -426,12 +442,16 @@ Examples:
 
   if (isList) {
     printBanner('🧭 SkillForgeAI: Monorepo Domain Slice Directory');
-    console.log(`Discovered ${colors.bold}${analyzedSlices.length}${colors.reset} domain slices (Avg ~${globalStats.avgSliceTokens} tokens / ${globalStats.tokenSavingsPct}% context savings):\n`);
+    console.log(
+      `Discovered ${colors.bold}${analyzedSlices.length}${colors.reset} domain slices (Avg ~${globalStats.avgSliceTokens} tokens / ${globalStats.tokenSavingsPct}% context savings):\n`,
+    );
 
     console.log(`| Domain / Slice | Root Path | Primary Stack | Files | Est. Tokens |`);
     console.log(`| :--- | :--- | :--- | :--- | :--- |`);
     for (const s of analyzedSlices) {
-      console.log(`| ${colors.bold}${s.name}${colors.reset} | \`${s.root}\` | ${s.primaryStack} | ${s.files.length} | ~${s.tokenEstimate} |`);
+      console.log(
+        `| ${colors.bold}${s.name}${colors.reset} | \`${s.root}\` | ${s.primaryStack} | ${s.files.length} | ~${s.tokenEstimate} |`,
+      );
     }
     console.log('');
     process.exit(0);
@@ -440,12 +460,16 @@ Examples:
   printBanner('🧭 SkillForgeAI: Monorepo Domain Slicing', 'Automatic Vertical Slice Context Partitioning');
   console.log(`Discovered ${colors.bold}${analyzedSlices.length}${colors.reset} domain slices across the monorepo:`);
   for (const s of analyzedSlices) {
-    console.log(`   📦 ${colors.cyan}${s.name}${colors.reset} (\`${s.root}\`) — ${s.files.length} file(s), ~${s.tokenEstimate} tokens`);
+    console.log(
+      `   📦 ${colors.cyan}${s.name}${colors.reset} (\`${s.root}\`) — ${s.files.length} file(s), ~${s.tokenEstimate} tokens`,
+    );
   }
 
   printSection('Partitioning Results');
   printSuccess(`Generated ${analyzedSlices.length} vertical slice maps in docs/context/slices/`);
   printSuccess(`Generated Domain Slice Router: docs/context/slices/index.md`);
   printSuccess(`Generated Slice Registry: docs/context/slices/slices.json`);
-  printSuccess(`Token Efficiency: ${colors.bold}${globalStats.tokenSavingsPct}% context savings${colors.reset} (~${globalStats.avgSliceTokens} vs ~${globalStats.monolithicTokens} monolithic tokens)\n`);
+  printSuccess(
+    `Token Efficiency: ${colors.bold}${globalStats.tokenSavingsPct}% context savings${colors.reset} (~${globalStats.avgSliceTokens} vs ~${globalStats.monolithicTokens} monolithic tokens)\n`,
+  );
 }

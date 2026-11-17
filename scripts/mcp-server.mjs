@@ -3,7 +3,7 @@
  * SkillForgeAI: Local Model Context Protocol (MCP) Server
  * Exposes SkillForgeAI SDLC tools natively to AI agents (Cursor, Claude Desktop, Antigravity)
  * using the standard JSON-RPC 2.0 over stdio MCP specification.
- * 
+ *
  * Tools Exposed:
  * - get_code_graph: Returns cached symbol-level dependency graph
  * - check_breaking_changes: Runs semantic change impact analysis
@@ -31,7 +31,8 @@ const TOOLS = [
   },
   {
     name: 'check_breaking_changes',
-    description: 'Analyzes uncommitted Git diffs for destructive breaking changes (MAJOR) vs additive changes (MINOR) and affected callers.',
+    description:
+      'Analyzes uncommitted Git diffs for destructive breaking changes (MAJOR) vs additive changes (MINOR) and affected callers.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -54,7 +55,8 @@ const TOOLS = [
   },
   {
     name: 'verify_human_signoff',
-    description: 'Checks if human approval (HITL) has been granted for the target feature before scaffolding or releasing.',
+    description:
+      'Checks if human approval (HITL) has been granted for the target feature before scaffolding or releasing.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -74,7 +76,8 @@ const TOOLS = [
       properties: {
         skillName: {
           type: 'string',
-          description: 'Name of the skill (e.g., sfa-prd-generator-validator, sfa-feature-scaffolder, sfa-unit-test-synthesizer)',
+          description:
+            'Name of the skill (e.g., sfa-prd-generator-validator, sfa-feature-scaffolder, sfa-unit-test-synthesizer)',
         },
       },
       required: ['skillName'],
@@ -82,7 +85,8 @@ const TOOLS = [
   },
   {
     name: 'list_domain_slices',
-    description: 'Lists all partitioned vertical domain slices in the monorepo with root paths, stacks, file counts, and token estimates.',
+    description:
+      'Lists all partitioned vertical domain slices in the monorepo with root paths, stacks, file counts, and token estimates.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -90,7 +94,8 @@ const TOOLS = [
   },
   {
     name: 'get_domain_slice',
-    description: 'Retrieves the token-efficient architectural slice map for a specific domain/feature (e.g. order-service, dotnet-order-service, cli).',
+    description:
+      'Retrieves the token-efficient architectural slice map for a specific domain/feature (e.g. order-service, dotnet-order-service, cli).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -104,7 +109,8 @@ const TOOLS = [
   },
   {
     name: 'audit_security',
-    description: 'Audits code changes or application codebases for vulnerabilities, secrets, and hacker-targetable weaknesses (OWASP Top 10, CWE Top 25).',
+    description:
+      'Audits code changes or application codebases for vulnerabilities, secrets, and hacker-targetable weaknesses (OWASP Top 10, CWE Top 25).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -147,7 +153,10 @@ function handleToolCall(name, args = {}) {
     case 'run_quality_gate': {
       const phaseFlag = args.phase ? `--phase ${args.phase}` : '';
       try {
-        const out = execSync(`node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs ${phaseFlag}`, { encoding: 'utf-8' });
+        const out = execSync(
+          `node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs ${phaseFlag}`,
+          { encoding: 'utf-8' },
+        );
         return out;
       } catch (err) {
         return err.stdout || err.message;
@@ -188,11 +197,17 @@ function handleToolCall(name, args = {}) {
       }
       if (fs.existsSync(slicesDir)) {
         const files = fs.readdirSync(slicesDir);
-        const matched = files.find(f => f.toLowerCase().includes(targetName) && f.endsWith('-map.md'));
+        const matched = files.find((f) => f.toLowerCase().includes(targetName) && f.endsWith('-map.md'));
         if (matched) {
           return fs.readFileSync(path.join(slicesDir, matched), 'utf-8');
         }
-        return `Domain slice "${args.name}" not found. Available slices:\n` + files.filter(f => f.endsWith('-map.md')).map(f => `- ${f.replace('-map.md', '')}`).join('\n');
+        return (
+          `Domain slice "${args.name}" not found. Available slices:\n` +
+          files
+            .filter((f) => f.endsWith('-map.md'))
+            .map((f) => `- ${f.replace('-map.md', '')}`)
+            .join('\n')
+        );
       }
       return 'Domain slices directory not found. Run "skillforge slice" first.';
     }
@@ -302,12 +317,14 @@ function startServer() {
       if (response) {
         process.stdout.write(JSON.stringify(response) + '\n');
       }
-    } catch (err) {
-      process.stdout.write(JSON.stringify({
-        jsonrpc: '2.0',
-        id: null,
-        error: { code: -32700, message: 'Parse error' },
-      }) + '\n');
+    } catch {
+      process.stdout.write(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: null,
+          error: { code: -32700, message: 'Parse error' },
+        }) + '\n',
+      );
     }
   });
 }
@@ -315,7 +332,7 @@ function startServer() {
 // If run directly in CLI test mode
 if (process.argv.includes('--test')) {
   console.log(`✅ ${SERVER_NAME} v${SERVER_VERSION} initialized.`);
-  console.log(`Available Tools: ${TOOLS.map(t => t.name).join(', ')}`);
+  console.log(`Available Tools: ${TOOLS.map((t) => t.name).join(', ')}`);
   process.exit(0);
 }
 

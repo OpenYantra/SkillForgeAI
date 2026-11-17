@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src/**/*.mjs", "scripts/**/*.mjs", "bin/**/*.mjs", ".agents/skills/**/scripts/*.mjs"],
+  "exclude": ["node_modules", "coverage", "examples/dotnet-order-service"]
+}

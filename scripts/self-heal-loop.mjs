@@ -24,7 +24,7 @@ function detectTestRunnerCommand() {
   if (fs.existsSync('pyproject.toml') || fs.existsSync('requirements.txt')) {
     return 'pytest';
   }
-  const csproj = fs.readdirSync('.').find(f => f.endsWith('.csproj') || f.endsWith('.sln'));
+  const csproj = fs.readdirSync('.').find((f) => f.endsWith('.csproj') || f.endsWith('.sln'));
   if (csproj) {
     return 'dotnet test';
   }
@@ -34,7 +34,7 @@ function detectTestRunnerCommand() {
   return 'node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts';
 }
 
-function runSelfHealingLoop(maxIterations = 3) {
+function runSelfHealingLoop(_maxIterations = 3) {
   console.log('\n======================================================');
   console.log('🔄 SkillForgeAI: Automated Self-Healing Test/Fix Loop');
   console.log('======================================================\n');
@@ -42,8 +42,8 @@ function runSelfHealingLoop(maxIterations = 3) {
   const testCommand = detectTestRunnerCommand();
   console.log(`Executing Test Runner: "${testCommand}"`);
 
-  let testOutput = '';
-  let passed = false;
+  let testOutput;
+  let passed;
 
   try {
     testOutput = execSync(testCommand, { encoding: 'utf-8', stdio: 'pipe' });
@@ -63,18 +63,9 @@ function runSelfHealingLoop(maxIterations = 3) {
 
   // Extract failure diagnostics
   const lines = testOutput.split('\n');
-  const failureLines = lines.filter(l => 
-    /✖|fail|error|AssertionError|assert\.equal|Expected|Received/i.test(l)
-  );
+  const failureLines = lines.filter((l) => /✖|fail|error|AssertionError|assert\.equal|Expected|Received/i.test(l));
 
   const cleanFailures = failureLines.slice(0, 15).join('\n');
-
-  // Load code graph to find target source file
-  let graph = { nodes: {} };
-  const graphPath = path.join('docs', 'context', 'code-graph.json');
-  if (fs.existsSync(graphPath)) {
-    graph = JSON.parse(fs.readFileSync(graphPath, 'utf-8'));
-  }
 
   console.log('------------------------------------------------------');
   console.log('📋 Diagnostic Failure Report:');

@@ -4,9 +4,8 @@
  * and hacker-targeted software weaknesses (OWASP Top 10, CWE Top 25).
  */
 
-import path from 'node:path';
 import { runSecurityAudit } from '../../../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs';
-import { printBanner, printError, colors } from '../ui.mjs';
+import { printError, colors } from '../ui.mjs';
 
 export function executeSecurity(args = []) {
   if (args.includes('--help') || args.includes('-h')) {
@@ -41,7 +40,7 @@ ${colors.bold}Examples:${colors.reset}
   let targetPath = pathIndex !== -1 ? args[pathIndex + 1] : null;
 
   if (!targetPath) {
-    const nonFlagArg = args.find(a => !a.startsWith('-'));
+    const nonFlagArg = args.find((a) => !a.startsWith('-'));
     targetPath = nonFlagArg || '.';
   }
 

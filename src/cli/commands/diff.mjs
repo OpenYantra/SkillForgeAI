@@ -6,7 +6,7 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { printBanner, printSection, printSuccess, printError, printWarning, colors } from '../ui.mjs';
+import { printBanner, printSection, printSuccess, colors } from '../ui.mjs';
 
 function getGitChangedFiles(options = {}) {
   try {
@@ -20,16 +20,12 @@ function getGitChangedFiles(options = {}) {
     const diffOutput = execSync(diffCmd, { encoding: 'utf-8' });
     const stagedOutput = options.staged ? '' : execSync('git diff --name-only --cached', { encoding: 'utf-8' });
     const untracked = options.staged ? '' : execSync('git ls-files --others --exclude-standard', { encoding: 'utf-8' });
-    
-    const all = [
-      ...diffOutput.split('\n'),
-      ...stagedOutput.split('\n'),
-      ...untracked.split('\n'),
-    ]
-      .map(f => f.trim().replace(/\\/g, '/'))
-      .filter(f => f.length > 0);
+
+    const all = [...diffOutput.split('\n'), ...stagedOutput.split('\n'), ...untracked.split('\n')]
+      .map((f) => f.trim().replace(/\\/g, '/'))
+      .filter((f) => f.length > 0);
     return [...new Set(all)];
-  } catch (err) {
+  } catch {
     return [];
   }
 }
@@ -38,7 +34,7 @@ function getDiffForFile(file, options = {}) {
   try {
     const base = options.target ? `${options.target}...HEAD` : 'HEAD';
     return execSync(`git diff -U0 ${base} -- "${file}"`, { encoding: 'utf-8' });
-  } catch (err) {
+  } catch {
     return '';
   }
 }
@@ -59,8 +55,8 @@ function classifyChanges(changedFiles, options = {}) {
       const diff = getDiffForFile(file, options);
       const lines = diff.split('\n');
 
-      const removedLines = lines.filter(l => l.startsWith('-') && !l.startsWith('---'));
-      const addedLines = lines.filter(l => l.startsWith('+') && !l.startsWith('+++'));
+      const removedLines = lines.filter((l) => l.startsWith('-') && !l.startsWith('---'));
+      const addedLines = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++'));
 
       if (removedLines.length > 0) {
         classifications.destructive.push({
@@ -130,7 +126,7 @@ Examples:
   for (const file of changedFiles) {
     if (graph.nodes[file]) {
       const callers = graph.nodes[file].importedBy || [];
-      callers.forEach(c => affectedCallers.add(c));
+      callers.forEach((c) => affectedCallers.add(c));
     }
   }
 
@@ -166,12 +162,12 @@ Examples:
   }
 
   console.log(`Detected ${colors.bold}${changedFiles.length}${colors.reset} modified / new file(s):`);
-  changedFiles.forEach(f => console.log(`   📝 ${f}`));
+  changedFiles.forEach((f) => console.log(`   📝 ${f}`));
 
   printSection('Downstream Impact Matrix');
   if (affectedCallers.size > 0) {
     console.log('The following downstream files are affected and require testing:');
-    affectedCallers.forEach(caller => console.log(`   ⚠️  ${colors.yellow}${caller}${colors.reset}`));
+    affectedCallers.forEach((caller) => console.log(`   ⚠️  ${colors.yellow}${caller}${colors.reset}`));
   } else {
     console.log('No registered downstream dependencies affected.');
   }
@@ -179,12 +175,12 @@ Examples:
   printSection('Semantic Change Classification');
   if (classifications.destructive.length > 0) {
     console.log(`${colors.red}${colors.bold}🚨 DESTRUCTIVE (Breaking Changes):${colors.reset}`);
-    classifications.destructive.forEach(d => console.log(`   💥 [MAJOR] ${d.file} — ${d.reason}`));
+    classifications.destructive.forEach((d) => console.log(`   💥 [MAJOR] ${d.file} — ${d.reason}`));
   }
 
   if (classifications.additive.length > 0) {
     console.log(`${colors.green}${colors.bold}✨ ADDITIVE (Backward-Compatible Changes):${colors.reset}`);
-    classifications.additive.forEach(a => console.log(`   🌱 [MINOR] ${a.file} — ${a.reason}`));
+    classifications.additive.forEach((a) => console.log(`   🌱 [MINOR] ${a.file} — ${a.reason}`));
   }
 
   if (classifications.destructive.length === 0 && classifications.additive.length === 0) {

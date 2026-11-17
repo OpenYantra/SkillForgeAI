@@ -1,14 +1,8 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  DomainValidationError,
-  InvalidStateTransitionError,
-} from '../src/domain/entities/order.entity.ts';
-import {
-  OrderService,
-  OrderNotFoundError,
-} from '../src/services/order.service.ts';
+import { DomainValidationError, InvalidStateTransitionError } from '../src/domain/entities/order.entity.ts';
+import { OrderService, OrderNotFoundError } from '../src/services/order.service.ts';
 import { InMemoryOrderRepository } from '../src/repositories/in-memory-order.repository.ts';
 
 describe('OrderService Unit Tests', () => {
@@ -48,9 +42,7 @@ describe('OrderService Unit Tests', () => {
     it('should round floating point total safely to two decimal places (EC-003)', async () => {
       // Arrange
       const customerId = 'cust-102';
-      const items = [
-        { sku: 'ITEM-X', quantity: 3, unitPrice: 1.111 },
-      ];
+      const items = [{ sku: 'ITEM-X', quantity: 3, unitPrice: 1.111 }];
 
       // Act
       const order = await service.createOrder(customerId, items);
@@ -65,21 +57,16 @@ describe('OrderService Unit Tests', () => {
       const emptyItems: any[] = [];
 
       // Act & Assert
-      await assert.rejects(
-        async () => {
-          await service.createOrder(customerId, emptyItems);
-        },
-        DomainValidationError
-      );
+      await assert.rejects(async () => {
+        await service.createOrder(customerId, emptyItems);
+      }, DomainValidationError);
     });
   });
 
   describe('cancelOrder', () => {
     it('should transition order status to CANCELLED (FR-002)', async () => {
       // Arrange
-      const created = await service.createOrder('cust-201', [
-        { sku: 'ITEM-1', quantity: 1, unitPrice: 50 },
-      ]);
+      const created = await service.createOrder('cust-201', [{ sku: 'ITEM-1', quantity: 1, unitPrice: 50 }]);
 
       // Act
       const cancelled = await service.cancelOrder(created.toJSON().id);
@@ -93,27 +80,20 @@ describe('OrderService Unit Tests', () => {
 
     it('should throw InvalidStateTransitionError when cancelling an already cancelled order (EC-002)', async () => {
       // Arrange
-      const created = await service.createOrder('cust-202', [
-        { sku: 'ITEM-2', quantity: 1, unitPrice: 30 },
-      ]);
+      const created = await service.createOrder('cust-202', [{ sku: 'ITEM-2', quantity: 1, unitPrice: 30 }]);
       await service.cancelOrder(created.toJSON().id);
 
       // Act & Assert
-      await assert.rejects(
-        async () => {
-          await service.cancelOrder(created.toJSON().id);
-        },
-        InvalidStateTransitionError
-      );
+      await assert.rejects(async () => {
+        await service.cancelOrder(created.toJSON().id);
+      }, InvalidStateTransitionError);
     });
   });
 
   describe('getOrderById', () => {
     it('should fetch order by valid ID (FR-003)', async () => {
       // Arrange
-      const created = await service.createOrder('cust-301', [
-        { sku: 'ITEM-3', quantity: 1, unitPrice: 15 },
-      ]);
+      const created = await service.createOrder('cust-301', [{ sku: 'ITEM-3', quantity: 1, unitPrice: 15 }]);
 
       // Act
       const fetched = await service.getOrderById(created.toJSON().id);
@@ -127,12 +107,9 @@ describe('OrderService Unit Tests', () => {
       const nonExistentId = 'non-existent-id';
 
       // Act & Assert
-      await assert.rejects(
-        async () => {
-          await service.getOrderById(nonExistentId);
-        },
-        OrderNotFoundError
-      );
+      await assert.rejects(async () => {
+        await service.getOrderById(nonExistentId);
+      }, OrderNotFoundError);
     });
   });
 });
