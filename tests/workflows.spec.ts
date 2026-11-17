@@ -62,6 +62,7 @@ describe('ci workflow', () => {
       'npm run test:ts',
       'npm run test:coverage',
       'bin/skillforge.mjs graph --check',
+      'scripts/sync-editors.mjs --check',
     ]) {
       assert.match(runs, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }

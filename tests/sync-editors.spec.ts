@@ -46,4 +46,54 @@ describe('sync-editors script', () => {
       removeDir(dir);
     }
   });
+
+  it('keeps folded skill descriptions intact', () => {
+    const dir = makeTempDir('sync-folded');
+    try {
+      writeFiles(dir, {
+        '.agents/skills/sfa-demo/SKILL.md': `---
+name: sfa-demo
+description: >-
+  First sentence of the skill description.
+  Second sentence that used to be truncated.
+---
+
+# Demo
+`,
+      });
+
+      const result = runNode(path.join(REPO_ROOT, 'scripts', 'sync-editors.mjs'), [], dir);
+      assert.equal(result.status, 0, result.stderr);
+
+      const agents = fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8');
+      assert.match(agents, /First sentence of the skill description/);
+      assert.match(agents, /Second sentence that used to be truncated/);
+      assert.doesNotMatch(agents, /First sentence of the skill description\.$/m);
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('detects stale editor configs with --check', () => {
+    const dir = makeTempDir('sync-check');
+    try {
+      writeFiles(dir, {
+        '.agents/skills/sfa-demo/SKILL.md': '---\nname: sfa-demo\ndescription: Demo skill\n---\n',
+      });
+
+      assert.equal(runNode(path.join(REPO_ROOT, 'scripts', 'sync-editors.mjs'), [], dir).status, 0);
+
+      const fresh = runNode(path.join(REPO_ROOT, 'scripts', 'sync-editors.mjs'), ['--check'], dir);
+      assert.equal(fresh.status, 0, fresh.stdout + fresh.stderr);
+      assert.match(fresh.stdout, /up to date/);
+
+      fs.appendFileSync(path.join(dir, 'AGENTS.md'), '\nmanual edit\n');
+      const stale = runNode(path.join(REPO_ROOT, 'scripts', 'sync-editors.mjs'), ['--check'], dir);
+      assert.equal(stale.status, 1);
+      assert.match(stale.stderr, /stale/);
+      assert.match(stale.stderr, /AGENTS\.md/);
+    } finally {
+      removeDir(dir);
+    }
+  });
 });

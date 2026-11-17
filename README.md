@@ -117,6 +117,10 @@ SkillForgeAI is **language-agnostic** and **database-agnostic**. The core skills
 | **Go (Golang)** | Modular packages (`internal/domain`, `internal/service`) | Native `go test` (table-driven) | `go test ./...` |
 | **Java / Kotlin** (Spring Boot) | Hexagonal Architecture (`domain.model`, `domain.port`) | `JUnit 5` with `Mockito` | `mvn test` / `gradle test` |
 
+> The `skillforge scaffold` CLI currently generates **TypeScript** and **.NET 10** templates.
+> The table above describes the architecture and test conventions enforced by the skills,
+> validators, and review workflows for other stacks; they are not all CLI scaffold targets.
+
 ### Supported Databases & Persistence Engines
 
 Because all data access is abstracted behind domain repository ports, any storage engine can be plugged in without mutating core business rules:

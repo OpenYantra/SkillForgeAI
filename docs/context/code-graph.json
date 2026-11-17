@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-17T18:01:02.548Z",
-  "totalFiles": 82,
+  "generatedAt": "2026-11-17T18:05:00.675Z",
+  "totalFiles": 84,
   "languages": {
-    "typescript": 74,
+    "typescript": 76,
     "csharp": 8
   },
   "parsers": {
-    "tree-sitter": 82
+    "tree-sitter": 84
   },
   "nodes": {
     "eslint.config.mjs": {
@@ -343,10 +343,16 @@
         "types": [],
         "functions": [
           "getInstalledSkills",
-          "generateEditorConfigs"
+          "vscodeTasks",
+          "renderEditorConfigs",
+          "normalized",
+          "writeOutputs",
+          "main"
         ]
       },
-      "imports": [],
+      "imports": [
+        "src/core/skill-frontmatter.mjs"
+      ],
       "importedBy": []
     },
     "scripts/verify-human-signoff.mjs": {
@@ -906,6 +912,26 @@
         "scripts/verify-human-signoff.mjs"
       ]
     },
+    "src/core/skill-frontmatter.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "parseFrontmatter",
+          "normalizeDescription",
+          "fallbackDescription",
+          "readSkillFrontmatter"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "scripts/sync-editors.mjs",
+        "tests/frontmatter.spec.ts"
+      ]
+    },
     "src/core/validators/architecture.mjs": {
       "language": "typescript",
       "parser": "tree-sitter",
@@ -1187,6 +1213,23 @@
       ],
       "importedBy": []
     },
+    "tests/frontmatter.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "skillFile"
+        ]
+      },
+      "imports": [
+        "src/core/skill-frontmatter.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
     "tests/gate-config.spec.ts": {
       "language": "typescript",
       "parser": "tree-sitter",
@@ -1282,6 +1325,7 @@
         "tests/context-check.spec.ts",
         "tests/diff.spec.ts",
         "tests/exec.spec.ts",
+        "tests/frontmatter.spec.ts",
         "tests/gate-runner.spec.ts",
         "tests/graph.spec.ts",
         "tests/heal.spec.ts",
