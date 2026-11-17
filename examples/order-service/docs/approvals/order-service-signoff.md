@@ -1,5 +1,7 @@
 # SDLC Phase Sign-Off: Order Processing Service
 
+> **Demo attestation:** Used by the SkillForgeAI self-test gate. Not a production sign-off.
+
 - **Target Phase:** Phase 2 (Requirements) & Phase 3 (Architecture)
 - **Status:** APPROVED
 - **Reviewed By (Human):** Rishikesh Kumar (Lead Architect)

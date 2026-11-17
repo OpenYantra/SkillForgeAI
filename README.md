@@ -55,8 +55,9 @@ node bin/skillforge.mjs slice --name "order-service"
 node bin/skillforge.mjs scaffold --name "catalog" --lang "dotnet"
 node bin/skillforge.mjs scaffold --name "billing" --lang "ts"
 
-# Human-in-the-Loop (HITL) Sign-Off Generator & Gate
+# Human-in-the-Loop (HITL) Sign-Off Draft & Verification
 node bin/skillforge.mjs signoff --feature "order-service" --by "Lead Architect"
+node bin/skillforge.mjs signoff --verify docs/approvals/order-service-signoff.md
 
 # Automated Self-Healing Test/Fix Loop
 node bin/skillforge.mjs heal
