@@ -16,7 +16,11 @@ import { expandGlob } from './glob.mjs';
 
 export const DEFAULT_CONFIG_FILE = 'skillforge.config.json';
 
-export const GATE_REGISTRY = [
+/**
+ * @typedef {{id: string, phase: number, name: string, script: string, artifactKey: string, selfTestTarget: string, required: boolean, validator?: string}} Gate
+ */
+
+export const GATE_REGISTRY = /** @type {Gate[]} */ ([
   {
     id: 'plan',
     phase: 1,
@@ -107,14 +111,32 @@ export const GATE_REGISTRY = [
     selfTestTarget: '.agents/skills/sfa-incident-root-cause-analyzer/templates/rca-report-template.md',
     required: true,
   },
-];
+]);
 
 export const VALID_MODES = ['project', 'self-test'];
+
+/** Maps each gate to the in-process validator implementation. */
+const VALIDATOR_BY_ID = {
+  plan: 'plan',
+  prd: 'prd',
+  openapi: 'openapi',
+  architecture: 'architecture',
+  signoff: 'signoff',
+  scaffold: 'scaffold',
+  tests: 'coverage',
+  container: 'ciContainer',
+  security: 'security',
+  rca: 'rca',
+};
+
+for (const gate of GATE_REGISTRY) {
+  gate.validator = VALIDATOR_BY_ID[gate.id];
+}
 
 /**
  * Load and validate the project gate configuration.
  * @param {string} [configPath] explicit config path (relative or absolute)
- * @returns {{mode: string, version: number, artifacts: object, governance: object, source: string, path: string}}
+ * @returns {{mode: string, version: number, artifacts: object, governance: object, gates: object, source: string, path: string}}
  */
 export function loadGateConfig(configPath) {
   const target = configPath || DEFAULT_CONFIG_FILE;
@@ -122,7 +144,15 @@ export function loadGateConfig(configPath) {
 
   if (!fs.existsSync(resolved)) {
     if (configPath) throw new Error(`Config file not found: ${resolved}`);
-    return { mode: 'self-test', version: 1, artifacts: {}, governance: {}, source: 'default', path: resolved };
+    return {
+      mode: 'self-test',
+      version: 1,
+      artifacts: {},
+      governance: {},
+      gates: {},
+      source: 'default',
+      path: resolved,
+    };
   }
 
   let raw;
@@ -142,6 +172,7 @@ export function loadGateConfig(configPath) {
     version: raw.version || 1,
     artifacts: raw.artifacts && typeof raw.artifacts === 'object' ? raw.artifacts : {},
     governance: raw.governance && typeof raw.governance === 'object' ? raw.governance : {},
+    gates: raw.gates && typeof raw.gates === 'object' ? raw.gates : {},
     source: 'file',
     path: resolved,
   };
@@ -155,6 +186,22 @@ export function loadGateConfig(configPath) {
 export function isSelfTest(config, flags = {}) {
   if (flags.selfTest) return true;
   return !config || config.mode !== 'project';
+}
+
+/**
+ * Apply project-level gate overrides from `skillforge.config.json`.
+ * @param {typeof GATE_REGISTRY} registry
+ * @param {{gates?: {disable?: string[], validators?: Record<string, string>}}} [config]
+ * @returns {typeof GATE_REGISTRY}
+ */
+export function applyGateConfig(registry, config) {
+  const gates = (config && config.gates) || {};
+  const disabled = Array.isArray(gates.disable) ? gates.disable : [];
+  const overrides = gates.validators && typeof gates.validators === 'object' ? gates.validators : {};
+
+  return registry
+    .filter((gate) => !disabled.includes(gate.id))
+    .map((gate) => (overrides[gate.id] ? { ...gate, validator: overrides[gate.id] } : gate));
 }
 
 /**

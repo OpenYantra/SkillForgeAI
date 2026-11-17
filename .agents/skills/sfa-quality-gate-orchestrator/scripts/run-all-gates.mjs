@@ -1,92 +1,87 @@
 #!/usr/bin/env node
 /**
  * Quality Gate Orchestrator Runner
- * Orchestrates quality verification across all 7 SDLC phases.
- *
- * Uses the canonical gate registry + project configuration so it validates the
- * same artifacts as `skillforge gate` (default: skillforge.config.json).
+ * Thin wrapper over `src/core/gate-runner.mjs` so the skill and the CLI share
+ * identical gate selection, validation and reporting.
  */
 
-import { GATE_REGISTRY, loadGateConfig, isSelfTest, resolveGateTargets } from '../../../../src/core/gate-registry.mjs';
-import { runNode } from '../../../../src/core/exec.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { runGates } from '../../../../src/core/gate-runner.mjs';
 
 function parseArgs(argv) {
   const phaseIndex = argv.indexOf('--phase');
   const configIndex = argv.indexOf('--config');
+  const outIndex = argv.indexOf('--out');
   return {
     phase: phaseIndex !== -1 ? argv[phaseIndex + 1] : null,
     configPath: configIndex !== -1 ? argv[configIndex + 1] : undefined,
+    outFile: outIndex !== -1 ? argv[outIndex + 1] : undefined,
     allowMissing: argv.includes('--allow-missing'),
     selfTest: argv.includes('--self-test'),
+    strict: argv.includes('--strict'),
+    json: argv.includes('--json'),
   };
 }
 
-function runGates(options = {}) {
-  console.log('\n======================================================');
-  console.log('🛡️  SkillForgeAI: Unified SDLC Quality Gate Evaluation');
-  console.log('======================================================\n');
-
-  let config;
-  try {
-    config = loadGateConfig(options.configPath);
-  } catch (err) {
-    console.error(`❌ Failed to load gate config: ${err.message}`);
-    process.exit(2);
+async function runGatesCli(options = {}) {
+  if (!options.json) {
+    console.log('\n======================================================');
+    console.log('🛡️  SkillForgeAI: Unified SDLC Quality Gate Evaluation');
+    console.log('======================================================\n');
   }
 
-  const selfTest = isSelfTest(config, { selfTest: options.selfTest });
-  console.log(`Mode: ${selfTest ? 'self-test' : 'project'} (config: ${config.source})\n`);
-
-  const activeGates = options.phase
-    ? GATE_REGISTRY.filter((g) => g.phase === Number(options.phase))
-    : GATE_REGISTRY;
-
-  if (activeGates.length === 0) {
-    console.error(`❌ No quality gates found for phase: ${options.phase}`);
+  let result;
+  try {
+    result = await runGates({
+      configPath: options.configPath,
+      phase: options.phase,
+      selfTest: options.selfTest ? true : undefined,
+      allowMissing: options.allowMissing,
+      strict: options.strict,
+    });
+  } catch (err) {
+    console.error(`❌ ${err.message}`);
     process.exit(1);
   }
 
-  let passed = 0;
-  let failed = 0;
-  let skipped = 0;
-  const results = [];
+  const { summary } = result;
 
-  for (const gate of activeGates) {
-    const resolved = resolveGateTargets(gate, config, { selfTest });
-    process.stdout.write(`Evaluating [${gate.name}]... `);
-
-    if (resolved.missing) {
-      if (options.allowMissing) {
-        console.log('⏭ SKIPPED (artifact not configured)');
-        results.push({ name: gate.name, status: 'SKIPPED' });
-        skipped++;
-      } else {
-        console.log('❌ FAILED (missing artifact)');
-        results.push({ name: gate.name, status: 'FAILED', reason: 'missing artifact' });
-        failed++;
-      }
-      continue;
+  if (options.json || options.outFile) {
+    const json = JSON.stringify(summary, null, 2);
+    if (options.outFile) {
+      const dir = path.dirname(options.outFile);
+      if (dir && !fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(options.outFile, json);
     }
+    if (options.json) console.log(json);
+    process.exit(summary.status === 'PASSED' ? 0 : 1);
+  }
 
-    try {
-      for (const target of resolved.targets) {
-        runNode(gate.script, [target]);
-      }
-      console.log('✅ PASSED');
-      results.push({ name: gate.name, status: 'PASSED' });
-      passed++;
-    } catch {
-      console.log('❌ FAILED');
-      results.push({ name: gate.name, status: 'FAILED' });
-      failed++;
+  console.log(`Mode: ${summary.mode} (config: ${summary.configSource})\n`);
+
+  for (const gate of summary.gates) {
+    if (gate.status === 'PASSED') {
+      console.log(`Evaluating [${gate.name}]... ✅ PASSED`);
+    } else if (gate.status === 'SKIPPED') {
+      console.log(`Evaluating [${gate.name}]... ⏭ SKIPPED (artifact not configured)`);
+    } else if (gate.reason === 'Strict mode warning detected') {
+      console.log(`Evaluating [${gate.name}]... ❌ FAILED (Strict Warning)`);
+    } else if (gate.reason && gate.reason.startsWith('Required artifact')) {
+      console.log(`Evaluating [${gate.name}]... ❌ FAILED (missing artifact)`);
+    } else {
+      console.log(`Evaluating [${gate.name}]... ❌ FAILED`);
     }
+    if (gate.status === 'FAILED' && gate.error) console.log(`   ${gate.error}`);
   }
 
   console.log('\n------------------------------------------------------');
-  console.log(`Summary: ${passed} Passed, ${failed} Failed, ${skipped} Skipped out of ${activeGates.length} Total Gates`);
+  console.log(
+    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped out of ${summary.totalGates} Total Gates`,
+  );
   console.log('------------------------------------------------------');
 
-  if (failed > 0) {
+  if (summary.failed > 0) {
     console.log('\n⚠️  One or more SDLC quality gates failed. Check logs above.\n');
     process.exit(1);
   } else {
@@ -95,4 +90,4 @@ function runGates(options = {}) {
   }
 }
 
-runGates(parseArgs(process.argv.slice(2)));
+await runGatesCli(parseArgs(process.argv.slice(2)));

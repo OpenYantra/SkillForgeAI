@@ -1,15 +1,16 @@
 /**
  * SkillForge CLI: Gate Command
- * Evaluates SDLC quality gates against configured project artifacts.
+ * Evaluates SDLC quality gates against configured project artifacts using the
+ * shared in-process gate runner.
  */
 
 import path from 'node:path';
 import fs from 'node:fs';
 import { printBanner, printSuccess, printError, colors } from '../ui.mjs';
-import { GATE_REGISTRY, loadGateConfig, isSelfTest, resolveGateTargets } from '../../core/gate-registry.mjs';
-import { runNode } from '../../core/exec.mjs';
+import { loadGateConfig, isSelfTest } from '../../core/gate-registry.mjs';
+import { runGates } from '../../core/gate-runner.mjs';
 
-export function executeGate(args = []) {
+export async function executeGate(args = []) {
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 Usage:
@@ -77,12 +78,10 @@ Examples:
 
   const selfTest = isSelfTest(config, { selfTest: forceSelfTest });
 
-  const activeGates = selectedPhase !== null ? GATE_REGISTRY.filter((g) => g.phase === selectedPhase) : GATE_REGISTRY;
-
   if (!isJson) {
     printBanner(
       '🛡️  SkillForgeAI: Unified SDLC Quality Gate Evaluation',
-      `${selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : `Evaluating All 7 SDLC Phases (${activeGates.length} Gates)`} · mode: ${selfTest ? 'self-test' : 'project'}`,
+      `${selectedPhase ? `Evaluating Phase ${selectedPhase} Gates` : 'Evaluating All 7 SDLC Phases'} · mode: ${selfTest ? 'self-test' : 'project'}`,
     );
     if (selfTest && config.source === 'default') {
       console.log(
@@ -91,100 +90,41 @@ Examples:
     }
   }
 
-  let passed = 0;
-  let failed = 0;
-  let skipped = 0;
-  const results = [];
-
-  for (const gate of activeGates) {
-    const resolved = resolveGateTargets(gate, config, { selfTest });
-
-    if (!isJson) process.stdout.write(`Evaluating [${gate.name}]... `);
-
-    if (resolved.missing) {
-      if (allowMissing) {
-        if (!isJson) console.log(`${colors.yellow}⏭ SKIPPED (artifact not configured)${colors.reset}`);
-        results.push({
-          id: gate.id,
-          name: gate.name,
-          phase: gate.phase,
-          status: 'SKIPPED',
-          reason: `No "${gate.artifactKey}" artifact configured in skillforge.config.json.`,
-          unresolved: resolved.unresolved,
-        });
-        skipped++;
-      } else {
-        if (!isJson) console.log(`${colors.red}✖ FAILED (missing artifact)${colors.reset}`);
-        results.push({
-          id: gate.id,
-          name: gate.name,
-          phase: gate.phase,
-          status: 'FAILED',
-          reason: `Required artifact "${gate.artifactKey}" is not configured or does not exist.`,
-          unresolved: resolved.unresolved,
-        });
-        failed++;
-      }
-      continue;
+  let summary;
+  try {
+    const result = await runGates({
+      config,
+      phase: selectedPhase,
+      selfTest,
+      allowMissing,
+      strict: isStrict,
+    });
+    summary = result.summary;
+  } catch (err) {
+    if (isJson) {
+      console.log(JSON.stringify({ status: 'FAILED', error: err.message }));
+    } else {
+      printError(err.message);
     }
-
-    try {
-      let sawWarning = false;
-      for (const target of resolved.targets) {
-        const output = runNode(gate.script, [target]);
-        if (/⚠️\s+WARNING/i.test(output)) sawWarning = true;
-      }
-
-      if (isStrict && sawWarning) {
-        if (!isJson) console.log(`${colors.red}✖ FAILED (Strict Warning)${colors.reset}`);
-        results.push({
-          id: gate.id,
-          name: gate.name,
-          phase: gate.phase,
-          status: 'FAILED',
-          reason: 'Strict mode warning detected',
-          targets: resolved.targets,
-        });
-        failed++;
-      } else {
-        if (!isJson) console.log(`${colors.green}✔ PASSED${colors.reset}`);
-        results.push({
-          id: gate.id,
-          name: gate.name,
-          phase: gate.phase,
-          status: 'PASSED',
-          warnings: sawWarning,
-          targets: resolved.targets,
-        });
-        passed++;
-      }
-    } catch (err) {
-      const raw = String((err && (err.stdout || err.stderr)) || (err && err.message) || 'validation failed').trim();
-      const message = raw.split('\n').filter(Boolean).slice(-1)[0] || 'validation failed';
-      if (!isJson) console.log(`${colors.red}✖ FAILED${colors.reset}`);
-      results.push({
-        id: gate.id,
-        name: gate.name,
-        phase: gate.phase,
-        status: 'FAILED',
-        error: message,
-        targets: resolved.targets,
-      });
-      failed++;
-    }
+    process.exit(1);
   }
 
-  const summary = {
-    timestamp: new Date().toISOString(),
-    mode: selfTest ? 'self-test' : 'project',
-    configSource: config.source,
-    totalGates: activeGates.length,
-    passed,
-    failed,
-    skipped,
-    status: failed === 0 ? 'PASSED' : 'FAILED',
-    gates: results,
-  };
+  if (!isJson) {
+    for (const gate of summary.gates) {
+      if (gate.status === 'PASSED') {
+        console.log(`Evaluating [${gate.name}]... ${colors.green}✔ PASSED${colors.reset}`);
+      } else if (gate.status === 'SKIPPED') {
+        console.log(`Evaluating [${gate.name}]... ${colors.yellow}⏭ SKIPPED (artifact not configured)${colors.reset}`);
+      } else if (gate.reason === 'Strict mode warning detected') {
+        console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (Strict Warning)${colors.reset}`);
+      } else if (gate.reason && gate.reason.startsWith('Required artifact')) {
+        console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (missing artifact)${colors.reset}`);
+      } else {
+        console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED${colors.reset}`);
+      }
+      if (gate.status === 'FAILED' && gate.error) console.log(`   ${colors.dim}${gate.error}${colors.reset}`);
+    }
+  }
 
   if (isJson || outFile) {
     const jsonStr = JSON.stringify(summary, null, 2);
@@ -201,11 +141,11 @@ Examples:
 
   console.log(`\n${colors.dim}${'─'.repeat(60)}${colors.reset}`);
   console.log(
-    `Summary: ${passed} Passed, ${failed} Failed, ${skipped} Skipped out of ${activeGates.length} Total Gates`,
+    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped out of ${summary.totalGates} Total Gates`,
   );
   console.log(`${colors.dim}${'─'.repeat(60)}${colors.reset}\n`);
 
-  if (failed > 0) {
+  if (summary.failed > 0) {
     printError('One or more SDLC quality gates failed. Please check the logs above.');
     process.exit(1);
   } else {

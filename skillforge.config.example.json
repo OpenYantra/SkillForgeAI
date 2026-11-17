@@ -13,6 +13,10 @@
     "dockerfile": "Dockerfile",
     "rca": "docs/incidents/RCA-*.md"
   },
+  "gates": {
+    "disable": [],
+    "validators": {}
+  },
   "governance": {
     "allowedReviewers": ["you@your-company.com"],
     "requireSignedCommits": true,

@@ -1,13 +1,29 @@
 {
-  "generatedAt": "2026-11-13T15:57:04.982Z",
-  "totalFiles": 28,
+  "generatedAt": "2026-11-17T17:22:59.498Z",
+  "totalFiles": 76,
   "languages": {
-    "csharp": 8,
-    "typescript": 20
+    "typescript": 68,
+    "csharp": 8
+  },
+  "parsers": {
+    "tree-sitter": 76
   },
   "nodes": {
+    "eslint.config.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
     "examples/dotnet-order-service/src/Application/Services/OrderService.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "OrderApplicationService"
@@ -21,6 +37,7 @@
     },
     "examples/dotnet-order-service/src/Domain/Entities/Order.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "Order"
@@ -34,6 +51,7 @@
     },
     "examples/dotnet-order-service/src/Domain/Entities/OrderItem.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "OrderItem"
@@ -47,6 +65,7 @@
     },
     "examples/dotnet-order-service/src/Domain/Exceptions/DomainExceptions.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "DomainValidationException",
@@ -62,6 +81,7 @@
     },
     "examples/dotnet-order-service/src/Domain/Ports/IOrderRepository.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [
@@ -75,6 +95,7 @@
     },
     "examples/dotnet-order-service/src/Infrastructure/Persistence/InMemoryOrderRepository.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "InMemoryOrderRepository"
@@ -88,6 +109,7 @@
     },
     "examples/dotnet-order-service/tests/OrderService.Tests/OrderServiceTests.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "OrderServiceTests"
@@ -101,6 +123,7 @@
     },
     "examples/dotnet-order-service/tests/OrderService.Tests/Program.cs": {
       "language": "csharp",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "Program"
@@ -114,6 +137,7 @@
     },
     "examples/order-service/src/domain/entities/order.entity.ts": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "DomainValidationError",
@@ -137,6 +161,7 @@
     },
     "examples/order-service/src/domain/ports/order.repository.ts": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [
@@ -155,6 +180,7 @@
     },
     "examples/order-service/src/repositories/in-memory-order.repository.ts": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "InMemoryOrderRepository"
@@ -173,15 +199,14 @@
     },
     "examples/order-service/src/services/order.service.ts": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [
           "OrderNotFoundError",
           "OrderService"
         ],
         "interfaces": [],
-        "types": [
-          "OrderItem"
-        ],
+        "types": [],
         "functions": []
       },
       "imports": [
@@ -194,6 +219,7 @@
     },
     "examples/order-service/tests/order.service.spec.ts": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -209,40 +235,37 @@
     },
     "scripts/detect-breaking-changes.mjs": {
       "language": "typescript",
-      "symbols": {
-        "classes": [],
-        "interfaces": [
-          "methods"
-        ],
-        "types": [],
-        "functions": [
-          "getGitChangedFiles",
-          "getDiffForFile",
-          "classifyChanges",
-          "analyzeImpact"
-        ]
-      },
-      "imports": [],
-      "importedBy": []
-    },
-    "scripts/generate-code-graph.mjs": {
-      "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
         "types": [],
         "functions": [
-          "scanFiles",
-          "detectLanguage",
-          "extractSymbolsAndImports",
-          "generateCodeGraph"
+          "main"
         ]
       },
-      "imports": [],
+      "imports": [
+        "src/core/breaking-changes.mjs"
+      ],
+      "importedBy": []
+    },
+    "scripts/generate-code-graph.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/code-graph.mjs"
+      ],
       "importedBy": []
     },
     "scripts/generate-pr-scorecard.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -255,10 +278,13 @@
         ]
       },
       "imports": [],
-      "importedBy": []
+      "importedBy": [
+        "tests/scorecard.spec.ts"
+      ]
     },
     "scripts/install-git-hooks.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -272,6 +298,7 @@
     },
     "scripts/mcp-server.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -287,14 +314,14 @@
     },
     "scripts/self-heal-loop.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
         "types": [],
         "functions": [
           "detectTestRunnerCommand",
-          "runSelfHealingLoop",
-          "using"
+          "runSelfHealingLoop"
         ]
       },
       "imports": [],
@@ -302,6 +329,7 @@
     },
     "scripts/sync-editors.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -316,37 +344,40 @@
     },
     "scripts/verify-human-signoff.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
         "types": [],
-        "functions": [
-          "verifySignOff"
-        ]
+        "functions": []
       },
-      "imports": [],
-      "importedBy": []
+      "imports": [
+        "src/core/signoff-verify.mjs"
+      ],
+      "importedBy": [
+        "tests/signoff-governance.spec.ts"
+      ]
     },
     "src/cli/commands/diff.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
         "types": [],
         "functions": [
-          "getGitChangedFiles",
-          "getDiffForFile",
-          "classifyChanges",
           "executeDiff"
         ]
       },
       "imports": [
-        "src/cli/ui.mjs"
+        "src/cli/ui.mjs",
+        "src/core/breaking-changes.mjs"
       ],
       "importedBy": []
     },
     "src/cli/commands/gate.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -356,45 +387,40 @@
         ]
       },
       "imports": [
-        "src/cli/ui.mjs"
+        "src/cli/ui.mjs",
+        "src/core/gate-registry.mjs",
+        "src/core/gate-runner.mjs"
       ],
       "importedBy": []
     },
     "src/cli/commands/graph.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
         "types": [],
         "functions": [
-          "scanFiles",
-          "detectLanguage",
-          "extractSymbolsAndImports",
-          "buildMermaidDiagram",
-          "buildCodeGraph",
-          "generateRepoMapMarkdown",
           "executeGraph"
         ]
       },
       "imports": [
         "src/cli/ui.mjs",
-        "src/cli/commands/slice.mjs"
+        "src/cli/commands/slice.mjs",
+        "src/core/code-graph.mjs"
       ],
       "importedBy": [
-        "src/cli/commands/slice.mjs"
+        "src/cli/commands/slice.mjs",
+        "tests/graph.spec.ts",
+        "tests/slice.spec.ts"
       ]
     },
     "src/cli/commands/scaffold.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
-        "classes": [
-          "InMemory",
-          "InMemory"
-        ],
-        "interfaces": [
-          "I",
-          "I"
-        ],
+        "classes": [],
+        "interfaces": [],
         "types": [],
         "functions": [
           "toPascalCase",
@@ -409,8 +435,26 @@
       ],
       "importedBy": []
     },
+    "src/cli/commands/security.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "executeSecurity"
+        ]
+      },
+      "imports": [
+        "src/core/security-audit.mjs",
+        "src/cli/ui.mjs"
+      ],
+      "importedBy": []
+    },
     "src/cli/commands/signoff.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -427,6 +471,7 @@
     },
     "src/cli/commands/slice.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -447,11 +492,13 @@
         "src/cli/commands/graph.mjs"
       ],
       "importedBy": [
-        "src/cli/commands/graph.mjs"
+        "src/cli/commands/graph.mjs",
+        "tests/slice.spec.ts"
       ]
     },
     "src/cli/ui.mjs": {
       "language": "typescript",
+      "parser": "tree-sitter",
       "symbols": {
         "classes": [],
         "interfaces": [],
@@ -471,12 +518,922 @@
         "src/cli/commands/gate.mjs",
         "src/cli/commands/graph.mjs",
         "src/cli/commands/scaffold.mjs",
+        "src/cli/commands/security.mjs",
         "src/cli/commands/signoff.mjs",
         "src/cli/commands/slice.mjs"
       ]
+    },
+    "src/cli/validator-output.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "printValidatorReport",
+          "runValidatorCli"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "src/core/breaking-changes.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "runGit",
+          "tryGit",
+          "splitLines",
+          "getGitChangedFiles",
+          "getDiffForFile",
+          "classifyChanges",
+          "loadCachedGraph",
+          "analyzeDiff"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "scripts/detect-breaking-changes.mjs",
+        "src/cli/commands/diff.mjs"
+      ]
+    },
+    "src/core/code-graph.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "scanFiles",
+          "buildCodeGraph",
+          "buildMermaidDiagram",
+          "generateRepoMapMarkdown",
+          "writeGraphArtifacts"
+        ]
+      },
+      "imports": [
+        "src/core/parsers/symbols.mjs",
+        "src/core/parsers/resolve.mjs"
+      ],
+      "importedBy": [
+        "scripts/generate-code-graph.mjs",
+        "src/cli/commands/graph.mjs",
+        "tests/parsers.spec.ts"
+      ]
+    },
+    "src/core/exec.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "runNode"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "tests/exec.spec.ts"
+      ]
+    },
+    "src/core/gate-registry.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "loadGateConfig",
+          "isSelfTest",
+          "applyGateConfig",
+          "resolveGateTargets"
+        ]
+      },
+      "imports": [
+        "src/core/glob.mjs"
+      ],
+      "importedBy": [
+        "src/cli/commands/gate.mjs",
+        "src/core/gate-runner.mjs",
+        "src/core/signoff-verify.mjs",
+        "tests/gate-config.spec.ts",
+        "tests/gate-runner.spec.ts"
+      ]
+    },
+    "src/core/gate-runner.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "normalizeValidatorResult",
+          "runGates"
+        ]
+      },
+      "imports": [
+        "src/core/gate-registry.mjs",
+        "src/core/validators/index.mjs"
+      ],
+      "importedBy": [
+        "src/cli/commands/gate.mjs",
+        "tests/gate-runner.spec.ts"
+      ]
+    },
+    "src/core/glob.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "hasGlob",
+          "patternToRegExp",
+          "expandGlob"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/gate-registry.mjs",
+        "tests/gate-config.spec.ts"
+      ]
+    },
+    "src/core/governance.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "isAgentIdentity",
+          "isAllowedReviewer",
+          "makeGitRunner",
+          "getSignoffCommitInfo",
+          "isExpired"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/signoff-verify.mjs",
+        "tests/signoff-governance.spec.ts"
+      ]
+    },
+    "src/core/markdown.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "stripFencedCode",
+          "parseHeadings",
+          "hasHeading",
+          "sectionBody",
+          "countFencedBlocks",
+          "findIds",
+          "hasBddStatements"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/validators/architecture.mjs",
+        "src/core/validators/plan.mjs",
+        "src/core/validators/prd.mjs",
+        "src/core/validators/rca.mjs",
+        "tests/markdown.spec.ts"
+      ]
+    },
+    "src/core/parsers/heuristic.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "emptySymbols",
+          "detectLanguage",
+          "pushUnique",
+          "unquote",
+          "extractHeuristic"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/parsers/symbols.mjs"
+      ]
+    },
+    "src/core/parsers/resolve.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "resolveSpecToBase",
+          "resolveImport",
+          "linkDependencies"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/code-graph.mjs",
+        "tests/parsers.spec.ts"
+      ]
+    },
+    "src/core/parsers/symbols.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "pushUnique",
+          "nameOf",
+          "walk",
+          "importSpecOf",
+          "extractTypeScript",
+          "extractCSharp",
+          "extractPython",
+          "extractGo",
+          "extractImportSources",
+          "extractSymbolsAndImports"
+        ]
+      },
+      "imports": [
+        "src/core/parsers/tree-sitter-loader.mjs",
+        "src/core/parsers/heuristic.mjs"
+      ],
+      "importedBy": [
+        "src/core/code-graph.mjs",
+        "src/core/validators/scaffold.mjs",
+        "tests/parsers.spec.ts"
+      ]
+    },
+    "src/core/parsers/tree-sitter-loader.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "grammarForFile",
+          "loadLanguage",
+          "getParser"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/parsers/symbols.mjs",
+        "src/core/validators/coverage.mjs"
+      ]
+    },
+    "src/core/security-audit.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "getGitDiffFiles",
+          "collectFiles",
+          "scanFile",
+          "runSecurityAudit"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/cli/commands/security.mjs",
+        "src/core/validators/security.mjs"
+      ]
+    },
+    "src/core/signoff-verify.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "verifySignOff",
+          "printReport"
+        ]
+      },
+      "imports": [
+        "src/core/gate-registry.mjs",
+        "src/core/governance.mjs"
+      ],
+      "importedBy": [
+        "scripts/verify-human-signoff.mjs",
+        "src/core/validators/index.mjs"
+      ]
+    },
+    "src/core/validators/architecture.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validateArchitecture"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/markdown.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs"
+      ]
+    },
+    "src/core/validators/ci-container.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "parseDockerfileInstructions",
+          "validateDockerfileContent",
+          "validateWorkflowContent",
+          "isDockerfileName",
+          "collectCandidates",
+          "validateCiContainer"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/validator-parsers.spec.ts"
+      ]
+    },
+    "src/core/validators/common.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "emptyResult",
+          "finalize",
+          "readTarget",
+          "requireDirectory"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "src/core/validators/architecture.mjs",
+        "src/core/validators/ci-container.mjs",
+        "src/core/validators/coverage.mjs",
+        "src/core/validators/openapi.mjs",
+        "src/core/validators/plan.mjs",
+        "src/core/validators/prd.mjs",
+        "src/core/validators/rca.mjs",
+        "src/core/validators/scaffold.mjs",
+        "src/core/validators/security.mjs"
+      ]
+    },
+    "src/core/validators/coverage.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "scanTestFiles",
+          "isTestFile",
+          "walk",
+          "countJsAstTests",
+          "countHeuristicTests",
+          "verifyCoverageCriteria"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/parsers/tree-sitter-loader.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/validator-parsers.spec.ts"
+      ]
+    },
+    "src/core/validators/index.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/validators/plan.mjs",
+        "src/core/validators/prd.mjs",
+        "src/core/validators/openapi.mjs",
+        "src/core/validators/architecture.mjs",
+        "src/core/validators/rca.mjs",
+        "src/core/validators/ci-container.mjs",
+        "src/core/validators/scaffold.mjs",
+        "src/core/validators/coverage.mjs",
+        "src/core/validators/security.mjs",
+        "src/core/signoff-verify.mjs"
+      ],
+      "importedBy": [
+        "src/core/gate-runner.mjs"
+      ]
+    },
+    "src/core/validators/openapi.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "isObject",
+          "parseOpenApiDocument",
+          "validateWithSwaggerParser",
+          "validateOpenApi"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/openapi-parse.spec.ts"
+      ]
+    },
+    "src/core/validators/plan.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validatePlan"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/markdown.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/validator-parsers.spec.ts"
+      ]
+    },
+    "src/core/validators/prd.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validatePrd"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/markdown.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/validator-parsers.spec.ts"
+      ]
+    },
+    "src/core/validators/rca.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validateRca"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/markdown.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs"
+      ]
+    },
+    "src/core/validators/scaffold.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "scanSourceFiles",
+          "matchesForbidden",
+          "verifyScaffold"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/parsers/symbols.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs",
+        "tests/validator-parsers.spec.ts"
+      ]
+    },
+    "src/core/validators/security.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validateSecurity"
+        ]
+      },
+      "imports": [
+        "src/core/validators/common.mjs",
+        "src/core/security-audit.mjs"
+      ],
+      "importedBy": [
+        "src/core/validators/index.mjs"
+      ]
+    },
+    "tests/cli.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/diff.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "makeRepo"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/exec.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/exec.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/gate-config.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "writeTempConfig",
+          "runGate"
+        ]
+      },
+      "imports": [
+        "src/core/gate-registry.mjs",
+        "src/core/glob.mjs"
+      ],
+      "importedBy": []
+    },
+    "tests/gate-runner.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "config"
+        ]
+      },
+      "imports": [
+        "src/core/gate-runner.mjs",
+        "src/core/gate-registry.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/graph.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/cli/commands/graph.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/helpers/workspace.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [
+          "RunResult"
+        ],
+        "types": [],
+        "functions": [
+          "makeTempDir",
+          "removeDir",
+          "writeFiles",
+          "runNode",
+          "runCli",
+          "runGit",
+          "initGitRepo",
+          "commitAll",
+          "readJson"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "tests/cli.spec.ts",
+        "tests/diff.spec.ts",
+        "tests/exec.spec.ts",
+        "tests/gate-runner.spec.ts",
+        "tests/graph.spec.ts",
+        "tests/mcp-server.spec.ts",
+        "tests/openapi-parse.spec.ts",
+        "tests/parsers.spec.ts",
+        "tests/quality-gate-orchestrator.spec.ts",
+        "tests/scaffold.spec.ts",
+        "tests/slice.spec.ts",
+        "tests/sync-editors.spec.ts",
+        "tests/validator-parsers.spec.ts",
+        "tests/validators.spec.ts"
+      ]
+    },
+    "tests/markdown.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/markdown.mjs"
+      ],
+      "importedBy": []
+    },
+    "tests/mcp-server.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "rpc"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/openapi-parse.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "writeSpec"
+        ]
+      },
+      "imports": [
+        "src/core/validators/openapi.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/parsers.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "buildIn"
+        ]
+      },
+      "imports": [
+        "src/core/code-graph.mjs",
+        "src/core/parsers/symbols.mjs",
+        "src/core/parsers/resolve.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/quality-gate-orchestrator.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "tempConfig"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/scaffold.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/scorecard.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "tempFile"
+        ]
+      },
+      "imports": [
+        "scripts/generate-pr-scorecard.mjs"
+      ],
+      "importedBy": []
+    },
+    "tests/security-auditor.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "tests/signoff-governance.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "writeSignoff"
+        ]
+      },
+      "imports": [
+        "scripts/verify-human-signoff.mjs",
+        "src/core/governance.mjs"
+      ],
+      "importedBy": []
+    },
+    "tests/slice.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/cli/commands/slice.mjs",
+        "src/cli/commands/graph.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/sync-editors.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/validator-parsers.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "file"
+        ]
+      },
+      "imports": [
+        "src/core/validators/prd.mjs",
+        "src/core/validators/plan.mjs",
+        "src/core/validators/ci-container.mjs",
+        "src/core/validators/coverage.mjs",
+        "src/core/validators/scaffold.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/validators.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "validator"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
     }
   },
   "circularDependencies": [
     "src/cli/commands/graph.mjs <--> src/cli/commands/slice.mjs"
+  ],
+  "unresolvedImports": [
+    "../.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs"
   ]
 }

@@ -70,7 +70,7 @@ function runScript(scriptPath, args = []) {
   }
 }
 
-function main() {
+async function main() {
   const [, , command, ...args] = process.argv;
 
   if (!command || command === 'help' || command === '--help' || command === '-h') {
@@ -80,7 +80,7 @@ function main() {
 
   switch (command.toLowerCase()) {
     case 'gate':
-      executeGate(args);
+      await executeGate(args);
       break;
 
     case 'security':
@@ -150,4 +150,4 @@ function main() {
   }
 }
 
-main();
+await main();
