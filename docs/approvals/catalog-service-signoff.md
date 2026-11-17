@@ -1,5 +1,7 @@
 # SDLC Phase Sign-Off: catalog-service
 
+> **Demo attestation:** Example sign-off for documentation. Not a production sign-off.
+
 - **Target Phase:** Phase 3
 - **Status:** APPROVED
 - **Reviewed By (Human):** Rishikesh Kumar

@@ -550,8 +550,12 @@ node bin/skillforge.mjs slice                         # Generate all slice maps
 node bin/skillforge.mjs slice --list                  # List slices with token counts
 node bin/skillforge.mjs slice --name "order-service"  # Inspect one slice
 
-# ── HITL Sign-Off Generator ───────────────────────────────────────
+# ── HITL Sign-Off Draft & Verification ────────────────────────────
+# Generates a PENDING_REVIEW draft only (never self-approves).
 node bin/skillforge.mjs signoff --feature "order-service" --by "Lead Architect"
+# A human sets Status: APPROVED, checks the boxes, and commits with `git commit -S`.
+# Verification requires an allow-listed, non-agent author and a signed commit.
+node bin/skillforge.mjs signoff --verify docs/approvals/order-service-signoff.md
 
 # ── Automated Self-Healing Loop ───────────────────────────────────
 node bin/skillforge.mjs heal                     # Auto-fix failing tests in a loop
