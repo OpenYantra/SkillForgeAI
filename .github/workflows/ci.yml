@@ -42,6 +42,9 @@ jobs:
       - name: Check generated context artifacts
         run: node bin/skillforge.mjs graph --check
 
+      - name: Check editor configs
+        run: node scripts/sync-editors.mjs --check
+
       - name: Run tests
         run: npm run test:ts
 

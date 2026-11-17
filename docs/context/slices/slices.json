@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-17T18:01:02.864Z",
+  "generatedAt": "2026-11-17T18:05:00.980Z",
   "globalStats": {
-    "monolithicTokens": 2043,
+    "monolithicTokens": 2090,
     "avgSliceTokens": 260,
-    "tokenSavingsPct": "87.3",
+    "tokenSavingsPct": "87.6",
     "totalSlices": 4
   },
   "slices": [
@@ -153,7 +153,7 @@
       "root": "src/core",
       "container": "src",
       "primaryStack": "typescript",
-      "filesCount": 26,
+      "filesCount": 27,
       "tokenEstimate": 214,
       "mapPath": "docs/context/slices/core-map.md",
       "symbols": {
@@ -236,6 +236,10 @@
           "runSecurityAudit",
           "verifySignOff",
           "printReport",
+          "parseFrontmatter",
+          "normalizeDescription",
+          "fallbackDescription",
+          "readSkillFrontmatter",
           "validateArchitecture",
           "parseDockerfileInstructions",
           "validateDockerfileContent",
