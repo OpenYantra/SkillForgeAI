@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Check generated context artifacts
+        run: node bin/skillforge.mjs graph --check
+
       - name: Run tests
         run: npm run test:ts
 

@@ -1,6 +1,6 @@
 {
   "name": "skillforge-ai",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Autonomous SDLC Engineering Platform for AI Coding Agents",
   "type": "module",
   "bin": {
@@ -60,6 +60,33 @@
   ],
   "author": "SkillForgeAI",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rishikesh-net/SkillForgeAI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rishikesh-net/SkillForgeAI/issues"
+  },
+  "homepage": "https://github.com/rishikesh-net/SkillForgeAI#readme",
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    ".agents",
+    "templates",
+    "examples/order-service",
+    "docs/context",
+    "skillforge.config.json",
+    "skillforge.config.example.json",
+    "skillforge.config.schema.json",
+    "AGENTS.md",
+    "README.md",
+    "GETTING-STARTED.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md"
+  ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",

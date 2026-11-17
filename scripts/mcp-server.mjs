@@ -17,9 +17,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import { VERSION } from '../src/core/version.mjs';
 
 const SERVER_NAME = 'skillforge-ai-mcp';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = VERSION;
 
 /** Framework root (this file lives in <root>/scripts). */
 const FRAMEWORK_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
