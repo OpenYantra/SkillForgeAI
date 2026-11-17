@@ -1,97 +1,121 @@
 #!/usr/bin/env node
 /**
- * SkillForgeAI: Automated Self-Healing Feedback Loop
- * Executes the project's native test suite:
- * - If tests pass: exits with code 0.
- * - If tests fail: isolates the failing assertions, identifies the target source
- *   files via code-graph.json, and synthesizes a precision remediation prompt
- *   for the coding agent to self-correct in a bounded loop.
+ * Script wrapper: bounded self-healing test/fix loop.
+ * The engine lives in `src/core/heal.mjs`.
  */
 
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
-import path from 'node:path';
+import { detectTestProject, discoverTestProjects, runHealLoop, writeIncidentPackage } from '../src/core/heal.mjs';
 
-function detectTestRunnerCommand() {
-  if (fs.existsSync('package.json')) {
-    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-    if (pkg.scripts && pkg.scripts.test) {
-      return 'npm test';
-    }
-    // Fallback to native Node test runner
-    return 'node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts';
-  }
-  if (fs.existsSync('pyproject.toml') || fs.existsSync('requirements.txt')) {
-    return 'pytest';
-  }
-  const csproj = fs.readdirSync('.').find((f) => f.endsWith('.csproj') || f.endsWith('.sln'));
-  if (csproj) {
-    return 'dotnet test';
-  }
-  if (fs.existsSync('go.mod')) {
-    return 'go test ./...';
-  }
-  return 'node --experimental-strip-types --test examples/order-service/tests/**/*.spec.ts';
+function parseArgs(argv) {
+  const maxIndex = argv.indexOf('--max-iterations');
+  const fixIndex = argv.indexOf('--fix');
+  const projectIndex = argv.indexOf('--project');
+
+  return {
+    help: argv.includes('--help') || argv.includes('-h'),
+    dryRun: argv.includes('--dry-run'),
+    all: argv.includes('--all'),
+    maxIterations: maxIndex !== -1 ? argv[maxIndex + 1] : '1',
+    fixScript: fixIndex !== -1 ? argv[fixIndex + 1] : null,
+    project: projectIndex !== -1 ? argv[projectIndex + 1] : null,
+  };
 }
 
-function runSelfHealingLoop(_maxIterations = 3) {
+function fail(message) {
+  console.error(`❌ ${message}`);
+  process.exit(2);
+}
+
+function main() {
+  const options = parseArgs(process.argv.slice(2));
+
+  if (options.help) {
+    console.log(`
+Usage:
+  node scripts/self-heal-loop.mjs [options]
+
+Options:
+  --max-iterations <n>   Maximum test/fix attempts per project (default: 1)
+  --fix <script.mjs>     Node script run between attempts (receives the project dir)
+  --project <dir>        Diagnose a single project directory
+  --all                  Include the root project and nested projects
+  --dry-run              Print the detected runner plan without executing tests
+  --help, -h             Show this help message
+
+Behavior:
+  Without --fix the loop runs once and writes a remediation package. With
+  --fix, a failing attempt invokes the fixer and retries up to --max-iterations.
+`);
+    process.exit(0);
+  }
+
+  if (options.fixScript && !fs.existsSync(options.fixScript)) {
+    fail(`Fix script not found: ${options.fixScript}`);
+  }
+
+  if (!Number.isInteger(Number(options.maxIterations)) || Number(options.maxIterations) < 1) {
+    fail(`Invalid --max-iterations: ${options.maxIterations}`);
+  }
+
+  let projects;
+  if (options.project) {
+    const project = detectTestProject(options.project);
+    if (!project) fail(`No test project detected in: ${options.project}`);
+    projects = [project];
+  } else {
+    projects = discoverTestProjects('.', { all: options.all });
+  }
+
   console.log('\n======================================================');
   console.log('🔄 SkillForgeAI: Automated Self-Healing Test/Fix Loop');
   console.log('======================================================\n');
 
-  const testCommand = detectTestRunnerCommand();
-  console.log(`Executing Test Runner: "${testCommand}"`);
-
-  let testOutput;
-  let passed;
-
-  try {
-    testOutput = execSync(testCommand, { encoding: 'utf-8', stdio: 'pipe' });
-    passed = true;
-  } catch (err) {
-    testOutput = (err.stdout || '') + '\n' + (err.stderr || '') + '\n' + err.message;
-    passed = false;
+  if (projects.length === 0) {
+    fail('No test projects detected. Add a package.json test script, pyproject.toml, go.mod, or .csproj/.sln.');
   }
 
-  if (passed) {
-    console.log('\n✅ All tests passed cleanly! No remediation needed.');
-    console.log(testOutput.trim());
+  console.log(`Detected ${projects.length} test project(s):`);
+  for (const project of projects) {
+    console.log(`   📦 ${project.root} (${project.stack}) → ${project.command} ${project.args.join(' ')}`.trim());
+  }
+
+  if (options.dryRun) {
+    console.log('\n🔍 Dry run complete. No tests were executed.\n');
     process.exit(0);
   }
 
-  console.log('\n❌ Test Failure Detected! Initiating Diagnostic Capture...\n');
+  console.log(`\nMax iterations per project: ${Number(options.maxIterations)}`);
+  if (options.fixScript) console.log(`Fixer: ${options.fixScript}`);
 
-  // Extract failure diagnostics
-  const lines = testOutput.split('\n');
-  const failureLines = lines.filter((l) => /✖|fail|error|AssertionError|assert\.equal|Expected|Received/i.test(l));
+  const report = runHealLoop({
+    projects,
+    maxIterations: Number(options.maxIterations),
+    fixScript: options.fixScript,
+  });
 
-  const cleanFailures = failureLines.slice(0, 15).join('\n');
+  for (const project of report.projects) {
+    if (project.passed) {
+      console.log(`\n✅ ${project.root}: tests passed after ${project.attempts} attempt(s).`);
+      continue;
+    }
+    console.log(`\n❌ ${project.root}: failed after ${project.attempts} attempt(s).`);
+    console.log('------------------------------------------------------');
+    console.log('📋 Diagnostic Failure Report:');
+    console.log('------------------------------------------------------');
+    console.log(project.diagnostics || 'No diagnostics captured.');
+    console.log('------------------------------------------------------');
+  }
 
-  console.log('------------------------------------------------------');
-  console.log('📋 Diagnostic Failure Report:');
-  console.log('------------------------------------------------------');
-  console.log(cleanFailures || testOutput.slice(0, 500));
-  console.log('------------------------------------------------------');
+  if (report.passed) {
+    console.log('\n✅ All detected test projects passed.\n');
+    process.exit(0);
+  }
 
-  // Synthesize Remediation Package for Agent
-  const remediationPackage = {
-    timestamp: new Date().toISOString(),
-    testRunner: testCommand,
-    diagnostics: cleanFailures,
-    remediationInstructions: [
-      '1. Read the failing assertion above.',
-      '2. Locate the corresponding source file and function using docs/context/REPO-MAP.md.',
-      '3. Apply a minimal, targeted patch to fix the defect.',
-      '4. Re-run: node scripts/self-heal-loop.mjs to verify the fix.',
-    ],
-  };
-
-  const incidentPath = path.join('docs', 'context', 'LATEST-TEST-FAILURE.json');
-  fs.writeFileSync(incidentPath, JSON.stringify(remediationPackage, null, 2));
+  const incidentPath = writeIncidentPackage(report);
   console.log(`\n💾 Saved diagnostic incident package to "${incidentPath}".`);
   console.log('🤖 Coding agents can read this package and apply a targeted patch autonomously.\n');
-
   process.exit(1);
 }
 
-runSelfHealingLoop();
+main();

@@ -12,13 +12,55 @@
  * - get_skill_instructions: Retrieves instructions for a specific skill
  */
 
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
+import { fileURLToPath } from 'node:url';
 
 const SERVER_NAME = 'skillforge-ai-mcp';
 const SERVER_VERSION = '1.0.0';
+
+/** Framework root (this file lives in <root>/scripts). */
+const FRAMEWORK_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Run a framework Node script with an argument array (no shell interpolation).
+ * The process keeps the user's working directory so gates/diffs inspect their repo.
+ * @param {string} script path relative to the framework root
+ * @param {string[]} [args]
+ * @returns {string}
+ */
+function runNodeScript(script, args = []) {
+  const result = spawnSync(process.execPath, [path.resolve(FRAMEWORK_ROOT, script), ...args], {
+    encoding: 'utf-8',
+    cwd: process.cwd(),
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    const error = /** @type {Error & {status: number|null, stdout: string, stderr: string}} */ (
+      new Error(`Script failed (${result.status}): ${script}`)
+    );
+    error.stdout = result.stdout || '';
+    error.stderr = result.stderr || '';
+    error.status = result.status;
+    throw error;
+  }
+  return result.stdout || '';
+}
+
+/**
+ * Run a script and return its stdout, or the captured failure output.
+ * @param {string} script
+ * @param {string[]} [args]
+ */
+function runNodeWithErrorCapture(script, args = []) {
+  try {
+    return runNodeScript(script, args);
+  } catch (err) {
+    return err.stdout || err.stderr || err.message;
+  }
+}
 
 const TOOLS = [
   {
@@ -143,33 +185,23 @@ function handleToolCall(name, args = {}) {
 
     case 'check_breaking_changes': {
       try {
-        const out = execSync('node scripts/detect-breaking-changes.mjs', { encoding: 'utf-8' });
-        return out;
+        return runNodeScript('scripts/detect-breaking-changes.mjs');
       } catch (err) {
         return err.stdout || err.message;
       }
     }
 
     case 'run_quality_gate': {
-      const phaseFlag = args.phase ? `--phase ${args.phase}` : '';
-      try {
-        const out = execSync(
-          `node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs ${phaseFlag}`,
-          { encoding: 'utf-8' },
-        );
-        return out;
-      } catch (err) {
-        return err.stdout || err.message;
-      }
+      const gateArgs = [];
+      if (args.phase) gateArgs.push('--phase', String(args.phase));
+      return runNodeWithErrorCapture(
+        '.agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs',
+        gateArgs,
+      );
     }
 
     case 'verify_human_signoff': {
-      try {
-        const out = execSync(`node scripts/verify-human-signoff.mjs "${args.signOffPath}"`, { encoding: 'utf-8' });
-        return out;
-      } catch (err) {
-        return err.stdout || err.message;
-      }
+      return runNodeWithErrorCapture('scripts/verify-human-signoff.mjs', [args.signOffPath]);
     }
 
     case 'get_skill_instructions': {
@@ -214,14 +246,11 @@ function handleToolCall(name, args = {}) {
 
     case 'audit_security': {
       const target = args.path || '.';
-      const isDiff = Boolean(args.diff);
-      const isStrict = Boolean(args.strict);
-      const flagDiff = isDiff ? '--diff' : '';
-      const flagStrict = isStrict ? '--strict' : '';
-      return execSync(`node bin/skillforge.mjs security --json ${flagDiff} ${flagStrict} --path "${target}"`, {
-        encoding: 'utf-8',
-        stdio: 'pipe',
-      });
+      const securityArgs = ['security', '--json'];
+      if (args.diff) securityArgs.push('--diff');
+      if (args.strict) securityArgs.push('--strict');
+      securityArgs.push('--path', target);
+      return runNodeWithErrorCapture('bin/skillforge.mjs', securityArgs);
     }
 
     default:

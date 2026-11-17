@@ -51,6 +51,7 @@ export function scanFiles(dir, fileList = []) {
  *   nodes: Record<string, {language: string, parser: string, symbols: object, imports: string[], importedBy: string[]}>,
  *   circularDependencies: string[],
  *   unresolvedImports: string[],
+ *   errors: Array<{file: string, message: string}>,
  * }} CodeGraph
  */
 
@@ -71,13 +72,26 @@ export function buildCodeGraph(targetDir = '.') {
     nodes: {},
     circularDependencies: [],
     unresolvedImports: [],
+    errors: [],
   };
 
   for (const normFile of normalizedFiles) {
-    const { symbols, internalImports, language, parser } = extractSymbolsAndImports(normFile);
-    graph.languages[language] = (graph.languages[language] || 0) + 1;
-    graph.parsers[parser] = (graph.parsers[parser] || 0) + 1;
-    graph.nodes[normFile] = { language, parser, symbols, imports: internalImports, importedBy: [] };
+    try {
+      const { symbols, internalImports, language, parser } = extractSymbolsAndImports(normFile);
+      graph.languages[language] = (graph.languages[language] || 0) + 1;
+      graph.parsers[parser] = (graph.parsers[parser] || 0) + 1;
+      graph.nodes[normFile] = { language, parser, symbols, imports: internalImports, importedBy: [] };
+    } catch (err) {
+      graph.errors.push({ file: normFile, message: err && err.message ? err.message : String(err) });
+      graph.languages.unknown = (graph.languages.unknown || 0) + 1;
+      graph.nodes[normFile] = {
+        language: 'unknown',
+        parser: 'heuristic',
+        symbols: { classes: [], interfaces: [], types: [], functions: [] },
+        imports: [],
+        importedBy: [],
+      };
+    }
   }
 
   const linked = linkDependencies(graph.nodes, fileSet);

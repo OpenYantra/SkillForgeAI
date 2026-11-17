@@ -85,4 +85,60 @@ describe('mcp-server', () => {
       removeDir(dir);
     }
   });
+
+  it('passes sign-off paths containing spaces without shell interpolation', () => {
+    const dir = makeTempDir('mcp-signoff');
+    try {
+      writeFiles(dir, {
+        'docs/approvals/order service-signoff.md': `# Sign-Off
+- **Status:** APPROVED
+- **Reviewed By (Human):** Dana Human
+- **Approval Date:** 2026-11-11
+- **Commit / Artifact Hash:** abc123
+
+- [x] Authorized to proceed to **Phase 4: Feature Scaffolding & Implementation**
+`,
+      });
+
+      const responses = rpc(dir, [
+        {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: {
+            name: 'verify_human_signoff',
+            arguments: { signOffPath: 'docs/approvals/order service-signoff.md' },
+          },
+        },
+      ]);
+
+      const result = responses[0].result as { content: Array<{ text: string }> };
+      assert.match(result.content[0].text, /PASSED/);
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('runs the security audit for a target directory containing spaces', () => {
+    const dir = makeTempDir('mcp-security');
+    try {
+      writeFiles(dir, { 'src dir/clean.ts': 'export class Clean {}\n' });
+
+      const responses = rpc(dir, [
+        {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: { name: 'audit_security', arguments: { path: 'src dir' } },
+        },
+      ]);
+
+      const result = responses[0].result as { content: Array<{ text: string }> };
+      const report = JSON.parse(result.content[0].text) as { status: string; filesScanned: number };
+      assert.equal(report.status, 'PASSED');
+      assert.ok(report.filesScanned > 0);
+    } finally {
+      removeDir(dir);
+    }
+  });
 });

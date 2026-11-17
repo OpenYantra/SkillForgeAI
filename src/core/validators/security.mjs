@@ -19,6 +19,12 @@ export function validateSecurity(target, options = {}) {
 
   const report = runSecurityAudit({ target, strict: Boolean(options.strict), silent: true });
 
+  for (const error of report.errors || []) {
+    const message = `${error.file}: ${error.message}`;
+    if (error.kind === 'target') result.errors.push(message);
+    else result.warnings.push(message);
+  }
+
   if (report.status === 'FAILED') {
     const criticalHigh = (report.findings || []).filter(
       (finding) => finding.severity === 'CRITICAL' || finding.severity === 'HIGH',

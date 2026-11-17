@@ -115,4 +115,25 @@ describe('generate-pr-scorecard CLI', () => {
       if (fs.existsSync(out)) fs.unlinkSync(out);
     }
   });
+
+  it('surfaces malformed report JSON instead of silently defaulting', () => {
+    const gateFile = tempFile('bad-gate.json');
+    const out = tempFile('scorecard.md');
+    fs.writeFileSync(gateFile, '{ this is not json');
+
+    const result = spawnSync(
+      process.execPath,
+      [SCRIPT, '--diff', tempFile('missing-diff.json'), '--gate', gateFile, '--out', out],
+      { encoding: 'utf-8' },
+    );
+
+    try {
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /not valid JSON/);
+      assert.match(fs.readFileSync(out, 'utf-8'), /Report Integrity/);
+    } finally {
+      if (fs.existsSync(gateFile)) fs.unlinkSync(gateFile);
+      if (fs.existsSync(out)) fs.unlinkSync(out);
+    }
+  });
 });

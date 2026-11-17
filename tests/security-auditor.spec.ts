@@ -148,4 +148,13 @@ describe('Security Vulnerability Auditor', () => {
     assert.equal(parsed.findings.length, 0);
     assert.ok(parsed.filesScanned > 0);
   });
+
+  it('fails closed and reports scan errors for a missing target', () => {
+    const missing = path.join(os.tmpdir(), `sfa-missing-${Date.now()}`);
+    const result = runSecurityAudit({ target: missing, silent: true });
+
+    assert.equal(result.status, 'FAILED');
+    assert.ok(Array.isArray(result.errors));
+    assert.ok(result.errors.some((error) => error.kind === 'target'));
+  });
 });
