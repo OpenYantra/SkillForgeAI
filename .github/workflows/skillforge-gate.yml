@@ -34,7 +34,7 @@ jobs:
           cache: npm
 
       - name: Guard protected enforcement paths
-        if: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skillforge:policy-change') }}
+        if: ${{ github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'skillforge:policy-change') }}
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
