@@ -63,12 +63,16 @@ async function runGatesCli(options = {}) {
   for (const gate of summary.gates) {
     if (gate.status === 'PASSED') {
       console.log(`Evaluating [${gate.name}]... ✅ PASSED`);
+    } else if (gate.status === 'SKIPPED' && gate.required) {
+      console.log(`Evaluating [${gate.name}]... ❌ FAILED (required gate skipped)`);
     } else if (gate.status === 'SKIPPED') {
       console.log(`Evaluating [${gate.name}]... ⏭ SKIPPED (artifact not configured)`);
     } else if (gate.reason === 'Strict mode warning detected') {
       console.log(`Evaluating [${gate.name}]... ❌ FAILED (Strict Warning)`);
     } else if (gate.reason && gate.reason.startsWith('Required artifact')) {
       console.log(`Evaluating [${gate.name}]... ❌ FAILED (missing artifact)`);
+    } else if (gate.reason && /Unresolved required artifact|outside the allowed roots/.test(gate.reason)) {
+      console.log(`Evaluating [${gate.name}]... ❌ FAILED (invalid artifact mapping)`);
     } else {
       console.log(`Evaluating [${gate.name}]... ❌ FAILED`);
     }
@@ -77,11 +81,13 @@ async function runGatesCli(options = {}) {
 
   console.log('\n------------------------------------------------------');
   console.log(
-    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped out of ${summary.totalGates} Total Gates`,
+    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped` +
+      (summary.skippedRequired ? ` (${summary.skippedRequired} required)` : '') +
+      ` out of ${summary.totalGates} Total Gates`,
   );
   console.log('------------------------------------------------------');
 
-  if (summary.failed > 0) {
+  if (summary.status !== 'PASSED') {
     console.log('\n⚠️  One or more SDLC quality gates failed. Check logs above.\n');
     process.exit(1);
   } else {

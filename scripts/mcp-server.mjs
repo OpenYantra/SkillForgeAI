@@ -25,6 +25,11 @@ const SERVER_VERSION = VERSION;
 /** Framework root (this file lives in <root>/scripts). */
 const FRAMEWORK_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+function isInside(root, target) {
+  const relative = path.relative(root, target);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
 /**
  * Run a framework Node script with an argument array (no shell interpolation).
  * The process keeps the user's working directory so gates/diffs inspect their repo.
@@ -193,7 +198,7 @@ function handleToolCall(name, args = {}) {
     }
 
     case 'run_quality_gate': {
-      const gateArgs = [];
+      const gateArgs = ['--json'];
       if (args.phase) gateArgs.push('--phase', String(args.phase));
       return runNodeWithErrorCapture(
         '.agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs',
@@ -206,11 +211,21 @@ function handleToolCall(name, args = {}) {
     }
 
     case 'get_skill_instructions': {
-      const skillPath = path.join('.agents', 'skills', args.skillName, 'SKILL.md');
+      const skillName = String(args.skillName || '');
+      if (!/^[a-z0-9-]+$/i.test(skillName)) {
+        return `Invalid skill name "${skillName}". Expected letters, digits, and hyphens only.`;
+      }
+
+      const skillsRoot = path.resolve('.agents', 'skills');
+      const skillPath = path.resolve(skillsRoot, skillName, 'SKILL.md');
+      if (!isInside(skillsRoot, skillPath)) {
+        return `Invalid skill name "${skillName}".`;
+      }
+
       if (fs.existsSync(skillPath)) {
         return fs.readFileSync(skillPath, 'utf-8');
       }
-      return `Skill "${args.skillName}" not found in .agents/skills/`;
+      return `Skill "${skillName}" not found in .agents/skills/`;
     }
 
     case 'list_domain_slices': {
@@ -247,6 +262,12 @@ function handleToolCall(name, args = {}) {
 
     case 'audit_security': {
       const target = args.path || '.';
+      const workspace = process.cwd();
+      const resolved = path.resolve(workspace, target);
+      if (!isInside(workspace, resolved)) {
+        return `Refusing to audit "${target}": path is outside the workspace.`;
+      }
+
       const securityArgs = ['security', '--json'];
       if (args.diff) securityArgs.push('--diff');
       if (args.strict) securityArgs.push('--strict');

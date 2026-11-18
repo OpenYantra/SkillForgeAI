@@ -85,7 +85,7 @@ Examples:
     );
     if (selfTest && config.source === 'default') {
       console.log(
-        `${colors.yellow}⚠️  No skillforge.config.json found — running in self-test mode against framework example artifacts.${colors.reset}\n`,
+        `${colors.yellow}⚠️  No skillforge.config.json found — refusing to certify a project with self-test targets. Use --self-test to validate framework templates explicitly.${colors.reset}\n`,
       );
     }
   }
@@ -95,7 +95,7 @@ Examples:
     const result = await runGates({
       config,
       phase: selectedPhase,
-      selfTest,
+      selfTest: forceSelfTest ? true : undefined,
       allowMissing,
       strict: isStrict,
     });
@@ -113,12 +113,16 @@ Examples:
     for (const gate of summary.gates) {
       if (gate.status === 'PASSED') {
         console.log(`Evaluating [${gate.name}]... ${colors.green}✔ PASSED${colors.reset}`);
+      } else if (gate.status === 'SKIPPED' && gate.required) {
+        console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (required gate skipped)${colors.reset}`);
       } else if (gate.status === 'SKIPPED') {
         console.log(`Evaluating [${gate.name}]... ${colors.yellow}⏭ SKIPPED (artifact not configured)${colors.reset}`);
       } else if (gate.reason === 'Strict mode warning detected') {
         console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (Strict Warning)${colors.reset}`);
       } else if (gate.reason && gate.reason.startsWith('Required artifact')) {
         console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (missing artifact)${colors.reset}`);
+      } else if (gate.reason && /Unresolved required artifact|outside the allowed roots/.test(gate.reason)) {
+        console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED (invalid artifact mapping)${colors.reset}`);
       } else {
         console.log(`Evaluating [${gate.name}]... ${colors.red}✖ FAILED${colors.reset}`);
       }
@@ -141,11 +145,13 @@ Examples:
 
   console.log(`\n${colors.dim}${'─'.repeat(60)}${colors.reset}`);
   console.log(
-    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped out of ${summary.totalGates} Total Gates`,
+    `Summary: ${summary.passed} Passed, ${summary.failed} Failed, ${summary.skipped} Skipped` +
+      (summary.skippedRequired ? ` (${summary.skippedRequired} required)` : '') +
+      ` out of ${summary.totalGates} Total Gates`,
   );
   console.log(`${colors.dim}${'─'.repeat(60)}${colors.reset}\n`);
 
-  if (summary.failed > 0) {
+  if (summary.status !== 'PASSED') {
     printError('One or more SDLC quality gates failed. Please check the logs above.');
     process.exit(1);
   } else {

@@ -38,11 +38,11 @@ describe('gate config loading', () => {
 
   it('loads a project config and rejects invalid modes', () => {
     const projectConfig = writeTempConfig({
-      version: 1,
+      version: 2,
       mode: 'project',
       artifacts: { src: 'examples/order-service/src' },
     });
-    const invalidConfig = writeTempConfig({ version: 1, mode: 'bogus' });
+    const invalidConfig = writeTempConfig({ version: 2, mode: 'bogus' });
     try {
       const loaded = loadGateConfig(projectConfig);
       assert.equal(loaded.mode, 'project');
@@ -51,6 +51,15 @@ describe('gate config loading', () => {
     } finally {
       fs.unlinkSync(projectConfig);
       fs.unlinkSync(invalidConfig);
+    }
+  });
+
+  it('rejects version 1 configs that try to override gates', () => {
+    const legacy = writeTempConfig({ version: 1, mode: 'project', gates: { disable: ['plan'] } });
+    try {
+      assert.throws(() => loadGateConfig(legacy), /version 2|no longer supported|gates/i);
+    } finally {
+      fs.unlinkSync(legacy);
     }
   });
 });
@@ -133,7 +142,7 @@ describe('expandGlob', () => {
 
 describe('gate CLI project mode (fail closed)', () => {
   it('fails when a required artifact is missing', () => {
-    const cfg = writeTempConfig({ version: 1, mode: 'project', artifacts: {} });
+    const cfg = writeTempConfig({ version: 2, mode: 'project', artifacts: {} });
     try {
       const result = runGate(['--phase', '1', '--config', cfg, '--json']);
       assert.equal(result.status, 1);
@@ -146,15 +155,30 @@ describe('gate CLI project mode (fail closed)', () => {
     }
   });
 
-  it('treats missing artifacts as SKIPPED with --allow-missing', () => {
-    const cfg = writeTempConfig({ version: 1, mode: 'project', artifacts: {} });
+  it('fails closed when no config exists and --self-test is not explicit', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sfa-no-config-'));
+    try {
+      const result = spawnSync(process.execPath, [BIN, 'gate', '--json'], { cwd: dir, encoding: 'utf-8' });
+      assert.equal(result.status, 1);
+      const report = JSON.parse(result.stdout);
+      assert.equal(report.status, 'FAILED');
+      assert.match(report.gates[0].reason, /No skillforge\.config\.json/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when required artifacts are skipped with --allow-missing', () => {
+    const cfg = writeTempConfig({ version: 2, mode: 'project', artifacts: {} });
     try {
       const result = runGate(['--phase', '1', '--config', cfg, '--json', '--allow-missing']);
-      assert.equal(result.status, 0);
+      assert.equal(result.status, 1);
       const report = JSON.parse(result.stdout);
-      assert.equal(report.status, 'PASSED');
+      assert.equal(report.status, 'FAILED');
       assert.equal(report.skipped, 1);
+      assert.equal(report.skippedRequired, 1);
       assert.equal(report.gates[0].status, 'SKIPPED');
+      assert.equal(report.gates[0].required, true);
     } finally {
       fs.unlinkSync(cfg);
     }
@@ -176,9 +200,10 @@ describe('gate CLI project mode (fail closed)', () => {
       'export class Entity { static create(): void { throw new Error("generic"); } }\n',
     );
     const cfg = writeTempConfig({
-      version: 1,
+      version: 2,
       mode: 'project',
       artifacts: { src: srcDir },
+      allowedRoots: [srcDir],
     });
     try {
       const normal = runGate(['--phase', '4', '--config', cfg, '--json']);

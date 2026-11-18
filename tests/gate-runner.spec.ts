@@ -12,7 +12,7 @@ import { applyGateConfig, GATE_REGISTRY } from '../src/core/gate-registry.mjs';
 import { makeTempDir, removeDir } from './helpers/workspace.ts';
 
 function config(overrides: Record<string, unknown> = {}) {
-  return { mode: 'project', artifacts: {}, governance: {}, gates: {}, source: 'file', ...overrides };
+  return { version: 2, mode: 'project', artifacts: {}, governance: {}, source: 'file', ...overrides };
 }
 
 describe('gate runner', () => {
@@ -30,13 +30,15 @@ describe('gate runner', () => {
     assert.match(summary.gates[0].reason, /Required artifact/);
   });
 
-  it('skips missing artifacts when allowMissing is set', async () => {
+  it('fails when required artifacts are skipped with allowMissing', async () => {
     const { summary } = await runGates({ config: config(), phase: 1, allowMissing: true });
-    assert.equal(summary.status, 'PASSED');
+    assert.equal(summary.status, 'FAILED');
+    assert.equal(summary.skippedRequired, 1);
     assert.equal(summary.gates[0].status, 'SKIPPED');
+    assert.equal(summary.gates[0].required, true);
   });
 
-  it('fails when a configured validator key is unknown', async () => {
+  it('rejects validator remapping from project configuration', async () => {
     const { summary } = await runGates({
       config: config({
         artifacts: { plan: '.agents/skills/sfa-project-planner-estimator/templates/project-plan-template.md' },
@@ -45,7 +47,7 @@ describe('gate runner', () => {
       phase: 1,
     });
     assert.equal(summary.status, 'FAILED');
-    assert.match(summary.gates[0].reason, /No validator registered/);
+    assert.match(summary.gates[0].reason, /not permitted|overrides/i);
   });
 
   it('honours strict mode warnings', async () => {
@@ -58,11 +60,11 @@ describe('gate runner', () => {
       );
       const artifacts = { src: dir };
 
-      const normal = await runGates({ config: config({ artifacts }), phase: 4 });
+      const normal = await runGates({ config: config({ artifacts, allowedRoots: [dir] }), phase: 4 });
       assert.equal(normal.summary.status, 'PASSED');
       assert.equal(normal.summary.gates[0].warnings, true);
 
-      const strict = await runGates({ config: config({ artifacts }), phase: 4, strict: true });
+      const strict = await runGates({ config: config({ artifacts, allowedRoots: [dir] }), phase: 4, strict: true });
       assert.equal(strict.summary.status, 'FAILED');
       assert.match(strict.summary.gates[0].reason, /Strict mode warning/);
     } finally {
@@ -76,11 +78,12 @@ describe('gate runner', () => {
 });
 
 describe('applyGateConfig', () => {
-  it('disables gates and remaps validators', () => {
-    const filtered = applyGateConfig(GATE_REGISTRY, { gates: { disable: ['plan'], validators: { prd: 'custom' } } });
-    assert.ok(!filtered.some((gate) => gate.id === 'plan'));
-    assert.equal(filtered.find((gate) => gate.id === 'prd')?.validator, 'custom');
-    assert.equal(filtered.length, GATE_REGISTRY.length - 1);
+  it('rejects gate disabling and validator remapping', () => {
+    assert.throws(() => applyGateConfig(GATE_REGISTRY, { gates: { disable: ['plan'] } }), /not permitted|overrides/i);
+    assert.throws(
+      () => applyGateConfig(GATE_REGISTRY, { gates: { validators: { prd: 'custom' } } }),
+      /not permitted|overrides/i,
+    );
   });
 
   it('is a no-op without overrides', () => {

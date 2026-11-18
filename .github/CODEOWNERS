@@ -1,0 +1,8 @@
+# Enforcement and policy paths require maintainer review.
+/src/core/ @rishikesh-net
+/bin/ @rishikesh-net
+/.agents/ @rishikesh-net
+/.github/workflows/ @rishikesh-net
+/scripts/ @rishikesh-net
+/skillforge.config.json @rishikesh-net
+/gate-policy.json @rishikesh-net

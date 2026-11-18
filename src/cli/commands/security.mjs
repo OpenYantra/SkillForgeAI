@@ -18,6 +18,8 @@ ${colors.bold}Options:${colors.reset}
   --diff            Audit uncommitted changes in Git working tree
   --staged          Audit only staged Git files
   --strict          Fail (exit 1) on warnings (MEDIUM/LOW) as well as errors
+  --include-build-output
+                    Also scan dist/build/out/target directories (excluded by default)
   --json            Emit machine-readable JSON results (for CI/CD PR bots)
   --help, -h        Show this help message
 
@@ -35,6 +37,7 @@ ${colors.bold}Examples:${colors.reset}
   const isStaged = args.includes('--staged');
   const isStrict = args.includes('--strict');
   const isJson = args.includes('--json');
+  const includeBuildOutput = args.includes('--include-build-output');
 
   const pathIndex = args.indexOf('--path');
   let targetPath = pathIndex !== -1 ? args[pathIndex + 1] : null;
@@ -51,6 +54,7 @@ ${colors.bold}Examples:${colors.reset}
       staged: isStaged,
       strict: isStrict,
       json: isJson,
+      includeBuildOutput,
     });
 
     if (result.status === 'FAILED') {

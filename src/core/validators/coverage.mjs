@@ -4,8 +4,31 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { emptyResult, finalize } from './common.mjs';
 import { getParser, grammarForFile } from '../parsers/tree-sitter-loader.mjs';
+
+const EXECUTABLE_TEST = /\.(spec|test)\.(ts|mts|cts|js|mjs|cjs)$/i;
+
+function executeTestFile(file) {
+  const args = ['--test'];
+  if (/\.(ts|mts|cts)$/i.test(file)) args.unshift('--experimental-strip-types');
+  const result = spawnSync(process.execPath, [...args, file], {
+    cwd: process.cwd(),
+    encoding: 'utf-8',
+    timeout: 120_000,
+  });
+
+  if (result.error) return `could not run (${result.error.message})`;
+  if (result.status === 0) return null;
+  const detail = `${result.stderr || ''}\n${result.stdout || ''}`
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(' | ');
+  return `exit ${result.status}${detail ? `: ${detail}` : ''}`;
+}
 
 function scanTestFiles(dir, list = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -81,8 +104,9 @@ function countHeuristicTests(content, file) {
 
 /**
  * @param {string} target test file or directory
+ * @param {{execute?: boolean}} [options]
  */
-export function verifyCoverageCriteria(target) {
+export function verifyCoverageCriteria(target, options = {}) {
   const result = emptyResult();
   if (!target || !fs.existsSync(target)) {
     result.errors.push(target ? `Target not found at "${target}".` : 'Please specify a test file or directory.');
@@ -109,7 +133,7 @@ export function verifyCoverageCriteria(target) {
     totalAssertions += counts.assertions;
 
     if (counts.tests === 0) {
-      result.warnings.push(`File "${relativePath}" does not contain recognized test case declarations.`);
+      result.errors.push(`File "${relativePath}" does not contain any executed test case declarations.`);
     }
     if (counts.assertions === 0) {
       result.errors.push(`File "${relativePath}" has 0 assertions! Tests must assert outcomes.`);
@@ -118,7 +142,14 @@ export function verifyCoverageCriteria(target) {
     const citations = content.match(/(?:^|[^a-zA-Z0-9])(FR-?\d{3}|EC-?\d{3})(?:$|[^a-zA-Z0-9])/gi) || [];
     requirementsCited += citations.length;
     if (citations.length === 0) {
-      result.warnings.push(`File "${relativePath}" does not cite any requirement IDs (e.g. FR-001, EC-001).`);
+      result.errors.push(`File "${relativePath}" does not cite any requirement IDs (e.g. FR-001, EC-001).`);
+    }
+
+    if (options.execute !== false && EXECUTABLE_TEST.test(file) && counts.tests > 0) {
+      const executionFailure = executeTestFile(file);
+      if (executionFailure) {
+        result.errors.push(`Test execution failed for "${relativePath}": ${executionFailure}`);
+      }
     }
   }
 

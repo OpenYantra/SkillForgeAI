@@ -18,6 +18,21 @@ export const AGENT_IDENTITY_PATTERNS = [
   /\bclaude\b/i,
   /\bbot@/i,
   /-bot\b/i,
+  /\bcursor\b/i,
+  /\bdevin\b/i,
+  /\baider\b/i,
+  /\bgemini\b/i,
+  /\bcodex\b/i,
+  /\banthropic\b/i,
+  /\bwindsurf\b/i,
+  /\bcontinue\b/i,
+  /\bcline\b/i,
+  /\broo\b/i,
+  /\baugment\b/i,
+  /\bsweep\b/i,
+  /\bopenhands\b/i,
+  /\brefact\b/i,
+  /\btabnine\b/i,
 ];
 
 /**
@@ -52,15 +67,21 @@ export function makeGitRunner() {
  * Inspect the most recent commit that touched a path.
  * @param {string} filePath
  * @param {(args: string[]) => string} [runGit]
- * @returns {{hash: string, authorEmail: string, signature: string, committedAt: string} | null}
+ * @returns {{hash: string, authorEmail: string, signature: string, committedAt: string, signer: string} | null}
  */
 export function getSignoffCommitInfo(filePath, runGit = makeGitRunner()) {
   try {
-    const out = runGit(['log', '-1', '--format=%H|%ae|%G?|%cI', '--', filePath]);
+    const out = runGit(['log', '-1', '--format=%H|%ae|%G?|%cI|%GS', '--', filePath]);
     if (!out) return null;
-    const [hash, authorEmail, signature, committedAt] = out.split('|');
+    const [hash, authorEmail, signature, committedAt, signer] = out.split('|');
     if (!hash) return null;
-    return { hash, authorEmail, signature: signature || 'N', committedAt };
+    return {
+      hash,
+      authorEmail,
+      signature: signature || 'N',
+      committedAt,
+      signer: signer || '',
+    };
   } catch {
     return null;
   }

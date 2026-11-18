@@ -30,8 +30,8 @@ describe('skillforge-gate workflow', () => {
     const steps = stepsOf(workflow, 'evaluate-sdlc-gates');
 
     const installIndex = runStepIndex(steps, 'npm ci');
-    const gateIndex = runStepIndex(steps, 'bin/skillforge.mjs gate');
-    const diffIndex = runStepIndex(steps, 'bin/skillforge.mjs diff');
+    const gateIndex = runStepIndex(steps, '.skillforge-eval/bin/skillforge.mjs gate');
+    const diffIndex = runStepIndex(steps, '.skillforge-eval/bin/skillforge.mjs diff');
 
     assert.ok(installIndex !== -1, 'expected an "npm ci" step');
     assert.ok(gateIndex !== -1, 'expected the gate step');

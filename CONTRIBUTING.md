@@ -34,6 +34,20 @@ Run the SDLC quality gates before pushing:
 node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
 ```
 
+## Governance and policy changes
+
+- Gate policy is framework-owned in `gate-policy.json`. After an intentional edit,
+  run `npm run policy:hash` and commit the updated hash.
+- `skillforge.config.json` (version 2) may map gates to artifacts only. Do not add
+  `gates.disable` or `gates.validators`; the loader rejects them.
+- Pull requests that change enforcement paths (`src/core`, `bin`, `.agents`, workflows,
+  `skillforge.config.json`, `gate-policy.json`) are blocked by the CI protected-path
+  guard. A maintainer reviews the change and applies the `skillforge:policy-change`
+  label to bypass the guard.
+- Add `.github/CODEOWNERS` entries when you introduce a new enforcement path.
+- HITL sign-offs must be committed, bind to artifact SHA-256 hashes, and use an
+  allow-listed reviewer identity/key.
+
 ## Repository layout
 
 | Path | Purpose |

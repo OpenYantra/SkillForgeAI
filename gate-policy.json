@@ -1,0 +1,106 @@
+{
+  "policyVersion": 1,
+  "policyHash": "sha256:21a441f20d4eedd64ae269b787e2bde8dc83c7ca566fb849b98ac6f8baec279b",
+  "gates": [
+    {
+      "id": "plan",
+      "phase": 1,
+      "name": "Phase 1: Planning & Feasibility",
+      "script": ".agents/skills/sfa-project-planner-estimator/scripts/validate-plan.mjs",
+      "artifactKey": "plan",
+      "selfTestTarget": ".agents/skills/sfa-project-planner-estimator/templates/project-plan-template.md",
+      "required": true,
+      "validator": "plan"
+    },
+    {
+      "id": "prd",
+      "phase": 2,
+      "name": "Phase 2: Requirements Analysis (PRD)",
+      "script": ".agents/skills/sfa-prd-generator-validator/scripts/validate-prd.mjs",
+      "artifactKey": "prd",
+      "selfTestTarget": "examples/order-service/order-service.prd.md",
+      "required": true,
+      "validator": "prd"
+    },
+    {
+      "id": "openapi",
+      "phase": 2,
+      "name": "Phase 2/3: API Contract (OpenAPI)",
+      "script": ".agents/skills/sfa-api-contract-designer/scripts/validate-openapi.mjs",
+      "artifactKey": "openapi",
+      "selfTestTarget": ".agents/skills/sfa-api-contract-designer/templates/openapi-template.yaml",
+      "required": true,
+      "validator": "openapi"
+    },
+    {
+      "id": "architecture",
+      "phase": 3,
+      "name": "Phase 3: Architecture & ADRs",
+      "script": ".agents/skills/sfa-system-architecture-adr/scripts/validate-architecture.mjs",
+      "artifactKey": "architecture",
+      "selfTestTarget": ".agents/skills/sfa-system-architecture-adr/templates/architecture-spec-template.md",
+      "required": true,
+      "validator": "architecture"
+    },
+    {
+      "id": "signoff",
+      "phase": 3,
+      "name": "Phase 3 -> 4: Human-in-the-Loop (HITL) Sign-Off Gate",
+      "script": "scripts/verify-human-signoff.mjs",
+      "artifactKey": "signoff",
+      "selfTestTarget": "examples/order-service/docs/approvals/order-service-signoff.md",
+      "required": true,
+      "validator": "signoff"
+    },
+    {
+      "id": "scaffold",
+      "phase": 4,
+      "name": "Phase 4: Code Scaffolding Boundaries",
+      "script": ".agents/skills/sfa-feature-scaffolder/scripts/verify-scaffold.mjs",
+      "artifactKey": "src",
+      "selfTestTarget": "examples/order-service/src",
+      "required": true,
+      "validator": "scaffold"
+    },
+    {
+      "id": "tests",
+      "phase": 5,
+      "name": "Phase 5: Test Criteria & AAA Structure",
+      "script": ".agents/skills/sfa-unit-test-synthesizer/scripts/verify-coverage-criteria.mjs",
+      "artifactKey": "tests",
+      "selfTestTarget": "examples/order-service/tests/order.service.spec.ts",
+      "required": true,
+      "validator": "coverage"
+    },
+    {
+      "id": "container",
+      "phase": 6,
+      "name": "Phase 6: Container Hardening & CI/CD",
+      "script": ".agents/skills/sfa-cicd-container-automator/scripts/validate-ci-container.mjs",
+      "artifactKey": "dockerfile",
+      "selfTestTarget": ".agents/skills/sfa-cicd-container-automator/templates/Dockerfile.template",
+      "required": true,
+      "validator": "ciContainer"
+    },
+    {
+      "id": "security",
+      "phase": 6,
+      "name": "Phase 6: Security Weakness & Vulnerability Audit",
+      "script": ".agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs",
+      "artifactKey": "src",
+      "selfTestTarget": "examples/order-service/src",
+      "required": true,
+      "validator": "security"
+    },
+    {
+      "id": "rca",
+      "phase": 7,
+      "name": "Phase 7: Maintenance & Incident RCA",
+      "script": ".agents/skills/sfa-incident-root-cause-analyzer/scripts/validate-rca.mjs",
+      "artifactKey": "rca",
+      "selfTestTarget": ".agents/skills/sfa-incident-root-cause-analyzer/templates/rca-report-template.md",
+      "required": true,
+      "validator": "rca"
+    }
+  ]
+}

@@ -40,6 +40,16 @@ export function validatePrd(target) {
     result.errors.push(
       'No functional requirement IDs found under Functional Requirements (expected FR-001, FR-002, ...).',
     );
+  } else {
+    const weak = functional
+      .split('\n')
+      .filter((line) => /FR-\d{3}/i.test(line))
+      .filter((line) => line.replace(/FR-\d{3}/gi, '').replace(/[^a-zA-Z0-9]/g, '').length < 10);
+    if (weak.length > 0) {
+      result.errors.push(
+        `Functional requirement(s) without substantive text: ${weak.map((line) => line.trim()).join('; ')}`,
+      );
+    }
   }
 
   const edgeCases = sectionBody(content, /Edge Cases/i) || '';
@@ -51,8 +61,22 @@ export function validatePrd(target) {
   }
 
   const acceptance = sectionBody(content, /Acceptance Criteria/i) || '';
-  if (!hasBddStatements(acceptance)) {
-    result.errors.push('Acceptance criteria must include BDD statements (Given / When / Then).');
+  const bddLines = acceptance.split('\n').map((line) => line.replace(/[*_`]/g, ''));
+  const hasScenario = (keyword) =>
+    bddLines.some((line) => {
+      const parts = line.split(new RegExp(`\\b${keyword}\\b`, 'i'));
+      if (parts.length < 2) return false;
+      return (
+        parts
+          .slice(1)
+          .join('')
+          .replace(/[^a-zA-Z0-9]/g, '').length >= 10
+      );
+    });
+  if (!hasBddStatements(acceptance) || !hasScenario('Given') || !hasScenario('When') || !hasScenario('Then')) {
+    result.errors.push(
+      'Acceptance criteria must include structured BDD scenarios: Given / When / Then with scenario text.',
+    );
   }
 
   result.details = { functionalRequirements: frIds, edgeCases: ecIds };

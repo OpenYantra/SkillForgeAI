@@ -5,7 +5,7 @@
  * checkboxes inside fenced code blocks are never mistaken for real content.
  */
 
-const FENCE_RE = /^( {0,3})(`{3,}|~{3,})(.*)$/;
+const FENCE_RE = /^( {0,3})(`{3,}|~{3,})(.*?)\r?$/;
 const HEADING_RE = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/;
 
 /**
@@ -87,13 +87,42 @@ export function sectionBody(content, pattern) {
 }
 
 /**
- * Count fenced blocks with a given info string (e.g. `mermaid`).
+ * Count fenced blocks with a given info string (e.g. `mermaid`) that contain
+ * at least one non-whitespace line. Empty fences do not count.
  * @param {string} content
  * @param {string} language
  */
 export function countFencedBlocks(content, language) {
-  const re = new RegExp(`^ {0,3}(\`{3,}|~{3,})\\s*${language}\\b`, 'gim');
-  return (content.match(re) || []).length;
+  const languageRe = new RegExp(`^${language}\\b`, 'i');
+  let open = null;
+  let count = 0;
+  let hasContent = false;
+
+  for (const line of content.split('\n')) {
+    const match = line.match(FENCE_RE);
+    if (!open) {
+      if (match) {
+        open = {
+          char: match[2][0],
+          length: match[2].length,
+          target: languageRe.test(match[3].trim()),
+        };
+        hasContent = false;
+      }
+      continue;
+    }
+
+    if (match && match[2][0] === open.char && match[2].length >= open.length) {
+      if (open.target && hasContent) count++;
+      open = null;
+      continue;
+    }
+
+    if (open.target && line.trim().length > 0) hasContent = true;
+  }
+
+  if (open && open.target && hasContent) count++;
+  return count;
 }
 
 /**

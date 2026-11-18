@@ -1,0 +1,692 @@
+{
+  "meta": {
+    "framework": "SkillForgeAI",
+    "version": "1.2.0",
+    "triageDate": "2026-11-18",
+    "source": "docs/audit/2026-11-skillforge-audit.md",
+    "reproCommand": "npm run audit:repro",
+    "taxonomy": {
+      "confirmed-bug": "The implementation does not meet its own documented claim. Fix the framework, keep the test.",
+      "policy-decision": "The secure expectation is defensible but product policy may intentionally allow it. Ratify or change policy, then keep/adjust/remove the test.",
+      "false-positive": "The assertion is too strict or the behaviour is legitimate. Rewrite or remove the test.",
+      "guard": "Passing test that pins a property which is currently safe."
+    },
+    "remediation": {
+      "p0_1": {
+        "status": "implemented"
+      },
+      "p0_2": {
+        "status": "implemented"
+      },
+      "p0_3": {
+        "status": "implemented"
+      },
+      "p1": {
+        "status": "implemented"
+      },
+      "p1_5": {
+        "status": "implemented"
+      },
+      "p1_6": {
+        "status": "implemented"
+      },
+      "policyDecisions": {
+        "status": "ratified",
+        "accepted": [
+          "AUD-R04 build outputs out of scope by default",
+          "AUD-D03 ADR absence is a Phase 3 warning"
+        ]
+      }
+    },
+    "reproStatus": {
+      "passing": 41,
+      "failing": 0,
+      "note": "All audit assertions pass; the suite is a regression gate."
+    }
+  },
+  "summary": {
+    "tests": 41,
+    "confirmedBug": 28,
+    "policyDecision": 11,
+    "falsePositive": 0,
+    "guard": 2
+  },
+  "rootCauses": [
+    {
+      "id": "RC-1",
+      "title": "Trust-domain collapse",
+      "description": "Gate policy, validator code and CI enforcement live in the same repository as the AI agent they constrain. Nothing is pinned, signed, or immutable at enforcement time.",
+      "tests": [
+        "AUD-G01",
+        "AUD-G02",
+        "AUD-G05",
+        "AUD-G07",
+        "AUD-C05"
+      ]
+    },
+    {
+      "id": "RC-2",
+      "title": "Fail-open defaults",
+      "description": "Missing mode, skipped gates and unresolved globs resolve to success instead of failure.",
+      "tests": [
+        "AUD-G03",
+        "AUD-G04",
+        "AUD-G06"
+      ]
+    },
+    {
+      "id": "RC-3",
+      "title": "Attestation not bound to identity or content",
+      "description": "Sign-off checks working-tree bytes against an older commit, trusts a self-asserted author email, and never binds approval to artifact hashes.",
+      "tests": [
+        "AUD-S01",
+        "AUD-S02",
+        "AUD-S03",
+        "AUD-S04",
+        "AUD-S05",
+        "AUD-S06",
+        "AUD-S07"
+      ]
+    },
+    {
+      "id": "RC-4",
+      "title": "Structural-only validation",
+      "description": "PRD, architecture and test gates validate headings and token counts, not substance or execution.",
+      "tests": [
+        "AUD-T01",
+        "AUD-T02",
+        "AUD-T03",
+        "AUD-D01",
+        "AUD-D02",
+        "AUD-D03"
+      ]
+    },
+    {
+      "id": "RC-5",
+      "title": "Rule-engine QA gap",
+      "description": "Security rules are regexes without positive-fixture liveness tests, so dead rules (SEC-004, multi-line SEC-014) ship undetected.",
+      "tests": [
+        "AUD-R01",
+        "AUD-R02",
+        "AUD-R03",
+        "AUD-R04",
+        "AUD-R05",
+        "AUD-R06",
+        "AUD-R07"
+      ]
+    },
+    {
+      "id": "RC-6",
+      "title": "CI supply-chain hygiene",
+      "description": "Mutable action tags, install scripts, persisted credentials, write tokens around untrusted code, masked failures and no dependency review.",
+      "tests": [
+        "AUD-C01",
+        "AUD-C02",
+        "AUD-C03",
+        "AUD-C04",
+        "AUD-C06",
+        "AUD-C07",
+        "AUD-C08",
+        "AUD-C09",
+        "AUD-C10",
+        "AUD-C11"
+      ]
+    },
+    {
+      "id": "RC-7",
+      "title": "Tool-surface confinement",
+      "description": "MCP tools accept traversal paths, scan outside the workspace, and return production-ready verdicts from self-test fixtures.",
+      "tests": [
+        "AUD-M01",
+        "AUD-M02",
+        "AUD-M03"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "test": "AUD-G01",
+      "findingIds": [
+        "SFA-001"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-1",
+      "severity": "CRITICAL",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Reject gates.disable for required gates. If a break-glass path is needed, require an explicit, recorded, time-boxed override.",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-G02",
+      "findingIds": [
+        "SFA-002"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-1",
+      "severity": "CRITICAL",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Remove gates.validators from adopter config; validators are framework-owned and fixed per gate id.",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-G03",
+      "findingIds": [
+        "SFA-003"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-2",
+      "severity": "HIGH",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Keep --allow-missing for local bootstrap but (a) never print a production-ready claim, (b) make skip counts a non-zero exit in CI, (c) require a recorded opt-out. Ratify whether the flag may exist at all in project mode.",
+      "status": "fixed",
+      "fixedIn": "P0.1",
+      "statusNote": "Fail-closed implementation; the product decision about whether --allow-missing should exist remains."
+    },
+    {
+      "test": "AUD-G04",
+      "findingIds": [
+        "SFA-004"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-2",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Require an explicit mode. Missing or invalid mode must throw, matching skillforge.config.schema.json.",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-G05",
+      "findingIds": [
+        "SFA-005"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-1",
+      "severity": "MEDIUM",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Decide whether monorepo/sibling-package targets are supported. If yes, add a configured allowedRoots list and reject everything else; if no, reject all paths outside the repo.",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-G06",
+      "findingIds": [
+        "SFA-006"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-2",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Fail when any configured non-optional glob resolves to zero files (or emit an explicit UNRESOLVED status that blocks CI).",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-G07",
+      "findingIds": [
+        "SFA-007"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-1",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Validate skillforge.config.json against its schema at load time; reject unknown keys and unsupported override values.",
+      "status": "fixed",
+      "fixedIn": "P0.1"
+    },
+    {
+      "test": "AUD-S01",
+      "findingIds": [
+        "SFA-010"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-3",
+      "severity": "CRITICAL",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Verify the committed blob (git show HEAD:path) or hash the working-tree content and require it to equal the committed blob before running identity checks.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S02",
+      "findingIds": [
+        "SFA-011"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-3",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Require a mandatory artifact list with path + SHA-256; verify each hash at gate time. Rename the field from 'Commit / Artifact Hash' to 'Commit' and add a real artifact binding.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S03",
+      "findingIds": [
+        "SFA-012"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-3",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Compare the signing key fingerprint/UID (%GF/%GS) to allow-listed reviewer keys. Do not use the author email as the identity.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S04",
+      "findingIds": [
+        "SFA-013"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-3",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Use the signed approval date (or author date) for TTL and reject documents whose approval date is in the future or older than the TTL.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S05",
+      "findingIds": [
+        "SFA-014"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-3",
+      "severity": "MEDIUM",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "A denylist is not a security control. Prefer the allow-list of reviewer key fingerprints (AUD-S03) and treat this test as documentation of the heuristic's limits. Rewrite or retire after S03.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S06",
+      "findingIds": [
+        "SFA-015"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-3",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Parse the sign-off with the fence-aware markdown parser and read fields only from the document header block.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-S07",
+      "findingIds": [
+        "SFA-016"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-3",
+      "severity": "MEDIUM",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Agree the machine-readable verdict contract. Recommendation: always return {mode, demo, artifactHashes, signerFingerprint} and never authorize deployment when demo=true.",
+      "status": "fixed",
+      "fixedIn": "P0.3"
+    },
+    {
+      "test": "AUD-R01",
+      "findingIds": [
+        "SFA-020"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-5",
+      "severity": "CRITICAL",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Fix the SEC-004 regex (remove the empty-matching \\s* alternative) and add a positive fixture to the normal test suite.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-R02",
+      "findingIds": [
+        "SFA-021"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-5",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Scan .env/YAML/Dockerfile regardless of comment marker; only skip comments for code extensions, and add inline suppression syntax.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-R03",
+      "findingIds": [
+        "SFA-022"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-5",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Scan multi-line windows or the parsed config for SEC-014 so formatting does not evade detection.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-R04",
+      "findingIds": [
+        "SFA-023"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-5",
+      "severity": "MEDIUM",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Decide scanning policy for build outputs. If dist/build are intentionally excluded, document it as an explicit trust assumption and add an opt-in --include-build-output flag; otherwise scan them.",
+      "status": "accepted",
+      "statusNote": "Build outputs are out of scope by default; --include-build-output opts in."
+    },
+    {
+      "test": "AUD-R05",
+      "findingIds": [
+        "SFA-020",
+        "SFA-022"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-5",
+      "severity": "CRITICAL",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Add a rule-liveness test requiring at least one positive fixture per SEC-* rule; this is the durable fix that prevents RC-5 regressions.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-R06",
+      "findingIds": [
+        "SFA-024"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-5",
+      "severity": "HIGH",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Define a per-severity blocking policy in framework-owned config. Recommended default: HIGH and CRITICAL block; MEDIUM blocks in CI; LOW warns.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-R07",
+      "findingIds": [
+        "SFA-025"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-5",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Include untracked files in diff mode (git status --porcelain) or document that --staged is mandatory for pre-commit.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-T01",
+      "findingIds": [
+        "SFA-030"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-4",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Execute the project test command in the Phase 5 gate and use the real exit code; keep static counts as an additional heuristic.",
+      "status": "fixed",
+      "fixedIn": "P1.6"
+    },
+    {
+      "test": "AUD-T02",
+      "findingIds": [
+        "SFA-031"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-4",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Require a minimum number of executed tests (from the runner report) rather than declared tests.",
+      "status": "fixed",
+      "fixedIn": "P1.6"
+    },
+    {
+      "test": "AUD-T03",
+      "findingIds": [
+        "SFA-032"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-4",
+      "severity": "LOW",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Ratify the traceability rule. Recommendation: require citations for tests mapped to FR-/EC- IDs and fail the gate only for tests that claim a requirement mapping.",
+      "status": "fixed",
+      "fixedIn": "P1.6"
+    },
+    {
+      "test": "AUD-D01",
+      "findingIds": [
+        "SFA-040"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-4",
+      "severity": "HIGH",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Define the minimum PRD content contract (non-empty FR bodies, AC per FR, NFR targets). The current 'structural only' contract is coherent but undersells the README claim.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-D02",
+      "findingIds": [
+        "SFA-041"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-4",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Count only non-empty Mermaid bodies and validate the diagram parses.",
+      "status": "fixed",
+      "fixedIn": "P1"
+    },
+    {
+      "test": "AUD-D03",
+      "findingIds": [
+        "SFA-042"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-4",
+      "severity": "LOW",
+      "decisionOwner": "Product owner",
+      "recommendedAction": "Decide whether ADR existence is required at Phase 3 or only before release. If required, fail; if progressive, keep the warning and document it.",
+      "status": "accepted",
+      "statusNote": "ADR absence is a Phase 3 warning by ratified policy."
+    },
+    {
+      "test": "AUD-M01",
+      "findingIds": [
+        "SFA-050"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-7",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Validate skillName against ^[a-z0-9-]+$ and assert the resolved path stays under .agents/skills.",
+      "status": "fixed",
+      "fixedIn": "P1.5"
+    },
+    {
+      "test": "AUD-M02",
+      "findingIds": [
+        "SFA-051"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-7",
+      "severity": "HIGH",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Confine audit_security paths to the workspace root by default; add an explicit, documented opt-in for external paths.",
+      "status": "fixed",
+      "fixedIn": "P1.5"
+    },
+    {
+      "test": "AUD-M03",
+      "findingIds": [
+        "SFA-052"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-7",
+      "severity": "MEDIUM",
+      "decisionOwner": "Framework maintainer",
+      "recommendedAction": "Return a structured verdict with mode; never emit a production-ready claim when mode is self-test.",
+      "status": "fixed",
+      "fixedIn": "P1.5"
+    },
+    {
+      "test": "AUD-C01",
+      "findingIds": [
+        "SFA-061"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "HIGH",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Pin all actions to 40-character commit SHAs and manage updates via Dependabot.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C02",
+      "findingIds": [
+        "SFA-062"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "HIGH",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Use npm ci --ignore-scripts in CI; add a separate, reviewed step for packages that genuinely need install scripts.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C03",
+      "findingIds": [
+        "SFA-063"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "HIGH",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Set persist-credentials: false on checkouts that precede untrusted execution.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C04",
+      "findingIds": [
+        "SFA-066"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "MEDIUM",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Remove || true from gate/diff/scorecard steps and handle missing reports explicitly.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C05",
+      "findingIds": [
+        "SFA-060",
+        "SFA-069"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-1",
+      "severity": "HIGH",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Run gates from an immutable pinned source and add a protected-path guard plus CODEOWNERS. Verify server-side branch protection as part of acceptance.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C06",
+      "findingIds": [
+        "SFA-064"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "MEDIUM",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Split evaluation (read-only, no untrusted code) from commenting (write, no code execution).",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C07",
+      "findingIds": [
+        "SFA-065"
+      ],
+      "classification": "confirmed-bug",
+      "rootCause": "RC-6",
+      "severity": "MEDIUM",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Declare permissions: {} at workflow level and grant the minimum per job.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C08",
+      "findingIds": [
+        "SFA-067"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-6",
+      "severity": "MEDIUM",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Operational policy, not a code bug. Recommended: add Dependabot for npm and github-actions with a review SLA.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C09",
+      "findingIds": [
+        "SFA-068"
+      ],
+      "classification": "policy-decision",
+      "rootCause": "RC-6",
+      "severity": "MEDIUM",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Operational policy. Recommended: add actions/dependency-review-action or npm audit --audit-level=high as a required check.",
+      "status": "fixed",
+      "fixedIn": "P0.2"
+    },
+    {
+      "test": "AUD-C10",
+      "findingIds": [
+        "SFA-G01"
+      ],
+      "classification": "guard",
+      "rootCause": "RC-6",
+      "severity": "INFO",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Keep. Add to the normal test suite as a regression guard.",
+      "status": "guard"
+    },
+    {
+      "test": "AUD-C11",
+      "findingIds": [],
+      "classification": "guard",
+      "rootCause": "RC-6",
+      "severity": "INFO",
+      "decisionOwner": "Platform / security",
+      "recommendedAction": "Keep. Add to the normal test suite as a regression guard.",
+      "status": "guard"
+    }
+  ],
+  "ratificationChecklist": [
+    "AUD-G03: may --allow-missing exist in project mode? If yes, what must it print/exit in CI?",
+    "AUD-G05: are artifact paths outside the repository a supported monorepo scenario? If yes, define allowedRoots.",
+    "AUD-S05: confirm the denylist is documentation-only and superseded by key-fingerprint allow-listing.",
+    "AUD-S07: confirm the machine-readable attestation verdict contract.",
+    "AUD-R04: are dist/build/bin in scope for the security audit? If not, record the trust assumption.",
+    "AUD-R06: confirm the per-severity blocking policy (recommended: HIGH/CRITICAL always, MEDIUM in CI).",
+    "AUD-T03: confirm whether FR-/EC- citations are mandatory for all tests.",
+    "AUD-D01: confirm the minimum PRD content contract.",
+    "AUD-D03: is an ADR required at Phase 3 or only before release?",
+    "AUD-C08/C09: confirm dependency-update and vulnerability-review policy."
+  ]
+}

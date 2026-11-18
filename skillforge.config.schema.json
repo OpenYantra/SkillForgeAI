@@ -6,7 +6,7 @@
   "required": ["version", "mode"],
   "properties": {
     "$schema": { "type": "string" },
-    "version": { "type": "integer", "enum": [1] },
+    "version": { "type": "integer", "enum": [2] },
     "mode": {
       "type": "string",
       "enum": ["project", "self-test"],
@@ -28,34 +28,10 @@
         "rca": { "$ref": "#/definitions/target" }
       }
     },
-    "gates": {
-      "type": "object",
-      "description": "Optional gate-registry overrides (disable a phase gate or remap its in-process validator).",
-      "additionalProperties": false,
-      "properties": {
-        "disable": {
-          "type": "array",
-          "items": {
-            "enum": [
-              "plan",
-              "prd",
-              "openapi",
-              "architecture",
-              "signoff",
-              "scaffold",
-              "tests",
-              "container",
-              "security",
-              "rca"
-            ]
-          }
-        },
-        "validators": {
-          "type": "object",
-          "description": "Maps a gate id to a custom validator key.",
-          "additionalProperties": { "type": "string" }
-        }
-      }
+    "allowedRoots": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional directories, relative to the repository root, that may contain project artifacts. Paths outside these roots are rejected."
     },
     "governance": {
       "type": "object",
@@ -66,6 +42,11 @@
           "items": { "type": "string" },
           "description": "Reviewer email addresses permitted to authorize HITL sign-offs."
         },
+        "allowedKeys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Signing key fingerprints (e.g. GPG %GF or SSH SHA256) permitted to sign HITL attestations."
+        },
         "requireSignedCommits": { "type": "boolean" },
         "signoffTtlDays": { "type": "integer", "minimum": 1 },
         "allowAgentIdentities": { "type": "boolean" }
@@ -74,7 +55,7 @@
   },
   "definitions": {
     "target": {
-      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" }, "minItems": 1 }]
     }
   }
 }

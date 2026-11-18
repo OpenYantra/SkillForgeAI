@@ -21,7 +21,7 @@ const SCRIPT = path.join(
 
 function tempConfig(): string {
   const file = path.join(os.tmpdir(), `sfa-orch-${Date.now()}-${Math.random().toString(16).slice(2)}.json`);
-  fs.writeFileSync(file, JSON.stringify({ version: 1, mode: 'project', artifacts: {} }));
+  fs.writeFileSync(file, JSON.stringify({ version: 2, mode: 'project', artifacts: {} }));
   return file;
 }
 
@@ -43,12 +43,12 @@ describe('run-all-gates orchestrator', () => {
     }
   });
 
-  it('treats missing artifacts as SKIPPED with --allow-missing', () => {
+  it('fails when required artifacts are skipped with --allow-missing', () => {
     const config = tempConfig();
     try {
       const result = runNode(SCRIPT, ['--phase', '1', '--config', config, '--allow-missing']);
-      assert.equal(result.status, 0, result.stdout + result.stderr);
-      assert.match(result.stdout, /SKIPPED/);
+      assert.equal(result.status, 1, result.stdout + result.stderr);
+      assert.match(result.stdout, /FAILED \(required gate skipped\)/);
     } finally {
       fs.unlinkSync(config);
     }

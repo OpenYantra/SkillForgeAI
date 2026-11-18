@@ -37,9 +37,12 @@ export function validateSecurity(target, options = {}) {
     }
   }
 
-  const warnings = (report.findings || []).filter(
-    (finding) => finding.severity === 'MEDIUM' || finding.severity === 'LOW',
-  );
+  const medium = (report.findings || []).filter((finding) => finding.severity === 'MEDIUM');
+  for (const finding of medium) {
+    result.errors.push(`${finding.ruleId} ${finding.name} at ${finding.file}:${finding.line}`);
+  }
+
+  const warnings = (report.findings || []).filter((finding) => finding.severity === 'LOW');
   for (const finding of warnings.slice(0, 10)) {
     result.warnings.push(`${finding.ruleId} ${finding.name} at ${finding.file}:${finding.line}`);
   }

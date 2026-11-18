@@ -1,6 +1,6 @@
 {
   "$schema": "./skillforge.config.schema.json",
-  "version": 1,
+  "version": 2,
   "mode": "project",
   "artifacts": {
     "plan": "docs/plan.md",
@@ -13,12 +13,10 @@
     "dockerfile": "Dockerfile",
     "rca": "docs/incidents/RCA-*.md"
   },
-  "gates": {
-    "disable": [],
-    "validators": {}
-  },
+  "allowedRoots": [],
   "governance": {
     "allowedReviewers": ["you@your-company.com"],
+    "allowedKeys": [],
     "requireSignedCommits": true,
     "signoffTtlDays": 30,
     "allowAgentIdentities": false

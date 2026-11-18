@@ -77,7 +77,7 @@ Quality gates validate **your project's** artifacts via `skillforge.config.json`
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
   "mode": "project",            // "project" (your artifacts) | "self-test" (framework examples)
   "artifacts": {
     "plan": "docs/plan.md",
@@ -93,10 +93,14 @@ Quality gates validate **your project's** artifacts via `skillforge.config.json`
 }
 ```
 
+Which gates exist, which validator they use, and whether they are required is
+**framework-owned** in `gate-policy.json`. Adopter configuration can only map
+gates to artifacts; it cannot disable gates or remap validators.
+
 ```bash
 node bin/skillforge.mjs gate --config skillforge.config.json  # explicit config
 node bin/skillforge.mjs gate --self-test                       # validate framework examples
-node bin/skillforge.mjs gate --allow-missing                   # missing artifacts -> SKIPPED
+node bin/skillforge.mjs gate --allow-missing                   # report skips; required gates still fail
 ```
 
 If a **required** artifact is missing in `project` mode, the gate **fails closed**. Copy [`skillforge.config.example.json`](skillforge.config.example.json) to get started.
