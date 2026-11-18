@@ -1,0 +1,845 @@
+{
+  "meta": {
+    "framework": "SkillForgeAI",
+    "version": "1.2.0",
+    "auditDate": "2026-11-18",
+    "mode": "read-only",
+    "summary": "The SDLC quality gates, HITL sign-off and security auditor are all governed by repository-owned code and configuration in the same trust domain as the AI agent they are meant to constrain. Multiple documented guarantees are unenforced or bypassable.",
+    "scope": [
+      "src/core/gate-runner.mjs",
+      "src/core/gate-registry.mjs",
+      "src/core/signoff-verify.mjs",
+      "src/core/governance.mjs",
+      "src/core/security-audit.mjs",
+      "src/core/validators/*.mjs",
+      "scripts/mcp-server.mjs",
+      ".github/workflows/*.yml",
+      "skillforge.config.json",
+      "Git-hook installer"
+    ],
+    "reproCommand": "npm run audit:repro",
+    "triage": "docs/audit/triage.md",
+    "triageJson": "docs/audit/triage.json",
+    "minimalFixDesign": "docs/audit/minimal-trust-fix.md",
+    "reproResults": {
+      "tests": 41,
+      "passedGuards": 2,
+      "failedFindings": 39,
+      "exitCode": 1,
+      "transcript": "docs/audit/repro-transcript.md"
+    },
+    "remediationStatus": {
+      "status": "implemented",
+      "date": "2026-11-18",
+      "reproStatus": {
+        "passing": 41,
+        "failing": 0
+      },
+      "remediatedIn": "2.0.0"
+    }
+  },
+  "findings": [
+    {
+      "id": "SFA-001",
+      "severity": "CRITICAL",
+      "domain": "gate-policy",
+      "title": "Mandatory quality gates can be disabled from repository-owned config",
+      "cwe": "CWE-693",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/gate-registry.mjs",
+      "line": "197-205",
+      "test": "AUD-G01",
+      "poc": "{ mode:'project', gates:{ disable:['security'] } } -> 9/10 gates pass, status PASSED",
+      "impact": "An AI agent with repo write access removes the gate that constrains it and still receives a PASSED certification.",
+      "remediation": "Make gate enablement immutable at runtime; reject disable/remap of required gates; verify policy hash against a signed baseline.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-002",
+      "severity": "CRITICAL",
+      "domain": "gate-policy",
+      "title": "Any gate validator can be remapped to a weaker validator",
+      "cwe": "CWE-693",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": "src/core/gate-registry.mjs",
+      "line": "200-204",
+      "test": "AUD-G02",
+      "poc": "phase 6 + gates.validators.security='scaffold' -> container PASSED, security PASSED; security auditor never runs",
+      "impact": "The security audit can be replaced by a boundary check while the report still shows a green security gate.",
+      "remediation": "Remove validator remap from adopter config; allow only a fixed registry of framework-owned validators.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-003",
+      "severity": "HIGH",
+      "domain": "gate-policy",
+      "title": "Zero evaluated gates reports PASSED",
+      "cwe": "CWE-754",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/gate-runner.mjs",
+      "line": "92-115, 215",
+      "test": "AUD-G03",
+      "poc": "empty artifacts + --allow-missing -> 0 passed, 0 failed, 10 skipped, status PASSED",
+      "impact": "The CLI prints 'ALL SDLC QUALITY GATES PASSED! Project is ready for production' without evaluating anything.",
+      "remediation": "Treat skipped required gates as a failure; require at least one evaluated gate per phase; remove --allow-missing from CI usage.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-004",
+      "severity": "HIGH",
+      "domain": "gate-policy",
+      "title": "Missing mode silently downgrades to self-test",
+      "cwe": "CWE-1188",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/gate-registry.mjs",
+      "line": "165, 186-189",
+      "test": "AUD-G04",
+      "poc": "{ version: 1 } -> isSelfTest() true; gates validate framework templates instead of project artifacts",
+      "impact": "A truncated or partially written config turns production enforcement into a self-test that validates shipped templates.",
+      "remediation": "Require explicit 'mode' and fail closed when absent or invalid; validate config against the JSON schema at runtime.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-005",
+      "severity": "MEDIUM",
+      "domain": "gate-policy",
+      "title": "Artifact paths outside the repository are accepted",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021 Broken Access Control",
+      "file": "src/core/glob.mjs",
+      "line": "57-60",
+      "test": "AUD-G05",
+      "poc": "artifacts.src = <temp dir outside repo> -> resolveGateTargets() accepts it",
+      "impact": "Gates can be pointed at arbitrary files (including shipped framework templates in node_modules) instead of project artifacts.",
+      "remediation": "Canonicalize artifact paths and reject anything outside the repository root.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-006",
+      "severity": "MEDIUM",
+      "domain": "gate-policy",
+      "title": "Unresolved required globs are silently ignored",
+      "cwe": "CWE-754",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/gate-registry.mjs",
+      "line": "229-236",
+      "test": "AUD-G06",
+      "poc": "artifacts.src = ['examples/order-service/src', 'missing/**'] -> phase 4 PASSED",
+      "impact": "A typo or deleted directory silently narrows gate coverage without failing the run.",
+      "remediation": "Fail when any configured pattern resolves to zero files.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-007",
+      "severity": "MEDIUM",
+      "domain": "gate-policy",
+      "title": "Config is never validated against its JSON schema at runtime",
+      "cwe": "CWE-20",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": "src/core/gate-registry.mjs",
+      "line": "158-178",
+      "test": "AUD-G07",
+      "poc": "config with unknown top-level key and a security->scaffold remap loads without error",
+      "impact": "Typos and unsupported overrides are silently accepted, producing a false sense of enforcement.",
+      "remediation": "Validate with skillforge.config.schema.json before any gate runs; reject unknown keys.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-010",
+      "severity": "CRITICAL",
+      "domain": "signoff",
+      "title": "Uncommitted working-tree approval satisfies the HITL gate",
+      "cwe": "CWE-345",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": "src/core/signoff-verify.mjs",
+      "line": "45, 97",
+      "test": "AUD-S01",
+      "poc": "commit a PENDING_REVIEW draft, then edit the file to APPROVED without committing -> PASSED",
+      "impact": "The document content is read from disk while identity/signature/date checks use the older commit, so the approval is never committed by the human.",
+      "remediation": "Verify the blob at HEAD (git show) or hash the working-tree content and compare to the committed blob.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-011",
+      "severity": "HIGH",
+      "domain": "signoff",
+      "title": "'Artifact Hash' is the commit hash and is optional; approval is not bound to artifact content",
+      "cwe": "CWE-345",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": "src/core/signoff-verify.mjs",
+      "line": "65-66, 122-126",
+      "test": "AUD-S02",
+      "poc": "sign off a PRD, then mutate the PRD -> PASSED; omitting the hash field skips the check entirely",
+      "impact": "An approval can authorize a PRD/architecture document that was never reviewed.",
+      "remediation": "Require a path plus SHA-256 of each approved artifact and verify it at gate time; make the field mandatory.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-012",
+      "severity": "HIGH",
+      "domain": "signoff",
+      "title": "Signing key UID is not checked; author email is self-asserted",
+      "cwe": "CWE-290",
+      "owasp": "A07:2021 Identification and Authentication Failures",
+      "file": "src/core/governance.mjs",
+      "line": "59",
+      "test": "AUD-S03",
+      "poc": "commit signed by attacker key with author.email=human@corp.com -> %G?='G' and PASSED",
+      "impact": "Any agent with its own GPG key and a spoofed git author email can impersonate an allow-listed reviewer.",
+      "remediation": "Compare the signing key fingerprint/UID (%GF/%GS) to the allow-listed reviewer key, not the author email string.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-013",
+      "severity": "MEDIUM",
+      "domain": "signoff",
+      "title": "TTL uses the forgeable committer date, not the approval date",
+      "cwe": "CWE-367",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": "src/core/governance.mjs",
+      "line": "74-78",
+      "test": "AUD-S04",
+      "poc": "Approval Date 2020-01-01 + GIT_COMMITTER_DATE=now + signoffTtlDays=30 -> PASSED",
+      "impact": "Expired approvals can be revived indefinitely by rewriting the committer date.",
+      "remediation": "Use the human Approval Date from the signed document (or the author date) and bind it to a freshness attestation.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-014",
+      "severity": "MEDIUM",
+      "domain": "signoff",
+      "title": "Agent identity denylist misses common coding agents",
+      "cwe": "CWE-184",
+      "owasp": "A07:2021 Identification and Authentication Failures",
+      "file": "src/core/governance.mjs",
+      "line": "13-21",
+      "test": "AUD-S05",
+      "poc": "cursor, devin, aider, gemini, codex, anthropic assistant identities -> isAgentIdentity() false",
+      "impact": "An automated committer whose identity is not on the short pattern list is treated as a human reviewer.",
+      "remediation": "Use an allow-list of reviewer key fingerprints; treat everything else as automated.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-015",
+      "severity": "MEDIUM",
+      "domain": "signoff",
+      "title": "Sign-off parsing is not fence-aware",
+      "cwe": "CWE-20",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/signoff-verify.mjs",
+      "line": "48-71",
+      "test": "AUD-S06",
+      "poc": "authorization checkbox placed inside a fenced code block -> PASSED",
+      "impact": "Structural tokens anywhere in the raw document (fences, quotes, examples) satisfy the approval gate.",
+      "remediation": "Reuse the fence-aware markdown parser and read fields only from the document header.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-016",
+      "severity": "MEDIUM",
+      "domain": "signoff",
+      "title": "Self-test attestations are indistinguishable from production approvals",
+      "cwe": "CWE-1188",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/signoff-verify.mjs",
+      "line": "92-95",
+      "test": "AUD-S07",
+      "poc": "self-test mode returns passed=true with only a human-readable warning",
+      "impact": "Downstream tools see passed=true and cannot tell the verdict is a demo attestation.",
+      "remediation": "Return a structured verdict (mode, demo, artifact hash, signer fingerprint) and refuse production authorization in demo mode.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.3",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-020",
+      "severity": "CRITICAL",
+      "domain": "security-auditor",
+      "title": "SEC-004 hardcoded-credential rule can never match",
+      "cwe": "CWE-798",
+      "owasp": "A07:2021 Identification and Authentication Failures",
+      "file": "src/core/security-audit.mjs",
+      "line": "74",
+      "test": "AUD-R01, AUD-R05",
+      "poc": "password = 'S3cr3tP@ssw0rd' -> no SEC-004 finding",
+      "impact": "The primary hardcoded-secret detector is dead because the negative lookahead contains \\s*, which matches the empty string.",
+      "remediation": "Remove the empty-matching alternative; add a positive-fixture liveness test for every rule.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-021",
+      "severity": "HIGH",
+      "domain": "security-auditor",
+      "title": "Secret scanning skips every comment line",
+      "cwe": "CWE-798",
+      "owasp": "A02:2021 Cryptographic Failures",
+      "file": "src/core/security-audit.mjs",
+      "line": "353-356",
+      "test": "AUD-R02",
+      "poc": "# AKIAIOSFODNN7EXAMPLE in .env -> not reported",
+      "impact": "Secrets committed in comments, YAML headers, or .env files are invisible to the audit.",
+      "remediation": "Scan .env/YAML regardless of comment marker; only skip comments for code extensions, and support inline suppression.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-022",
+      "severity": "MEDIUM",
+      "domain": "security-auditor",
+      "title": "Multi-line CORS-with-credentials rule is dead in line-based scanning",
+      "cwe": "CWE-942",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/security-audit.mjs",
+      "line": "199-200",
+      "test": "AUD-R03, AUD-R05",
+      "poc": "prettier-formatted origin '*' / credentials: true on separate lines -> no SEC-014 finding",
+      "impact": "The most common formatting of a critical misconfiguration evades detection.",
+      "remediation": "Scan multi-line windows (or the parsed config) instead of individual lines.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-023",
+      "severity": "MEDIUM",
+      "domain": "security-auditor",
+      "title": "Build output directories are excluded from scanning",
+      "cwe": "CWE-693",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/security-audit.mjs",
+      "line": "234-245",
+      "test": "AUD-R04",
+      "poc": "eval() in dist/bundle.js -> zero files scanned",
+      "impact": "Vulnerable code that is actually shipped in build artifacts is never audited.",
+      "remediation": "Scan build outputs or explicitly document them as out of scope per project policy.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-024",
+      "severity": "HIGH",
+      "domain": "security-auditor",
+      "title": "MEDIUM weaknesses never block the gate",
+      "cwe": "CWE-693",
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "file": "src/core/validators/security.mjs",
+      "line": "40-45",
+      "test": "AUD-R06",
+      "poc": "MD5 password hashing -> gate PASSED (warning only); CI does not pass --strict",
+      "impact": "Weak cryptography and insecure randomness are reported but do not stop the pipeline.",
+      "remediation": "Define per-severity blocking policy in framework-owned config and enforce it in CI.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-025",
+      "severity": "MEDIUM",
+      "domain": "security-auditor",
+      "title": "--diff mode excludes untracked files",
+      "cwe": "CWE-754",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": "src/core/security-audit.mjs",
+      "line": "273",
+      "test": "AUD-R07",
+      "poc": "new untracked leaked.ts with an AWS key -> 0 findings in --diff mode",
+      "impact": "Pre-commit scans miss exactly the newly added files most likely to contain leaked credentials.",
+      "remediation": "Use git status --porcelain or diff HEAD plus untracked files.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-030",
+      "severity": "HIGH",
+      "domain": "test-gate",
+      "title": "The Phase 5 test gate never executes tests",
+      "cwe": "CWE-754",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/coverage.mjs",
+      "line": "49-59, 111-116",
+      "test": "AUD-T01",
+      "poc": "it(...) with assert.equal(1,2) -> gate PASSED",
+      "impact": "Failing test suites are certified because the gate only counts test/assertion syntax.",
+      "remediation": "Run the project test command and use the real exit code; treat syntax counts as an additional check.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.6",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-031",
+      "severity": "MEDIUM",
+      "domain": "test-gate",
+      "title": "Skip-only suites satisfy the test gate",
+      "cwe": "CWE-754",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/coverage.mjs",
+      "line": "49-59",
+      "test": "AUD-T02",
+      "poc": "it.skip(...) containing an assertion -> gate PASSED",
+      "impact": "Disabling tests by adding .skip keeps the quality gate green.",
+      "remediation": "Require a minimum count of executed (not declared) tests.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.6",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-032",
+      "severity": "LOW",
+      "domain": "test-gate",
+      "title": "Missing requirement-ID citations only warn",
+      "cwe": "CWE-1053",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/coverage.mjs",
+      "line": "118-122",
+      "test": "AUD-T03",
+      "poc": "tests with assertions but no FR-/EC- reference -> gate PASSED",
+      "impact": "AGENTS.md rule 3 (traceability) is not enforced by the gate that is supposed to enforce it.",
+      "remediation": "Fail when no requirement citation is present.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.6",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-040",
+      "severity": "HIGH",
+      "domain": "document-gates",
+      "title": "PRD gate is structural theatre",
+      "cwe": "CWE-754",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/prd.mjs",
+      "line": "26-56",
+      "test": "AUD-D01",
+      "poc": "headings + 'None.' + 'FR-001' + the words 'Given When Then' -> PASSED",
+      "impact": "An empty PRD satisfies the Phase 2 gate, so agents can proceed without requirements.",
+      "remediation": "Require minimum content, scenario structure, and cross-reference integrity (FR -> AC -> test).",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-041",
+      "severity": "MEDIUM",
+      "domain": "document-gates",
+      "title": "Empty Mermaid fences count as diagrams",
+      "cwe": "CWE-754",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/architecture.mjs",
+      "line": "31-34",
+      "test": "AUD-D02",
+      "poc": "two empty ```mermaid blocks -> architecture gate PASSED",
+      "impact": "The C4 diagram requirement is satisfied by empty code fences.",
+      "remediation": "Require non-empty diagram bodies and parse/validate the Mermaid graph.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-042",
+      "severity": "LOW",
+      "domain": "document-gates",
+      "title": "Missing ADR index only warns",
+      "cwe": "CWE-1053",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "src/core/validators/architecture.mjs",
+      "line": "38-40",
+      "test": "AUD-D03",
+      "poc": "ADR section with 'Pending.' -> architecture gate PASSED",
+      "impact": "Architecture decisions can be entirely undocumented while the gate passes.",
+      "remediation": "Fail when no ADR references or ADR files exist.",
+      "remediationStatus": {
+        "status": "accepted",
+        "change": "policy",
+        "note": "ADR absence is a Phase 3 warning.",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-050",
+      "severity": "HIGH",
+      "domain": "mcp",
+      "title": "get_skill_instructions allows path traversal",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021 Broken Access Control",
+      "file": "scripts/mcp-server.mjs",
+      "line": "208-214",
+      "test": "AUD-M01",
+      "poc": "skillName='../secret' reads .agents/secret/SKILL.md",
+      "impact": "A prompt-injected agent can read arbitrary SKILL.md-named files outside the skills directory.",
+      "remediation": "Validate skillName against ^[a-z0-9-]+$ and verify the resolved path stays under .agents/skills.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.5",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-051",
+      "severity": "HIGH",
+      "domain": "mcp",
+      "title": "audit_security scans arbitrary absolute paths",
+      "cwe": "CWE-200",
+      "owasp": "A01:2021 Broken Access Control",
+      "file": "scripts/mcp-server.mjs",
+      "line": "248-256",
+      "test": "AUD-M02",
+      "poc": "audit_security({ path: '<outside workspace>' }) returns findings and snippets from that path",
+      "impact": "The tool can be used as a file-content oracle to exfiltrate data outside the workspace via prompt injection.",
+      "remediation": "Confine path to the workspace root and reject absolute/escaping paths.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.5",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-052",
+      "severity": "MEDIUM",
+      "domain": "mcp",
+      "title": "run_quality_gate certifies production using self-test fixtures",
+      "cwe": "CWE-1188",
+      "owasp": "A04:2021 Insecure Design",
+      "file": "scripts/mcp-server.mjs",
+      "line": "196-201",
+      "test": "AUD-M03",
+      "poc": "run_quality_gate() -> 'ALL SDLC QUALITY GATES PASSED! Project is ready for production.' in self-test mode",
+      "impact": "An agent can obtain a production-ready verdict without project artifacts, then report it to the user.",
+      "remediation": "Return structured mode/verdict data and never emit a production-ready claim from self-test.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P1.5",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-060",
+      "severity": "HIGH",
+      "domain": "ci-supply-chain",
+      "title": "CI gate executes the pull request's own gate implementation",
+      "cwe": "CWE-807",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": ".github/workflows/skillforge-gate.yml",
+      "line": "48-52",
+      "test": "AUD-C05",
+      "poc": "a PR editing src/core/gate-runner.mjs (or skillforge.config.json) is graded by that edited code",
+      "impact": "Self-grading: the PR can make its own quality gate return PASSED.",
+      "remediation": "Run gates from an immutable, pinned version (separate workflow from the default branch or a published package) and guard protected paths.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-061",
+      "severity": "HIGH",
+      "domain": "ci-supply-chain",
+      "title": "Third-party actions are pinned to mutable tags",
+      "cwe": "CWE-1357",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": ".github/workflows/ci.yml, .github/workflows/skillforge-gate.yml",
+      "line": "uses: actions/checkout@v4, setup-node@v4, setup-dotnet@v4, github-script@v7",
+      "test": "AUD-C01",
+      "poc": "8 uses: references are tag-pinned, not SHA-pinned",
+      "impact": "A compromised or retagged action executes with repository credentials.",
+      "remediation": "Pin every action to a full 40-character commit SHA and update via Dependabot.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-062",
+      "severity": "HIGH",
+      "domain": "ci-supply-chain",
+      "title": "npm ci runs dependency lifecycle scripts",
+      "cwe": "CWE-829",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": ".github/workflows/ci.yml, .github/workflows/skillforge-gate.yml",
+      "line": "run: npm ci",
+      "test": "AUD-C02",
+      "poc": "a PR modifies package-lock.json to add a package with a postinstall script -> executes in CI",
+      "impact": "Arbitrary code execution on the runner via lockfile tampering.",
+      "remediation": "Use npm ci --ignore-scripts and add a separate, reviewed install step only where builds require it.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-063",
+      "severity": "HIGH",
+      "domain": "ci-supply-chain",
+      "title": "actions/checkout persists credentials while PR code runs",
+      "cwe": "CWE-522",
+      "owasp": "A07:2021 Identification and Authentication Failures",
+      "file": ".github/workflows/ci.yml, .github/workflows/skillforge-gate.yml",
+      "line": "uses: actions/checkout@v4",
+      "test": "AUD-C03",
+      "poc": "persist-credentials is not set to false; later steps run PR-controlled node code",
+      "impact": "PR code can read the persisted token from .git/config and use it against the API.",
+      "remediation": "Set persist-credentials: false on every checkout that precedes untrusted execution.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-064",
+      "severity": "MEDIUM",
+      "domain": "ci-supply-chain",
+      "title": "A job with pull-requests: write executes untrusted code",
+      "cwe": "CWE-269",
+      "owasp": "A01:2021 Broken Access Control",
+      "file": ".github/workflows/skillforge-gate.yml",
+      "line": "19-22",
+      "test": "AUD-C06",
+      "poc": "evaluate-sdlc-gates has pull-requests: write and runs npm ci + node bin/skillforge.mjs",
+      "impact": "Same-repository PR branches (the normal agent workflow) run with a write-capable token available to the job.",
+      "remediation": "Split evaluation (read-only) from commenting (write-only, no code execution).",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-065",
+      "severity": "MEDIUM",
+      "domain": "ci-supply-chain",
+      "title": "Gate workflow has no top-level least-privilege permissions",
+      "cwe": "CWE-732",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": ".github/workflows/skillforge-gate.yml",
+      "line": "14-22",
+      "test": "AUD-C07",
+      "poc": "only job-level permissions are declared; ci.yml declares top-level contents: read",
+      "impact": "Workflow-level token scope falls back to repository defaults.",
+      "remediation": "Declare permissions: {} at workflow level and grant the minimum per job.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-066",
+      "severity": "MEDIUM",
+      "domain": "ci-supply-chain",
+      "title": "Gate, diff, and scorecard failures are masked with '|| true'",
+      "cwe": "CWE-754",
+      "owasp": "A05:2021 Security Misconfiguration",
+      "file": ".github/workflows/skillforge-gate.yml",
+      "line": "46, 51, 63",
+      "test": "AUD-C04",
+      "poc": "node bin/skillforge.mjs gate --out gate-report.json || true",
+      "impact": "A crashed or errored gate run is indistinguishable from a clean run and only fails later if the report is missing.",
+      "remediation": "Let the command exit status fail the step; handle missing reports explicitly.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-067",
+      "severity": "MEDIUM",
+      "domain": "ci-supply-chain",
+      "title": "No automated dependency updates",
+      "cwe": "CWE-1104",
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "file": ".github/dependabot.yml",
+      "line": "missing",
+      "test": "AUD-C08",
+      "poc": "no dependabot.yml or renovate config",
+      "impact": "Vulnerable actions/dependencies (see SFA-061, dependency snapshot) are not remediated automatically.",
+      "remediation": "Add Dependabot for npm and github-actions with a short review SLA.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-068",
+      "severity": "MEDIUM",
+      "domain": "ci-supply-chain",
+      "title": "CI has no dependency vulnerability review",
+      "cwe": "CWE-1104",
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "file": ".github/workflows/*.yml",
+      "line": "missing",
+      "test": "AUD-C09",
+      "poc": "npm audit reports 13 vulnerabilities (9 high) but no CI step fails on them",
+      "impact": "Known vulnerable dependencies can be merged indefinitely.",
+      "remediation": "Add actions/dependency-review-action or npm audit --audit-level=high as a required check.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-069",
+      "severity": "LOW",
+      "domain": "ci-supply-chain",
+      "title": "No CODEOWNERS protection for the enforcement code",
+      "cwe": "CWE-693",
+      "owasp": "A01:2021 Broken Access Control",
+      "file": "CODEOWNERS",
+      "line": "missing",
+      "test": "AUD-C05 (partial)",
+      "poc": "no .github/CODEOWNERS or root CODEOWNERS",
+      "impact": "Without branch-protection verification, PRs can edit src/core, workflows, and the gate config without a human reviewer.",
+      "remediation": "Add CODEOWNERS for src/core, bin, .github/workflows, .agents, and skillforge.config.json; require review and protect the branch.",
+      "remediationStatus": {
+        "status": "fixed",
+        "change": "P0.2",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-070",
+      "severity": "LOW",
+      "domain": "ci-supply-chain",
+      "title": "CI builds PR-controlled MSBuild projects",
+      "cwe": "CWE-1357",
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "file": ".github/workflows/ci.yml",
+      "line": "67",
+      "test": "report-only",
+      "poc": "dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/OrderService.Tests.csproj",
+      "impact": "MSBuild targets, analyzers, and package imports from the PR execute on the runner.",
+      "remediation": "Run .NET tests in a sandboxed job with read-only token and no secrets; pin SDK and analyzers.",
+      "remediationStatus": {
+        "status": "accepted",
+        "change": "P0.2",
+        "note": ".NET tests run in a read-only, secret-free job; MSBuild execution remains a documented trust assumption.",
+        "date": "2026-11-18"
+      }
+    },
+    {
+      "id": "SFA-G01",
+      "severity": "INFO",
+      "domain": "guard",
+      "title": "No pull_request_target workflow",
+      "cwe": "n/a",
+      "owasp": "n/a",
+      "file": ".github/workflows/*.yml",
+      "line": "n/a",
+      "test": "AUD-C10",
+      "poc": "guard test passes",
+      "impact": "Currently safe; keep it that way.",
+      "remediation": "Add a regression check to prevent introducing pull_request_target with a head checkout.",
+      "remediationStatus": {
+        "status": "guard",
+        "date": "2026-11-18"
+      }
+    }
+  ],
+  "dependencySnapshot": {
+    "source": "docs/audit/dependency-audit.json",
+    "productionDependencies": 14,
+    "developmentDependencies": 140,
+    "totalDependencies": 166,
+    "vulnerabilities": {
+      "critical": 0,
+      "high": 9,
+      "moderate": 4,
+      "low": 0,
+      "info": 0,
+      "total": 13,
+      "scope": "all reported advisories are in the dev toolchain (eslint / typescript-eslint / c8 / glob / picomatch / fdir / tinyglobby); no vulnerable production dependency was reported"
+    }
+  },
+  "unverifiableFromRepository": [
+    "Branch protection rules and required status checks",
+    "Repository default GITHUB_TOKEN permissions",
+    "Environment protection rules and secrets",
+    "Organization-level CODEOWNERS enforcement",
+    "Whether the gate workflow is a required check before merge"
+  ]
+}

@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-17T18:05:00.675Z",
-  "totalFiles": 84,
+  "generatedAt": "2026-11-18T06:39:33.043Z",
+  "totalFiles": 99,
   "languages": {
-    "typescript": 76,
+    "typescript": 91,
     "csharp": 8
   },
   "parsers": {
-    "tree-sitter": 84
+    "tree-sitter": 99
   },
   "nodes": {
     "eslint.config.mjs": {
@@ -304,6 +304,7 @@
         "interfaces": [],
         "types": [],
         "functions": [
+          "isInside",
           "runNodeScript",
           "runNodeWithErrorCapture",
           "handleToolCall",
@@ -352,6 +353,20 @@
       },
       "imports": [
         "src/core/skill-frontmatter.mjs"
+      ],
+      "importedBy": []
+    },
+    "scripts/update-policy-hash.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/policy.mjs"
       ],
       "importedBy": []
     },
@@ -655,19 +670,24 @@
         "interfaces": [],
         "types": [],
         "functions": [
+          "validateConfig",
           "loadGateConfig",
           "isSelfTest",
           "applyGateConfig",
+          "isInside",
+          "resolveAllowedRoots",
           "resolveGateTargets"
         ]
       },
       "imports": [
-        "src/core/glob.mjs"
+        "src/core/glob.mjs",
+        "src/core/policy.mjs"
       ],
       "importedBy": [
         "src/cli/commands/gate.mjs",
         "src/core/gate-runner.mjs",
         "src/core/signoff-verify.mjs",
+        "tests/audit/gate-policy.audit.ts",
         "tests/gate-config.spec.ts",
         "tests/gate-runner.spec.ts"
       ]
@@ -682,6 +702,8 @@
         "functions": [
           "loadValidator",
           "normalizeValidatorResult",
+          "runtimeConfigErrors",
+          "failedSummary",
           "runGates"
         ]
       },
@@ -690,6 +712,7 @@
       ],
       "importedBy": [
         "src/cli/commands/gate.mjs",
+        "tests/audit/gate-policy.audit.ts",
         "tests/gate-runner.spec.ts"
       ]
     },
@@ -730,6 +753,7 @@
       "imports": [],
       "importedBy": [
         "src/core/signoff-verify.mjs",
+        "tests/audit/signoff-integrity.audit.ts",
         "tests/signoff-governance.spec.ts"
       ]
     },
@@ -777,6 +801,7 @@
       },
       "imports": [],
       "importedBy": [
+        "src/core/signoff-verify.mjs",
         "src/core/validators/architecture.mjs",
         "src/core/validators/plan.mjs",
         "src/core/validators/prd.mjs",
@@ -872,6 +897,30 @@
         "src/core/validators/coverage.mjs"
       ]
     },
+    "src/core/policy.mjs": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "policyPath",
+          "readIfExists",
+          "canonicalize",
+          "computePolicyHash",
+          "validatePolicy",
+          "verifyPolicySignature",
+          "loadPolicy"
+        ]
+      },
+      "imports": [],
+      "importedBy": [
+        "scripts/update-policy-hash.mjs",
+        "src/core/gate-registry.mjs",
+        "tests/policy.spec.ts"
+      ]
+    },
     "src/core/security-audit.mjs": {
       "language": "typescript",
       "parser": "tree-sitter",
@@ -889,7 +938,8 @@
       "imports": [],
       "importedBy": [
         "src/cli/commands/security.mjs",
-        "src/core/validators/security.mjs"
+        "src/core/validators/security.mjs",
+        "tests/audit/security-rules.audit.ts"
       ]
     },
     "src/core/signoff-verify.mjs": {
@@ -901,15 +951,20 @@
         "types": [],
         "functions": [
           "verifySignOff",
+          "isWorkingTreeDirty",
+          "resolveArtifactPath",
+          "checkArtifacts",
           "printReport"
         ]
       },
       "imports": [
         "src/core/gate-registry.mjs",
-        "src/core/governance.mjs"
+        "src/core/governance.mjs",
+        "src/core/markdown.mjs"
       ],
       "importedBy": [
-        "scripts/verify-human-signoff.mjs"
+        "scripts/verify-human-signoff.mjs",
+        "tests/audit/signoff-integrity.audit.ts"
       ]
     },
     "src/core/skill-frontmatter.mjs": {
@@ -947,7 +1002,9 @@
         "src/core/validators/common.mjs",
         "src/core/markdown.mjs"
       ],
-      "importedBy": []
+      "importedBy": [
+        "tests/audit/doc-theater.audit.ts"
+      ]
     },
     "src/core/validators/ci-container.mjs": {
       "language": "typescript",
@@ -1007,6 +1064,7 @@
         "interfaces": [],
         "types": [],
         "functions": [
+          "executeTestFile",
           "scanTestFiles",
           "isTestFile",
           "walk",
@@ -1020,6 +1078,7 @@
         "src/core/parsers/tree-sitter-loader.mjs"
       ],
       "importedBy": [
+        "tests/audit/test-gate-integrity.audit.ts",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -1079,6 +1138,7 @@
         "src/core/markdown.mjs"
       ],
       "importedBy": [
+        "tests/audit/doc-theater.audit.ts",
         "tests/validator-parsers.spec.ts"
       ]
     },
@@ -1135,7 +1195,9 @@
         "src/core/validators/common.mjs",
         "src/core/security-audit.mjs"
       ],
-      "importedBy": []
+      "importedBy": [
+        "tests/audit/security-rules.audit.ts"
+      ]
     },
     "src/core/version.mjs": {
       "language": "typescript",
@@ -1150,6 +1212,209 @@
       "importedBy": [
         "scripts/mcp-server.mjs"
       ]
+    },
+    "tests/audit/ci-supply-chain.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/doc-theater.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/validators/prd.mjs",
+        "src/core/validators/architecture.mjs",
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/fixtures/security/all-rules.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "tests/audit/fixtures/security/cors-multiline.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "tests/audit/fixtures/security/hardcoded-password.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "tests/audit/fixtures/security/md5-auth.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "hashPassword"
+        ]
+      },
+      "imports": [],
+      "importedBy": []
+    },
+    "tests/audit/gate-policy.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/gate-runner.mjs",
+        "src/core/gate-registry.mjs",
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/helpers/audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [
+          "SignoffDocOptions",
+          "WorkflowFile",
+          "WorkflowStep"
+        ],
+        "types": [],
+        "functions": [
+          "fixture",
+          "frameworkModule",
+          "sha256",
+          "templateArtifacts",
+          "projectConfig",
+          "signoffDoc",
+          "writeSignoffFile",
+          "gitStub",
+          "loadWorkflows",
+          "workflowSteps",
+          "runNodeInDir",
+          "safeRemove"
+        ]
+      },
+      "imports": [
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": [
+        "tests/audit/ci-supply-chain.audit.ts",
+        "tests/audit/doc-theater.audit.ts",
+        "tests/audit/gate-policy.audit.ts",
+        "tests/audit/mcp-boundary.audit.ts",
+        "tests/audit/security-rules.audit.ts",
+        "tests/audit/signoff-integrity.audit.ts",
+        "tests/audit/test-gate-integrity.audit.ts"
+      ]
+    },
+    "tests/audit/mcp-boundary.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "rpc",
+          "toolText"
+        ]
+      },
+      "imports": [
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/security-rules.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": []
+      },
+      "imports": [
+        "src/core/security-audit.mjs",
+        "src/core/validators/security.mjs",
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/signoff-integrity.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "withSignoff"
+        ]
+      },
+      "imports": [
+        "src/core/signoff-verify.mjs",
+        "src/core/governance.mjs",
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/audit/test-gate-integrity.audit.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "withSuite"
+        ]
+      },
+      "imports": [
+        "src/core/validators/coverage.mjs",
+        "tests/audit/helpers/audit.ts"
+      ],
+      "importedBy": []
     },
     "tests/cli.spec.ts": {
       "language": "typescript",
@@ -1321,6 +1586,7 @@
       },
       "imports": [],
       "importedBy": [
+        "tests/audit/helpers/audit.ts",
         "tests/cli.spec.ts",
         "tests/context-check.spec.ts",
         "tests/diff.spec.ts",
@@ -1332,6 +1598,7 @@
         "tests/mcp-server.spec.ts",
         "tests/openapi-parse.spec.ts",
         "tests/parsers.spec.ts",
+        "tests/policy.spec.ts",
         "tests/quality-gate-orchestrator.spec.ts",
         "tests/scaffold.spec.ts",
         "tests/slice.spec.ts",
@@ -1404,6 +1671,24 @@
         "src/core/code-graph.mjs",
         "src/core/parsers/symbols.mjs",
         "src/core/parsers/resolve.mjs",
+        "tests/helpers/workspace.ts"
+      ],
+      "importedBy": []
+    },
+    "tests/policy.spec.ts": {
+      "language": "typescript",
+      "parser": "tree-sitter",
+      "symbols": {
+        "classes": [],
+        "interfaces": [],
+        "types": [],
+        "functions": [
+          "realPolicy",
+          "writePolicy"
+        ]
+      },
+      "imports": [
+        "src/core/policy.mjs",
         "tests/helpers/workspace.ts"
       ],
       "importedBy": []

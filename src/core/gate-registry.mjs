@@ -1,142 +1,137 @@
 /**
- * Canonical SDLC quality-gate registry and project configuration resolver.
+ * Canonical SDLC gate registry and project configuration resolver.
  *
- * Single source of truth for the 10 gates used by:
- * - `src/cli/commands/gate.mjs` (the `skillforge gate` command)
- * - `.agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs`
- *
- * Validator `script`s are framework-owned; `target`s are project-owned and
- * resolved from `skillforge.config.json`. When no config (or self-test mode)
- * is active, each gate falls back to its framework `selfTestTarget`.
+ * The gate list (which gates exist, their phase, validator and whether they are
+ * required) is framework-owned and loaded from `gate-policy.json`. Adopter
+ * configuration can only map gates to artifacts; it cannot disable gates or
+ * remap validators.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { expandGlob } from './glob.mjs';
+import { expandGlob, hasGlob } from './glob.mjs';
+import { computePolicyHash, loadPolicy } from './policy.mjs';
 
 export const DEFAULT_CONFIG_FILE = 'skillforge.config.json';
-
-/**
- * @typedef {{id: string, phase: number, name: string, script: string, artifactKey: string, selfTestTarget: string, required: boolean, validator?: string}} Gate
- */
-
-export const GATE_REGISTRY = /** @type {Gate[]} */ ([
-  {
-    id: 'plan',
-    phase: 1,
-    name: 'Phase 1: Planning & Feasibility',
-    script: '.agents/skills/sfa-project-planner-estimator/scripts/validate-plan.mjs',
-    artifactKey: 'plan',
-    selfTestTarget: '.agents/skills/sfa-project-planner-estimator/templates/project-plan-template.md',
-    required: true,
-  },
-  {
-    id: 'prd',
-    phase: 2,
-    name: 'Phase 2: Requirements Analysis (PRD)',
-    script: '.agents/skills/sfa-prd-generator-validator/scripts/validate-prd.mjs',
-    artifactKey: 'prd',
-    selfTestTarget: 'examples/order-service/order-service.prd.md',
-    required: true,
-  },
-  {
-    id: 'openapi',
-    phase: 2,
-    name: 'Phase 2/3: API Contract (OpenAPI)',
-    script: '.agents/skills/sfa-api-contract-designer/scripts/validate-openapi.mjs',
-    artifactKey: 'openapi',
-    selfTestTarget: '.agents/skills/sfa-api-contract-designer/templates/openapi-template.yaml',
-    required: true,
-  },
-  {
-    id: 'architecture',
-    phase: 3,
-    name: 'Phase 3: Architecture & ADRs',
-    script: '.agents/skills/sfa-system-architecture-adr/scripts/validate-architecture.mjs',
-    artifactKey: 'architecture',
-    selfTestTarget: '.agents/skills/sfa-system-architecture-adr/templates/architecture-spec-template.md',
-    required: true,
-  },
-  {
-    id: 'signoff',
-    phase: 3,
-    name: 'Phase 3 -> 4: Human-in-the-Loop (HITL) Sign-Off Gate',
-    script: 'scripts/verify-human-signoff.mjs',
-    artifactKey: 'signoff',
-    selfTestTarget: 'examples/order-service/docs/approvals/order-service-signoff.md',
-    required: true,
-  },
-  {
-    id: 'scaffold',
-    phase: 4,
-    name: 'Phase 4: Code Scaffolding Boundaries',
-    script: '.agents/skills/sfa-feature-scaffolder/scripts/verify-scaffold.mjs',
-    artifactKey: 'src',
-    selfTestTarget: 'examples/order-service/src',
-    required: true,
-  },
-  {
-    id: 'tests',
-    phase: 5,
-    name: 'Phase 5: Test Criteria & AAA Structure',
-    script: '.agents/skills/sfa-unit-test-synthesizer/scripts/verify-coverage-criteria.mjs',
-    artifactKey: 'tests',
-    selfTestTarget: 'examples/order-service/tests/order.service.spec.ts',
-    required: true,
-  },
-  {
-    id: 'container',
-    phase: 6,
-    name: 'Phase 6: Container Hardening & CI/CD',
-    script: '.agents/skills/sfa-cicd-container-automator/scripts/validate-ci-container.mjs',
-    artifactKey: 'dockerfile',
-    selfTestTarget: '.agents/skills/sfa-cicd-container-automator/templates/Dockerfile.template',
-    required: true,
-  },
-  {
-    id: 'security',
-    phase: 6,
-    name: 'Phase 6: Security Weakness & Vulnerability Audit',
-    script: '.agents/skills/sfa-security-vulnerability-auditor/scripts/audit-security.mjs',
-    artifactKey: 'src',
-    selfTestTarget: 'examples/order-service/src',
-    required: true,
-  },
-  {
-    id: 'rca',
-    phase: 7,
-    name: 'Phase 7: Maintenance & Incident RCA',
-    script: '.agents/skills/sfa-incident-root-cause-analyzer/scripts/validate-rca.mjs',
-    artifactKey: 'rca',
-    selfTestTarget: '.agents/skills/sfa-incident-root-cause-analyzer/templates/rca-report-template.md',
-    required: true,
-  },
-]);
-
+export const CONFIG_VERSION = 2;
 export const VALID_MODES = ['project', 'self-test'];
 
-/** Maps each gate to the in-process validator implementation. */
-const VALIDATOR_BY_ID = {
-  plan: 'plan',
-  prd: 'prd',
-  openapi: 'openapi',
-  architecture: 'architecture',
-  signoff: 'signoff',
-  scaffold: 'scaffold',
-  tests: 'coverage',
-  container: 'ciContainer',
-  security: 'security',
-  rca: 'rca',
-};
+const TOP_LEVEL_KEYS = new Set(['$schema', 'version', 'mode', 'artifacts', 'governance', 'allowedRoots']);
+const ARTIFACT_KEYS = new Set([
+  'plan',
+  'prd',
+  'openapi',
+  'architecture',
+  'signoff',
+  'src',
+  'tests',
+  'dockerfile',
+  'rca',
+]);
+const GOVERNANCE_KEYS = new Set([
+  'allowedReviewers',
+  'allowedKeys',
+  'requireSignedCommits',
+  'signoffTtlDays',
+  'allowAgentIdentities',
+]);
 
-for (const gate of GATE_REGISTRY) {
-  gate.validator = VALIDATOR_BY_ID[gate.id];
+export const GATE_POLICY = loadPolicy();
+export const POLICY_VERSION = GATE_POLICY.policyVersion;
+export const POLICY_HASH = computePolicyHash(GATE_POLICY);
+
+/**
+ * @typedef {{id: string, phase: number, name: string, script: string, artifactKey: string, selfTestTarget: string, required: boolean, validator: string}} Gate
+ */
+
+export const GATE_REGISTRY = /** @type {Gate[]} */ (GATE_POLICY.gates.map((gate) => ({ ...gate })));
+
+/**
+ * Validate adopter configuration. Gate overrides are not part of the schema:
+ * policy is framework-owned.
+ * @param {any} raw
+ * @returns {string[]}
+ */
+export function validateConfig(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return ['config root must be an object.'];
+  }
+
+  for (const key of Object.keys(raw)) {
+    if (!TOP_LEVEL_KEYS.has(key)) {
+      if (key === 'gates') {
+        errors.push(
+          'unknown key "gates": gate overrides are not permitted because the gate policy is framework-owned (gate-policy.json). Remove "gates" from skillforge.config.json.',
+        );
+      } else {
+        errors.push(`unknown key "${key}".`);
+      }
+    }
+  }
+
+  if (raw.version !== CONFIG_VERSION) {
+    errors.push(
+      `version must be ${CONFIG_VERSION}.` +
+        (raw.version === 1 ? ' Version 1 configs are no longer supported: remove "gates" and set "version": 2.' : ''),
+    );
+  }
+
+  if (raw.mode === undefined) {
+    errors.push('Missing required key "mode" ("project" or "self-test").');
+  } else if (!VALID_MODES.includes(raw.mode)) {
+    errors.push(`Invalid "mode": "${raw.mode}" (expected one of: ${VALID_MODES.join(', ')}).`);
+  }
+
+  if (raw.artifacts !== undefined) {
+    if (!raw.artifacts || typeof raw.artifacts !== 'object' || Array.isArray(raw.artifacts)) {
+      errors.push('"artifacts" must be an object mapping artifact keys to a path, glob, or array of paths.');
+    } else {
+      for (const [key, value] of Object.entries(raw.artifacts)) {
+        if (!ARTIFACT_KEYS.has(key)) errors.push(`unknown artifact key "${key}".`);
+        const validValue =
+          typeof value === 'string' ||
+          (Array.isArray(value) && value.length > 0 && value.every((entry) => typeof entry === 'string'));
+        if (!validValue) errors.push(`artifact "${key}" must be a string or a non-empty array of strings.`);
+      }
+    }
+  }
+
+  if (raw.allowedRoots !== undefined) {
+    if (!Array.isArray(raw.allowedRoots) || !raw.allowedRoots.every((entry) => typeof entry === 'string')) {
+      errors.push('"allowedRoots" must be an array of directory paths.');
+    }
+  }
+
+  if (raw.governance !== undefined) {
+    if (!raw.governance || typeof raw.governance !== 'object' || Array.isArray(raw.governance)) {
+      errors.push('"governance" must be an object.');
+    } else {
+      for (const [key, value] of Object.entries(raw.governance)) {
+        if (!GOVERNANCE_KEYS.has(key)) errors.push(`unknown governance key "${key}".`);
+        if (key === 'allowedReviewers' && !Array.isArray(value))
+          errors.push('governance.allowedReviewers must be an array.');
+        if (key === 'allowedKeys' && !Array.isArray(value)) errors.push('governance.allowedKeys must be an array.');
+        if (key === 'requireSignedCommits' && typeof value !== 'boolean') {
+          errors.push('governance.requireSignedCommits must be a boolean.');
+        }
+        if (key === 'allowAgentIdentities' && typeof value !== 'boolean') {
+          errors.push('governance.allowAgentIdentities must be a boolean.');
+        }
+        if (key === 'signoffTtlDays' && (!Number.isInteger(value) || value < 1)) {
+          errors.push('governance.signoffTtlDays must be a positive integer.');
+        }
+      }
+    }
+  }
+
+  return errors;
 }
 
 /**
  * Load and validate the project gate configuration.
  * @param {string} [configPath] explicit config path (relative or absolute)
- * @returns {{mode: string, version: number, artifacts: object, governance: object, gates: object, source: string, path: string}}
+ * @returns {{version: number, mode: string, artifacts: object, governance: object, allowedRoots: string[], source: string, path: string, policyVersion: number, policyHash: string}}
  */
 export function loadGateConfig(configPath) {
   const target = configPath || DEFAULT_CONFIG_FILE;
@@ -145,13 +140,15 @@ export function loadGateConfig(configPath) {
   if (!fs.existsSync(resolved)) {
     if (configPath) throw new Error(`Config file not found: ${resolved}`);
     return {
+      version: CONFIG_VERSION,
       mode: 'self-test',
-      version: 1,
       artifacts: {},
       governance: {},
-      gates: {},
+      allowedRoots: [],
       source: 'default',
       path: resolved,
+      policyVersion: POLICY_VERSION,
+      policyHash: POLICY_HASH,
     };
   }
 
@@ -162,76 +159,115 @@ export function loadGateConfig(configPath) {
     throw new Error(`Invalid JSON in ${resolved}: ${err.message}`, { cause: err });
   }
 
-  const mode = raw.mode || 'self-test';
-  if (!VALID_MODES.includes(mode)) {
-    throw new Error(`Invalid "mode": "${mode}" in ${resolved} (expected one of: ${VALID_MODES.join(', ')}).`);
+  const errors = validateConfig(raw);
+  if (errors.length > 0) {
+    throw new Error(`Invalid config (${resolved}): ${errors.join(' ')}`);
   }
 
   return {
-    mode,
-    version: raw.version || 1,
-    artifacts: raw.artifacts && typeof raw.artifacts === 'object' ? raw.artifacts : {},
-    governance: raw.governance && typeof raw.governance === 'object' ? raw.governance : {},
-    gates: raw.gates && typeof raw.gates === 'object' ? raw.gates : {},
+    version: raw.version,
+    mode: raw.mode,
+    artifacts: raw.artifacts || {},
+    governance: raw.governance || {},
+    allowedRoots: raw.allowedRoots || [],
     source: 'file',
     path: resolved,
+    policyVersion: POLICY_VERSION,
+    policyHash: POLICY_HASH,
   };
 }
 
 /**
  * Determine whether to run in self-test mode.
  * `--self-test` always wins; otherwise project mode is used only when the
- * config explicitly sets `"mode": "project"`.
+ * config explicitly sets `"mode": "project"`. A config without a mode is
+ * treated as project mode and rejected by the runner (fail closed).
  */
 export function isSelfTest(config, flags = {}) {
   if (flags.selfTest) return true;
-  return !config || config.mode !== 'project';
+  return !config || config.mode === 'self-test';
 }
 
 /**
- * Apply project-level gate overrides from `skillforge.config.json`.
+ * Retained for backwards compatibility. Gate overrides are no longer allowed.
  * @param {typeof GATE_REGISTRY} registry
  * @param {{gates?: {disable?: string[], validators?: Record<string, string>}}} [config]
  * @returns {typeof GATE_REGISTRY}
  */
 export function applyGateConfig(registry, config) {
-  const gates = (config && config.gates) || {};
-  const disabled = Array.isArray(gates.disable) ? gates.disable : [];
-  const overrides = gates.validators && typeof gates.validators === 'object' ? gates.validators : {};
+  const gates = config && config.gates;
+  const hasDisable = gates && Array.isArray(gates.disable) && gates.disable.length > 0;
+  const hasValidators = gates && gates.validators && Object.keys(gates.validators).length > 0;
+  if (hasDisable || hasValidators) {
+    throw new Error(
+      'Gate overrides are not permitted: the gate policy is framework-owned (gate-policy.json). Remove "gates" from skillforge.config.json.',
+    );
+  }
+  return registry;
+}
 
-  return registry
-    .filter((gate) => !disabled.includes(gate.id))
-    .map((gate) => (overrides[gate.id] ? { ...gate, validator: overrides[gate.id] } : gate));
+function isInside(root, target) {
+  const relative = path.relative(root, target);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function resolveAllowedRoots(config) {
+  const root = process.cwd();
+  const extra = (config && Array.isArray(config.allowedRoots) ? config.allowedRoots : []).map((entry) =>
+    path.resolve(root, entry),
+  );
+  return [root, ...extra];
 }
 
 /**
  * Resolve the concrete target path(s) for a gate.
- * @returns {{targets: string[], missing: boolean, unresolved: string[], source: 'self-test'|'config'}}
+ * @returns {{targets: string[], missing: boolean, unresolved: string[], rejected: string[], source: 'self-test'|'config'}}
  */
 export function resolveGateTargets(gate, config, opts = {}) {
   if (opts.selfTest) {
-    return { targets: [gate.selfTestTarget], missing: false, unresolved: [], source: 'self-test' };
+    return { targets: [gate.selfTestTarget], missing: false, unresolved: [], rejected: [], source: 'self-test' };
   }
 
   const raw = config && config.artifacts ? config.artifacts[gate.artifactKey] : undefined;
   const entries = Array.isArray(raw) ? raw : raw ? [raw] : [];
   if (entries.length === 0) {
-    return { targets: [], missing: true, unresolved: [], source: 'config' };
+    return { targets: [], missing: true, unresolved: [], rejected: [], source: 'config' };
   }
 
+  const root = process.cwd();
+  const allowedRoots = resolveAllowedRoots(config);
   const candidates = [];
+  const unresolved = [];
+  const rejected = [];
+
   for (const entry of entries) {
-    for (const t of expandGlob(entry)) {
-      if (!candidates.includes(t)) candidates.push(t);
+    const absolute = path.resolve(root, entry);
+
+    if (!allowedRoots.some((allowed) => isInside(allowed, absolute))) {
+      rejected.push(entry);
+      continue;
+    }
+
+    if (hasGlob(entry)) {
+      if (path.isAbsolute(entry)) {
+        unresolved.push(entry);
+        continue;
+      }
+      const matches = expandGlob(entry, root);
+      if (matches.length === 0) unresolved.push(entry);
+      for (const match of matches) {
+        if (!candidates.includes(match)) candidates.push(match);
+      }
+      continue;
+    }
+
+    if (!fs.existsSync(absolute)) {
+      unresolved.push(entry);
+    } else if (!candidates.includes(entry)) {
+      candidates.push(entry);
     }
   }
 
-  const targets = candidates.filter((t) => fs.existsSync(t));
-  const unresolved = candidates.filter((t) => !fs.existsSync(t));
-
-  if (targets.length === 0) {
-    return { targets, missing: true, unresolved, source: 'config' };
-  }
-
-  return { targets, missing: false, unresolved, source: 'config' };
+  const targets = candidates.filter((candidate) => fs.existsSync(candidate));
+  return { targets, missing: targets.length === 0, unresolved, rejected, source: 'config' };
 }

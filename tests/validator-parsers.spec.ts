@@ -27,8 +27,8 @@ All.
 None.
 
 ## 3. Functional Requirements
-| ID | Title |
-| FR-001 | Create |
+| ID | Title | Description |
+| FR-001 | Create Order | System creates a new order in PENDING state. |
 
 ## 4. Non-Functional Requirements
 NFR.
@@ -37,12 +37,12 @@ NFR.
 Flow.
 
 ## 6. Edge Cases
-| EC-001 | empty |
+| EC-001 | Empty items | Reject creation when the item list is empty. |
 
 ## 7. Acceptance Criteria
-- **Given** x
-- **When** y
-- **Then** z
+- **Given** a valid customer
+- **When** the order is submitted
+- **Then** the order is saved
 `;
 
 function file(dir: string, name: string, content: string): string {

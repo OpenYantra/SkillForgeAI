@@ -71,7 +71,7 @@ const RULES = [
     name: 'Hardcoded Credential Assignment',
     severity: SEVERITY.HIGH,
     regex:
-      /(?:password|passwd|apiKey|apiSecret|jwtSecret|clientSecret|dbPassword)\s*[:=]\s*["'](?!(?:test|mock|dummy|fake|placeholder|<.*>|\s*|undefined|null|process\.env))[^"']{8,}["']/i,
+      /(?:password|passwd|apiKey|apiSecret|jwtSecret|clientSecret|dbPassword)\s*[:=]\s*["'](?!(?:test|mock|dummy|fake|placeholder|<.*>|undefined|null|process\.env))[^"']{8,}["']/i,
     description: 'Potential hardcoded password, API secret, or JWT key string literal.',
     hackerVector:
       'Attackers inspect client-side code or public repositories to authenticate as legitimate users/services.',
@@ -196,6 +196,7 @@ const RULES = [
     cwe: 'CWE-942',
     name: 'Permissive Wildcard CORS with Credentials',
     severity: SEVERITY.HIGH,
+    multiline: true,
     regex:
       /(?:origin:\s*['"]\*['"][\s\S]*?credentials:\s*true|Access-Control-Allow-Origin:\s*\*[\s\S]*?Access-Control-Allow-Credentials:\s*true)/i,
     description: 'Access-Control-Allow-Origin wildcard (*) configured alongside credentials: true.',
@@ -244,6 +245,8 @@ const IGNORE_DIRS = new Set([
   '.vscode',
 ]);
 
+const BUILD_OUTPUT_DIRS = new Set(['dist', 'build', 'out', 'target']);
+
 const SCANNABLE_EXTENSIONS = new Set([
   '.js',
   '.mjs',
@@ -276,13 +279,23 @@ function getGitDiffFiles(stagedOnly = false) {
       .split('\n')
       .map((f) => f.trim())
       .filter((f) => f.length > 0 && fs.existsSync(f));
+
+    if (!stagedOnly) {
+      const untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], { encoding: 'utf-8' });
+      for (const file of untracked.split('\n').map((entry) => entry.trim())) {
+        if (file && fs.existsSync(file) && !files.includes(file)) files.push(file);
+      }
+    }
+
     return files;
   } catch {
     return [];
   }
 }
 
-function collectFiles(targetPath, fileList = [], errors = []) {
+function collectFiles(targetPath, fileList = [], errors = [], options = {}) {
+  const includeBuildOutput = options.includeBuildOutput === true;
+
   if (!fs.existsSync(targetPath)) {
     errors.push({ file: targetPath, kind: 'target', message: `Target not found: ${targetPath}` });
     return fileList;
@@ -307,7 +320,8 @@ function collectFiles(targetPath, fileList = [], errors = []) {
 
   if (stat.isDirectory()) {
     const baseDir = path.basename(targetPath);
-    if (IGNORE_DIRS.has(baseDir)) return fileList;
+    const buildOutput = includeBuildOutput && BUILD_OUTPUT_DIRS.has(baseDir);
+    if (IGNORE_DIRS.has(baseDir) && !buildOutput) return fileList;
 
     let entries;
     try {
@@ -317,10 +331,11 @@ function collectFiles(targetPath, fileList = [], errors = []) {
       return fileList;
     }
     for (const entry of entries) {
-      if (IGNORE_DIRS.has(entry.name)) continue;
+      const entryBuildOutput = includeBuildOutput && BUILD_OUTPUT_DIRS.has(entry.name);
+      if (IGNORE_DIRS.has(entry.name) && !entryBuildOutput) continue;
       const fullPath = path.join(targetPath, entry.name);
       if (entry.isDirectory()) {
-        collectFiles(fullPath, fileList, errors);
+        collectFiles(fullPath, fileList, errors, options);
       } else {
         const ext = path.extname(entry.name).toLowerCase();
         const base = entry.name.toLowerCase();
@@ -346,16 +361,30 @@ export function scanFile(filePath, errors = []) {
   }
 
   const lines = content.split('\n');
+  const extension = path.extname(filePath).toLowerCase();
+  const baseName = path.basename(filePath).toLowerCase();
+  const scanComments =
+    extension === '.env' ||
+    extension === '.yaml' ||
+    extension === '.yml' ||
+    extension === '.sh' ||
+    extension === '.bash' ||
+    extension === '.ps1' ||
+    baseName.startsWith('.env') ||
+    baseName.includes('dockerfile');
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex];
-    // Skip comment lines in scans
     const trimmed = line.trim();
-    if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('*') || trimmed.startsWith('/*')) {
+    if (
+      !scanComments &&
+      (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
+    ) {
       continue;
     }
 
     for (const rule of RULES) {
+      if (rule.multiline) continue;
       if (rule.regex.test(line)) {
         findings.push({
           ruleId: rule.id,
@@ -373,11 +402,40 @@ export function scanFile(filePath, errors = []) {
     }
   }
 
+  // Multi-line rules are evaluated against the whole file so formatting does
+  // not hide the pattern.
+  for (const rule of RULES) {
+    if (!rule.multiline) continue;
+    const match = content.match(rule.regex);
+    if (!match || match.index === undefined) continue;
+    const line = content.slice(0, match.index).split('\n').length;
+    findings.push({
+      ruleId: rule.id,
+      cwe: rule.cwe,
+      name: rule.name,
+      severity: rule.severity,
+      file: filePath.replace(/\\/g, '/'),
+      line,
+      snippet: match[0].replace(/\s+/g, ' ').trim().slice(0, 140),
+      description: rule.description,
+      hackerVector: rule.hackerVector,
+      remediation: rule.remediation,
+    });
+  }
+
   return findings;
 }
 
 export function runSecurityAudit(options = {}) {
-  const { target = '.', diff = false, staged = false, strict = false, json = false, silent = false } = options;
+  const {
+    target = '.',
+    diff = false,
+    staged = false,
+    strict = false,
+    json = false,
+    silent = false,
+    includeBuildOutput = false,
+  } = options;
   const emit = silent ? () => {} : (...args) => globalThis.console.log(...args);
 
   let filesToScan;
@@ -394,7 +452,7 @@ export function runSecurityAudit(options = {}) {
       return { status: 'PASSED', findings: [], filesScanned: 0, errors: [] };
     }
   } else {
-    filesToScan = collectFiles(path.resolve(target), [], scanErrors);
+    filesToScan = collectFiles(path.resolve(target), [], scanErrors, { includeBuildOutput });
   }
 
   const allFindings = [];

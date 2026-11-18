@@ -115,11 +115,16 @@ run against the same source tree.
 | Mode | When it is used | What it checks |
 |:---|:---|:---|
 | `project` | `skillforge.config.json` exists and sets `"mode": "project"` | Your artifacts, resolved from the configured paths and globs |
-| `self-test` | No config is present, the config uses self-test mode, or `--self-test` is passed | The framework's own templates and example artifacts |
+| `self-test` | The config sets `"mode": "self-test"`, or `--self-test` is passed | The framework's own templates and example artifacts |
+| none | No config and no `--self-test` | `FAILED` (fail closed) |
 
-In project mode, a missing required artifact fails the gate. Use `--allow-missing` only
-when you intentionally want missing artifacts reported as skipped while the project is
-still being set up.
+A missing `skillforge.config.json` does **not** silently downgrade to self-test:
+`skillforge gate` fails unless `--self-test` is passed explicitly. This keeps an
+agent from deleting the config to obtain a green run.
+
+In project mode, a missing required artifact fails the gate. `--allow-missing`
+reports unconfigured artifacts as skipped, but the run still exits non-zero while
+any required gate is skipped.
 
 ### Key terms
 
@@ -176,6 +181,7 @@ Run the following steps from your project root.
    cp -r <path-to-SkillForgeAI>/templates .
    cp <path-to-SkillForgeAI>/skillforge.config.example.json .
    cp <path-to-SkillForgeAI>/skillforge.config.schema.json .
+   cp <path-to-SkillForgeAI>/gate-policy.json .
    ```
 
    ```powershell
@@ -187,6 +193,7 @@ Run the following steps from your project root.
    Copy-Item -Recurse <path-to-SkillForgeAI>\templates .
    Copy-Item <path-to-SkillForgeAI>\skillforge.config.example.json .
    Copy-Item <path-to-SkillForgeAI>\skillforge.config.schema.json .
+   Copy-Item <path-to-SkillForgeAI>\gate-policy.json .
    ```
 
    > [!IMPORTANT]
@@ -330,9 +337,20 @@ A human reviewer then:
    ```
 
 > [!IMPORTANT]
-> In project mode, the sign-off commit must be authored by an allow-listed, non-agent
-> identity. If `requireSignedCommits` is enabled, the commit must also carry a valid Git
-> signature, match the recorded artifact hash, and fall within the configured TTL.
+> In project mode, the sign-off must be committed (uncommitted edits are rejected), the
+> commit must be authored by an allow-listed, non-agent identity, and the document must
+> declare at least one approved artifact:
+>
+> ```markdown
+> - **Artifact Path:** docs/PRD.md
+> - **Artifact Hash:** <SHA-256 of the reviewed file>
+> ```
+>
+> If `requireSignedCommits` is enabled, the commit must carry a valid Git signature. If
+> `allowedKeys` is configured, the signing key fingerprint must be allow-listed. The TTL
+> is measured from the document's `Approval Date`, not the commit date. Fenced code
+> examples are ignored when reading the sign-off fields. Self-test verdicts are marked
+> `demo: true` and never authorize deployment.
 
 The relevant configuration lives under `governance` in `skillforge.config.json`.
 
@@ -382,8 +400,10 @@ Gate: `scaffold` (`verify-scaffold.mjs`).
 - **Location:** `tests/*.spec.ts`, `*Tests.cs`, `test_*.py`, or `*_test.go`
 - **Gate:** `tests` (`verify-coverage-criteria.mjs`)
 
-The validator checks that test files exist, contain recognized test declarations, assert
-outcomes, and cite requirement or edge-case identifiers.
+The validator checks that test files exist, contain recognized and executed test
+declarations, assert outcomes, and cite requirement or edge-case identifiers. For
+JavaScript/TypeScript specs it runs the file with Node's test runner and fails on a
+non-zero exit; other stacks are checked structurally unless the project provides a runner.
 
 ### 5.8 Phase 6: Container and CI
 
@@ -407,11 +427,13 @@ project and checks each one.
 node bin/skillforge.mjs security --path src
 node bin/skillforge.mjs security --diff
 node bin/skillforge.mjs security --staged --strict
+node bin/skillforge.mjs security --include-build-output
 node bin/skillforge.mjs security --json
 ```
 
-The command exits non-zero for critical or high findings, and for missing targets. Use
-`--strict` to also fail on medium and low findings.
+Build outputs (`dist/`, `build/`, `out/`, `target/`) are out of scope by default; use
+`--include-build-output` to scan them. Through the quality gate, HIGH/CRITICAL/MEDIUM
+findings block and LOW findings warn.
 
 ### 5.10 Phase 7: Maintenance
 
@@ -435,7 +457,7 @@ or as `skillforge <command>` when the package bin is installed.
 | Command | Purpose | Options |
 |:---|:---|:---|
 | `gate` | Evaluate SDLC quality gates | `--phase <1-7>`, `--config <file>`, `--self-test`, `--allow-missing`, `--strict`, `--json`, `--out <file>` |
-| `security` | Audit secrets and vulnerability classes | `--path <dir\|file>`, `--diff`, `--staged`, `--strict`, `--json` |
+| `security` | Audit secrets and vulnerability classes | `--path <dir\|file>`, `--diff`, `--staged`, `--strict`, `--include-build-output`, `--json` |
 | `diff` | Classify changes and list affected callers | `--staged`, `--target <branch>`, `--json`, `--out <file>` |
 | `graph` | Build the code graph and repository map | `--format md\|json\|mermaid`, `--check` |
 | `slice` | Generate or inspect domain slice maps | `--list`, `--name <slice>`, `--json` |
@@ -487,23 +509,25 @@ Each value can be a path, a glob, or an array of paths and globs.
 | Key | Purpose |
 |:---|:---|
 | `allowedReviewers` | Email addresses permitted to authorize sign-offs |
+| `allowedKeys` | Signing key fingerprints (e.g. `%GF` / SSH SHA256) permitted to sign attestations |
 | `requireSignedCommits` | Require a valid Git signature on the sign-off commit |
 | `signoffTtlDays` | Maximum age of a sign-off before it must be renewed |
 | `allowAgentIdentities` | Permit bot or agent identities as sign-off authors |
 
-### Gate overrides
+### Gate policy
 
-| Key | Purpose |
-|:---|:---|
-| `gates.disable` | Gate IDs to skip (for example, when a phase does not apply) |
-| `gates.validators` | Map a gate ID to a different built-in validator key |
+The gate list, validators, and required flags are framework-owned in
+`gate-policy.json`. `skillforge.config.json` can only map gates to artifacts.
+`gates.disable` and `gates.validators` are no longer supported; a config that
+contains them is rejected. Use `allowedRoots` to opt into artifact directories
+outside the repository root.
 
 ### Example
 
 ```json
 {
   "$schema": "./skillforge.config.schema.json",
-  "version": 1,
+  "version": 2,
   "mode": "project",
   "artifacts": {
     "plan": "docs/plan.md",
@@ -516,12 +540,10 @@ Each value can be a path, a glob, or an array of paths and globs.
     "dockerfile": "Dockerfile",
     "rca": "docs/incidents/RCA-*.md"
   },
-  "gates": {
-    "disable": [],
-    "validators": {}
-  },
+  "allowedRoots": [],
   "governance": {
     "allowedReviewers": ["you@example.com"],
+    "allowedKeys": [],
     "requireSignedCommits": true,
     "signoffTtlDays": 30,
     "allowAgentIdentities": false
@@ -529,34 +551,45 @@ Each value can be a path, a glob, or an array of paths and globs.
 }
 ```
 
-Set `"mode": "project"` for real adoption. A missing required artifact fails its gate. If
-you need a temporary green build while artifacts are still being produced, use
-`--allow-missing`, which reports unconfigured artifacts as `SKIPPED`.
+Set `"mode": "project"` for real adoption. A missing required artifact fails its gate, an
+unresolved glob fails the run, and a path outside the repository (or `allowedRoots`) is
+rejected. `--allow-missing` reports unconfigured artifacts as `SKIPPED` but the run still
+exits non-zero while a required gate is skipped.
 
 ## 8. CI and Automation
 
-The repository includes two workflows.
+The repository includes three workflows, split so that untrusted pull-request code is
+never evaluated with a write token.
 
-### Quality gate bot
+### Quality gate evaluator (read-only)
 
 `.github/workflows/skillforge-gate.yml` runs on pull requests and pushes to `main`. It:
 
-1. Checks out the repository and installs Node, .NET, and npm dependencies.
-2. Runs `skillforge diff` and writes `diff-report.json`.
-3. Runs `skillforge gate` and writes `gate-report.json`.
-4. Verifies that the gate report exists.
-5. Generates `pr-scorecard.md`, publishes it to the job summary, and comments on the PR.
-6. Fails the job when the gate report is missing or any gate failed.
+1. Checks out the pull request with `persist-credentials: false`.
+2. Guards protected enforcement paths (`src/core`, `bin`, `.agents`, workflows,
+   `skillforge.config.json`, `gate-policy.json`); a maintainer can apply the
+   `skillforge:policy-change` label for an intentional framework change.
+3. Creates a worktree of the base branch and installs it with `npm ci --ignore-scripts`.
+4. Runs `diff` and `gate` using the **base-branch** evaluator against the PR artifacts, so
+   the PR cannot grade itself.
+5. Runs `npm audit --omit=dev --audit-level=high`.
+6. Uploads `gate-report.json` and `diff-report.json` as artifacts.
 
-The workflow runs `npm ci`, so an adopting repository needs a lockfile or an equivalent
-install step.
+### Scorecard reporter (write-only)
+
+`.github/workflows/skillforge-gate-report.yml` is triggered by `workflow_run`. It has
+`pull-requests: write`, downloads the report artifact, renders the scorecard from the
+default branch, comments on the PR, and enforces the gate status. It does **not** check out
+or execute pull-request code.
 
 ### Repository CI
 
 `.github/workflows/ci.yml` runs lint, formatting, type checking, generated-context
-checks, editor-config checks, the Node test suite, coverage, and the .NET tests. These
-checks protect contributions to the framework itself and serve as a reference for
-project-specific CI.
+checks, editor-config checks, the Node test suite, coverage, the .NET tests, and a
+dependency review. Actions are pinned to full commit SHAs. `npm ci` runs with
+`--ignore-scripts`; native tree-sitter bindings are built in an explicit `npm rebuild`
+step. These checks protect contributions to the framework itself and serve as a reference
+for project-specific CI.
 
 Generated context and editor configuration are committed. CI fails when either set is
 stale, so regenerate them after changing source or skills:
@@ -660,7 +693,9 @@ Repository policies are documented in the following files:
 |:---|:---|:---|
 | `ERR_MODULE_NOT_FOUND: yaml` | Runtime dependencies are not installed | Run `npm ci` in a source checkout, or install the runtime packages in an adopting repository |
 | Gates validate framework templates instead of project files | No config, or mode is `self-test` | Create `skillforge.config.json`, set `"mode": "project"`, and map artifacts |
-| `FAILED (missing artifact)` | The configured path does not exist or does not match the glob | Fix `artifacts`, or use `--allow-missing` temporarily |
+| `FAILED (missing artifact)` | The configured path does not exist or does not match the glob | Fix `artifacts`; `--allow-missing` reports skips but required gates still fail |
+| `Invalid config ... unknown key "gates"` | Config still uses version 1 gate overrides | Remove `gates`, set `"version": 2`; policy lives in `gate-policy.json` |
+| `Invalid gate policy ... hash mismatch` | `gate-policy.json` was edited without updating `policyHash` | Run `npm run policy:hash` and commit the result |
 | Sign-off verification fails | Reviewer is not allow-listed, commit is unsigned, hash differs, or the sign-off expired | Check `governance`, commit with `git commit -S`, and regenerate the sign-off |
 | Graph nodes are labeled `heuristic` | A tree-sitter grammar binding is unavailable | Reinstall dependencies; the graph remains usable with reduced accuracy |
 | `graph --check` reports stale files | `docs/context` was not regenerated | Run `node bin/skillforge.mjs graph` and commit the result |
@@ -713,7 +748,8 @@ SkillForgeAI/
 ├── templates/                   Phase sign-off template
 ├── docs/context/                Generated code graph, repository map, and slices
 ├── examples/                    TypeScript and .NET reference implementations
-├── .github/workflows/           Gate bot and framework CI
+├── .github/workflows/           Gate evaluator, scorecard reporter, and framework CI
+├── gate-policy.json               Framework-owned gate policy (hash-verified)
 ├── skillforge.config.example.json
 ├── skillforge.config.schema.json
 ├── AGENTS.md                    Generated agent instructions

@@ -1,6 +1,6 @@
 {
   "$schema": "./skillforge.config.schema.json",
-  "version": 1,
+  "version": 2,
   "mode": "self-test",
   "artifacts": {
     "plan": ".agents/skills/sfa-project-planner-estimator/templates/project-plan-template.md",

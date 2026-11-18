@@ -7,6 +7,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,6 +25,12 @@ function writeSignoff(overrides: Record<string, string> = {}): string {
     hash: 'abc123',
     ...overrides,
   };
+  const file = path.join(os.tmpdir(), `sfa-signoff-${Date.now()}-${Math.random().toString(16).slice(2)}.md`);
+  const artifact = `${file}.artifact.md`;
+  const artifactContent = 'Approved artifact content.';
+  fs.writeFileSync(artifact, artifactContent);
+  const artifactHash = createHash('sha256').update(artifactContent).digest('hex');
+
   const content = `# SDLC Phase Sign-Off: demo
 
 - **Target Phase:** Phase 3
@@ -32,6 +39,8 @@ function writeSignoff(overrides: Record<string, string> = {}): string {
 - **Reviewer Role:** Lead Architect
 - **Approval Date:** ${o.date}
 - **Commit / Artifact Hash:** ${o.hash}
+- **Artifact Path:** ${artifact}
+- **Artifact Hash:** ${artifactHash}
 
 ---
 
@@ -45,7 +54,6 @@ function writeSignoff(overrides: Record<string, string> = {}): string {
 **Authorized Next Phase:**
 - [x] Authorized to proceed to **Phase 4: Feature Scaffolding & Implementation**
 `;
-  const file = path.join(os.tmpdir(), `sfa-signoff-${Date.now()}-${Math.random().toString(16).slice(2)}.md`);
   fs.writeFileSync(file, content);
   return file;
 }
@@ -63,8 +71,10 @@ const projectConfig = (gov: Record<string, unknown> = {}) => ({
 
 const commitLine =
   (email = 'human@corp.com', sig = 'G', hash = 'abc123', date = '2026-11-15T00:00:00Z') =>
-  () =>
-    `${hash}|${email}|${sig}|${date}`;
+  (args: string[] = []) => {
+    if (args[0] === 'status') return '';
+    return `${hash}|${email}|${sig}|${date}`;
+  };
 
 describe('governance helpers', () => {
   it('detects agent/bot identities and allow-list membership', () => {

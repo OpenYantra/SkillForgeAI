@@ -1,6 +1,6 @@
 {
   "name": "skillforge-ai",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Autonomous SDLC Engineering Platform for AI Coding Agents",
   "type": "module",
   "bin": {
@@ -18,6 +18,8 @@
     "sync": "node bin/skillforge.mjs sync",
     "mcp": "node bin/skillforge.mjs mcp",
     "pr:scorecard": "node scripts/generate-pr-scorecard.mjs",
+    "audit:repro": "node --experimental-strip-types --test \"tests/audit/**/*.audit.ts\"",
+    "policy:hash": "node scripts/update-policy-hash.mjs",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.mjs\" \"scripts/**/*.mjs\" \"bin/**/*.mjs\" \"tests/**/*.ts\" \"examples/order-service/**/*.ts\" \"*.json\" \"eslint.config.mjs\" \"tsconfig*.json\"",
@@ -76,6 +78,7 @@
     "templates",
     "examples/order-service",
     "docs/context",
+    "gate-policy.json",
     "skillforge.config.json",
     "skillforge.config.example.json",
     "skillforge.config.schema.json",

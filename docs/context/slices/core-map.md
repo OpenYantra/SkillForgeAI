@@ -1,12 +1,13 @@
 <!-- skillforge-slice: core -->
 # Vertical Slice: `core`
-> **Est. Tokens:** ~214 | **Root:** `src/core` | **Stack:** typescript | **Files:** 27
+> **Est. Tokens:** ~225 | **Root:** `src/core` | **Stack:** typescript | **Files:** 28
 
 ### 🏛️ Architecture & Exported Symbols
 - **Domain Entities:** None
 - **Ports / Interfaces:** None
 - **Application Services:** None
 - **Persistence & Adapters:** None
+- **Commands & Handlers:** `executeTestFile`
 - **Additional Components:** `runGit`, `tryGit`, `splitLines`, `getGitChangedFiles`, `getDiffForFile`, `classifyChanges`, `loadCachedGraph`, `analyzeDiff`
 
 ### 🔗 Cross-Slice Dependencies

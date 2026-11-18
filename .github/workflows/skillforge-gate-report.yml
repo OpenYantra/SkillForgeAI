@@ -1,0 +1,86 @@
+name: SkillForgeAI SDLC Quality Gate (report)
+
+on:
+  workflow_run:
+    workflows: ['SkillForgeAI SDLC Quality Gate (evaluate)']
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  publish-scorecard:
+    name: Publish scorecard (write, no PR code)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download gate report
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: gate-report
+          path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Generate scorecard
+        continue-on-error: true
+        run: |
+          if [ -f gate-report.json ]; then
+            node scripts/generate-pr-scorecard.mjs --gate gate-report.json --diff diff-report.json --out pr-scorecard.md
+          else
+            printf '<!-- skillforge-pr-scorecard -->\n## 🛡️ SkillForgeAI Quality Gate Report\n\n> **Status:** 🚨 GATE REPORT MISSING — CANNOT CERTIFY\n' > pr-scorecard.md
+          fi
+
+      - name: Publish job step summary
+        if: always()
+        run: |
+          if [ -f pr-scorecard.md ]; then
+            cat pr-scorecard.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Comment on pull request
+        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].number != null }}
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('pr-scorecard.md')) return;
+            const body = fs.readFileSync('pr-scorecard.md', 'utf8');
+            const marker = '<!-- skillforge-pr-scorecard -->';
+            const issue_number = context.payload.workflow_run.pull_requests[0].number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Enforce gate status
+        run: |
+          node -e "
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('gate-report.json', 'utf8'));
+            if (report.status !== 'PASSED') {
+              console.error('❌ SkillForge quality gate failed: ' + (report.failed || report.skippedRequired || 1) + ' gate(s).');
+              process.exit(1);
+            }
+            console.log('✅ All ' + report.totalGates + ' quality gates passed.');
+          "

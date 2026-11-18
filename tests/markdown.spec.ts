@@ -62,6 +62,7 @@ describe('markdown structure parser', () => {
   it('counts real mermaid fences only', () => {
     assert.equal(countFencedBlocks(DOC, 'mermaid'), 2);
     assert.equal(countFencedBlocks(DOC, 'json'), 0);
+    assert.equal(countFencedBlocks('```mermaid\n\n```', 'mermaid'), 0);
   });
 
   it('finds unique IDs and BDD statements', () => {
