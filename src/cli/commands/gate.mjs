@@ -29,8 +29,9 @@ Options:
 Behavior:
   In "project" mode every gate validates the artifact mapped to it in
   skillforge.config.json. A missing required artifact fails the gate (fail closed).
-  In "self-test" mode (default when no config exists) the framework's own
-  example/template artifacts are validated.
+  In "self-test" mode (set via config or explicitly passing --self-test) the
+  framework's own example/template artifacts are validated. When no config exists,
+  gate fails closed unless --self-test is passed explicitly.
 
 Examples:
   skillforge gate

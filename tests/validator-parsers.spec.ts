@@ -168,6 +168,35 @@ describe('AST-backed coverage criteria', () => {
       removeDir(dir);
     }
   });
+
+  it('validates Java and Kotlin test files with JUnit annotations', () => {
+    const dir = makeTempDir('val-cov-jvm');
+    try {
+      const javaTest = file(
+        dir,
+        'OrderTests.java',
+        `package com.example;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class OrderTests {
+    @Test
+    void testCreateOrder() {
+        // FR-001: Order creation
+        assertEquals(1, 1);
+    }
+}
+`,
+      );
+      const result = verifyCoverageCriteria(javaTest, { execute: false });
+      assert.equal(result.passed, true, result.errors.join('\n'));
+      assert.equal(result.details.tests, 1);
+      assert.equal(result.details.assertions, 1);
+      assert.equal(result.details.requirementsCited, 1);
+    } finally {
+      removeDir(dir);
+    }
+  });
 });
 
 describe('scaffold boundary detection', () => {
@@ -180,6 +209,26 @@ describe('scaffold boundary detection', () => {
       assert.equal(result.passed, false);
       assert.equal(result.errors.length, 1);
       assert.match(result.errors[0], /express/);
+    } finally {
+      removeDir(dir);
+    }
+  });
+
+  it('rejects Spring and JPA framework imports in Java domain entities', () => {
+    const dir = makeTempDir('val-scaffold-jvm');
+    try {
+      file(
+        dir,
+        'domain/Order.java',
+        `package com.example.domain;
+import org.springframework.stereotype.Component;
+
+public class Order {}
+`,
+      );
+      const result = verifyScaffold(dir);
+      assert.equal(result.passed, false);
+      assert.ok(result.errors.some((err) => /org\.springframework/.test(err)));
     } finally {
       removeDir(dir);
     }

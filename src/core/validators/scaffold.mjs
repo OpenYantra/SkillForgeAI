@@ -38,6 +38,13 @@ export const FORBIDDEN_DOMAIN_IMPORTS = [
   'gorm.io',
   'database/sql',
   'github.com/gin-gonic',
+  // Java / Kotlin
+  'org.springframework',
+  'jakarta.persistence',
+  'javax.persistence',
+  'org.hibernate',
+  'java.sql',
+  'io.ktor',
 ];
 
 function scanSourceFiles(dir, fileList = []) {
@@ -45,7 +52,7 @@ function scanSourceFiles(dir, fileList = []) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (!/^(bin|obj|node_modules|\.git)$/.test(entry.name)) scanSourceFiles(fullPath, fileList);
-    } else if (/\.(ts|js|mjs|cs|py|go)$/i.test(entry.name)) {
+    } else if (/\.(ts|js|mjs|cs|py|go|java|kt)$/i.test(entry.name)) {
       fileList.push(fullPath);
     }
   }

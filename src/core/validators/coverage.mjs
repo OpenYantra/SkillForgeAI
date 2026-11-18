@@ -47,7 +47,8 @@ function isTestFile(name) {
     /\.(spec|test)\.(ts|js|mjs|tsx|jsx)$/i.test(name) ||
     /Tests?\.cs$/i.test(name) ||
     /(^test_.*|.*_test)\.py$/i.test(name) ||
-    /.*_test\.go$/i.test(name)
+    /.*_test\.go$/i.test(name) ||
+    /Tests?\.(java|kt)$/i.test(name)
   );
 }
 
@@ -95,9 +96,13 @@ function countHeuristicTests(content, file) {
     return { tests, assertions };
   }
 
-  const tests = (content.match(/\[Fact\]|\[Theory\]|\bdef\s+test_\w+|\bfunc\s+Test\w+/g) || []).length;
+  const tests = (
+    content.match(/\[Fact\]|\[Theory\]|\bdef\s+test_\w+|\bfunc\s+Test\w+|@(?:Test|ParameterizedTest)\b/g) || []
+  ).length;
   const assertions = (
-    content.match(/Assert\.\w+\s*\(|^\s*assert\b|\.should\b|t\.(?:Error|Errorf|Fatal|Fatalf)\s*\(/gm) || []
+    content.match(
+      /Assert\.\w+\s*\(|^\s*assert\b|\.should\b|t\.(?:Error|Errorf|Fatal|Fatalf)\s*\(|assert(?:Equals|True|False|Null|NotNull|That|Throws)\s*\(|assertThat\s*\(/gm,
+    ) || []
   ).length;
   return { tests, assertions };
 }
@@ -115,7 +120,7 @@ export function verifyCoverageCriteria(target, options = {}) {
 
   const testFiles = fs.statSync(target).isDirectory() ? scanTestFiles(target) : [target].filter(isTestFile);
   if (testFiles.length === 0) {
-    result.errors.push('No test files (*.spec.*, *Tests.cs, test_*.py, *_test.go) found.');
+    result.errors.push('No test files (*.spec.*, *Tests.cs, test_*.py, *_test.go, *Tests.java, *Tests.kt) found.');
     return finalize(result);
   }
 
