@@ -115,6 +115,11 @@ describe('dependabot policy', () => {
       'expected @types/node major updates to be ignored',
     );
 
+    const typescriptIgnore = npmIgnores.find((entry) => entry.name === 'typescript');
+    assert.ok(typescriptIgnore, 'expected a typescript ignore rule');
+    assert.ok(typescriptIgnore.types.includes('version-update:semver-minor'));
+    assert.ok(typescriptIgnore.types.includes('version-update:semver-major'));
+
     assert.ok(
       ignores(actions!).some((entry) => entry.name === '*' && entry.types.includes('version-update:semver-major')),
       'expected action major updates to be ignored',

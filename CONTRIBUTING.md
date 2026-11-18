@@ -55,6 +55,8 @@ node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
 - `tree-sitter` and all grammar packages (`tree-sitter-*`) are upgraded together
   in one PR. Their 0.x minor bumps are breaking and are intentionally ignored by
   Dependabot.
+- `typescript` and `typescript-eslint` are upgraded together. TypeScript minor and
+  major bumps are ignored until the `typescript-eslint` peer range supports them.
 - GitHub Actions minor/patch updates are grouped and run monthly. Action majors
   require a manual, reviewed upgrade with release-note and input/output checks.
 - Dependabot PRs that touch `.github/workflows` are exempt from the

@@ -20,6 +20,9 @@ updates:
       # Keep the type definitions aligned with the Node runtime major (24).
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # TypeScript minors/majors need a matching typescript-eslint release.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
