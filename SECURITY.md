@@ -4,7 +4,8 @@
 
 | Version | Supported |
 | :--- | :--- |
-| 1.2.x | ✅ |
+| 2.0.x | ✅ (Current) |
+| 1.2.x | ✅ (Maintenance) |
 | < 1.2 | ❌ |
 
 ## Reporting a vulnerability

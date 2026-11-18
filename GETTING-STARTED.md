@@ -215,7 +215,8 @@ Run the following steps from your project root.
        "scaffold": "node bin/skillforge.mjs scaffold",
        "signoff": "node bin/skillforge.mjs signoff",
        "heal": "node bin/skillforge.mjs heal",
-       "sync": "node bin/skillforge.mjs sync"
+       "sync": "node bin/skillforge.mjs sync",
+       "mcp": "node bin/skillforge.mjs mcp"
      }
    }
    ```
@@ -308,7 +309,7 @@ optional `swagger-parser` dependency is installed.
 
 - **Skill:** `sfa-system-architecture-adr`
 - **Produces:** C4 context and container diagrams and Architecture Decision Records.
-- **Location:** `ARCHITECTURE.md` and `docs/adr/ADR-0001-<title>.md`
+- **Location:** `docs/ARCHITECTURE.md` (or configured path) and `docs/adr/ADR-0001-<title>.md`
 - **Gate:** `architecture` (`validate-architecture.mjs`)
 
 ### 5.5 Phase 3 to 4: Human sign-off
@@ -397,7 +398,7 @@ Gate: `scaffold` (`verify-scaffold.mjs`).
 - **Skill:** `sfa-unit-test-synthesizer`
 - **Produces:** unit tests following Arrange-Act-Assert, with assertions and requirement
   citations (`FR-001`, `EC-001`).
-- **Location:** `tests/*.spec.ts`, `*Tests.cs`, `test_*.py`, or `*_test.go`
+- **Location:** `tests/*.spec.ts`, `*Tests.cs`, `test_*.py`, `*_test.go`, `*Tests.java`, or `*Tests.kt`
 - **Gate:** `tests` (`verify-coverage-criteria.mjs`)
 
 The validator checks that test files exist, contain recognized and executed test
@@ -703,6 +704,7 @@ Repository policies are documented in the following files:
 | Graph nodes are labeled `heuristic` | A tree-sitter grammar binding is unavailable | Reinstall dependencies; the graph remains usable with reduced accuracy |
 | `graph --check` reports stale files | `docs/context` was not regenerated | Run `node bin/skillforge.mjs graph` and commit the result |
 | `node scripts/sync-editors.mjs --check` reports stale files | Editor instructions were not regenerated after skill changes | Run `node scripts/sync-editors.mjs` and commit the result |
+| `PSSecurityException: npm.ps1 cannot be loaded` (Windows) | Windows PowerShell script execution policy restricts `npm.ps1` | Run `cmd /c npm ...` or `npm.cmd ...`, or update execution policy with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | Gate report is `MISSING` in CI | The gate step crashed, often because dependencies were not installed | Check the CI log and ensure `npm ci` runs before the gate |
 
 ## 13. Reference

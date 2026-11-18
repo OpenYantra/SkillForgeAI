@@ -132,4 +132,19 @@ describe('gate report workflow', () => {
     const workflow = loadWorkflow('skillforge-gate-report.yml');
     assert.match(String(workflow.jobs['publish-scorecard'].if), /cancelled/);
   });
+
+  it('checks out the default branch to access reporter scripts', () => {
+    const workflow = loadWorkflow('skillforge-gate-report.yml');
+    const steps = stepsOf(workflow, 'publish-scorecard');
+    const checkout = steps.find((step) => String(step.uses || '').startsWith('actions/checkout'));
+
+    assert.ok(checkout, 'expected an actions/checkout step in publish-scorecard job');
+    assert.equal(checkout.with && checkout.with['persist-credentials'], false);
+    assert.match(String(checkout.with && checkout.with.ref), /default_branch/);
+
+    const checkoutIndex = steps.indexOf(checkout);
+    const generateIndex = runStepIndex(steps, 'generate-pr-scorecard.mjs');
+    assert.ok(generateIndex !== -1, 'expected scorecard generation step');
+    assert.ok(checkoutIndex < generateIndex, 'checkout must happen before scorecard generation');
+  });
 });

@@ -66,9 +66,13 @@ node bin/skillforge.mjs signoff --verify docs/approvals/order-service-signoff.md
 # Automated Self-Healing Test/Fix Loop
 node bin/skillforge.mjs heal
 
-# Environment Initialization & Editor Sync
+# Model Context Protocol (MCP) Server
+node bin/skillforge.mjs mcp
+
+# Environment Initialization, Editor Sync & Version
 node bin/skillforge.mjs init
 node bin/skillforge.mjs sync
+node bin/skillforge.mjs version
 ```
 
 ### ⚙️ Project Gate Configuration
@@ -157,7 +161,7 @@ Because all data access is abstracted behind domain repository ports, any storag
 
 SkillForgeAI includes an enterprise-ready GitHub Actions workflow ([`.github/workflows/skillforge-gate.yml`](.github/workflows/skillforge-gate.yml)) that acts as an automated quality gatekeeper for every Pull Request:
 
-1. **Dual SDK Support:** Configures Node.js 24 and .NET 10 runners.
+1. **Automated Evaluation Runner:** Runs the SDLC gate evaluation in an isolated Node.js 24 environment (with .NET 10 suites executed in companion CI jobs).
 2. **Breaking Change Audit:** Executes `skillforge diff --out diff-report.json` to analyze changes against the base branch and assign SemVer impact (`MAJOR`, `MINOR`, `PATCH`).
 3. **10-Gate SDLC Evaluation:** Runs `skillforge gate --out gate-report.json` across all 7 SDLC phases (including HITL sign-offs and security audit).
 4. **Anti-Spam In-Place Commenting:** Comments a structured Markdown scorecard on the PR, updating existing comments in-place via HTML marker (`<!-- skillforge-pr-scorecard -->`).
@@ -220,14 +224,15 @@ node bin/skillforge.mjs slice --name "order-service"
 
 ```
 docs/context/
-├── REPO-MAP.md                      # Full monolithic repository map (~840 tokens)
+├── REPO-MAP.md                      # Full monolithic repository map (~2,250 tokens)
 ├── code-graph.json                  # Deep symbol-level AST dependency graph
 └── slices/
     ├── index.md                     # Domain Slice Router (Router table directing agents to slices)
     ├── slices.json                  # Machine-readable slice registry & cross-slice boundaries
     ├── order-service-map.md         # Hyper-focused slice context (~230 tokens)
     ├── dotnet-order-service-map.md  # Hyper-focused C# .NET 10 slice context (~275 tokens)
-    └── cli-map.md                   # Core CLI commands slice context (~295 tokens)
+    ├── cli-map.md                   # Core CLI commands slice context (~315 tokens)
+    └── core-map.md                  # Core engines slice context (~225 tokens)
 ```
 
 ### Key Advantages

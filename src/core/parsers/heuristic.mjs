@@ -18,6 +18,10 @@ export function detectLanguage(filePath) {
       return 'python';
     case '.go':
       return 'go';
+    case '.java':
+      return 'java';
+    case '.kt':
+      return 'kotlin';
     case '.ts':
     case '.tsx':
     case '.js':
@@ -95,6 +99,20 @@ export function extractHeuristic(content, filePath, language) {
     }
     for (const m of content.matchAll(/func\s+(?:\([A-Za-z0-9_\s*]+\)\s+)?([A-Za-z0-9_]+)\s*\(/g)) {
       pushUnique(symbols.functions, m[1]);
+    }
+  } else if (language === 'java' || language === 'kotlin') {
+    for (const m of content.matchAll(
+      /(?:public|protected|private|internal)?\s*(?:abstract|sealed|final|data|open)?\s*(?:class|record|enum)\s+([A-Za-z0-9_]+)/g,
+    )) {
+      pushUnique(symbols.classes, m[1]);
+    }
+    for (const m of content.matchAll(
+      /(?:public|protected|private|internal)?\s*(?:sealed)?\s*interface\s+([A-Za-z0-9_]+)/g,
+    )) {
+      pushUnique(symbols.interfaces, m[1]);
+    }
+    for (const m of content.matchAll(/(?:fun|void|[A-Za-z0-9_<>]+)\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*[{=]/g)) {
+      if (!/^(if|for|while|switch|catch)$/.test(m[1])) pushUnique(symbols.functions, m[1]);
     }
   }
 

@@ -94,5 +94,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Missing security targets fail closed with scan errors.
 - Malformed gate/diff reports are surfaced in the PR scorecard.
 
-[Unreleased]: https://github.com/rishikesh-net/SkillForgeAI/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/rishikesh-net/SkillForgeAI/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/rishikesh-net/SkillForgeAI/releases/tag/v2.0.0
 [1.2.0]: https://github.com/rishikesh-net/SkillForgeAI/releases/tag/v1.2.0
