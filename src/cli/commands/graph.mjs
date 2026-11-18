@@ -36,8 +36,6 @@ Usage:
 
 Options:
   --format <md|json|mermaid>  Output format (default: all saved to docs/context/)
-  --output <path>             Custom output file destination
-  --detect-orphans            Highlight unreferenced classes/interfaces
   --check                     Verify docs/context is up to date without writing
   --help, -h                  Show this help message
 

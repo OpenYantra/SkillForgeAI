@@ -38,4 +38,13 @@ describe('skillforge CLI', () => {
     assert.match(result.stdout, /skillforge security/);
     assert.match(result.stdout, /--path/);
   });
+
+  it('does not advertise unimplemented graph options', () => {
+    const result = runCli(['graph', '--help']);
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /--format/);
+    assert.match(result.stdout, /--check/);
+    assert.doesNotMatch(result.stdout, /--output/);
+    assert.doesNotMatch(result.stdout, /--detect-orphans/);
+  });
 });

@@ -1,361 +1,508 @@
-# SkillForgeAI — Getting Started Guide
+# SkillForgeAI Getting Started
 
-> **SkillForgeAI** is an enterprise-grade framework of specialized **Agent Skills** that equips AI coding assistants — Antigravity, Cursor, Claude Code, Windsurf, OpenCode, and VSCode Copilot — with structured, phase-locked, and verified capabilities across all **7 phases of the Software Development Life Cycle (SDLC)**.
+SkillForgeAI is a framework for AI-assisted software delivery. It provides a set of
+agent skills, validation scripts, and quality gates that guide an AI coding agent
+through planning, requirements, architecture, implementation, testing, security, and
+maintenance. The same artifacts are checked locally and in CI, so the process is
+consistent whether you work in an editor or open a pull request.
 
----
+The framework is language- and editor-agnostic. This guide covers installation,
+configuration, the phase workflow, the command line interface, and operational
+details for teams adopting it in a new or existing repository.
 
 ## Table of Contents
 
-1. [What Is SkillForgeAI?](#1-what-is-skillforgeai)
-2. [Prerequisites](#2-prerequisites)
-3. [The 7-Phase SDLC Architecture](#3-the-7-phase-sdlc-architecture)
-4. [Path A — Brand-New Project](#4-path-a--brand-new-project)
-5. [Path B — Adopting Into an Existing Repo](#5-path-b--adopting-into-an-existing-repo)
-6. [The 10 SDLC Skills — Reference Card](#6-the-10-sdlc-skills--reference-card)
-7. [The Quality Gate System](#7-the-quality-gate-system)
-8. [The `skillforge` CLI — Full Command Reference](#8-the-skillforge-cli--full-command-reference)
-9. [Monorepo Domain Slicing](#9-monorepo-domain-slicing)
-10. [Multi-Editor Sync](#10-multi-editor-sync)
-11. [Daily Developer Workflow](#11-daily-developer-workflow)
-12. [The 4 Golden Rules](#12-the-4-golden-rules)
-13. [Verified Reference Examples](#13-verified-reference-examples)
+1. [Overview](#1-overview)
+2. [Requirements](#2-requirements)
+3. [How It Works](#3-how-it-works)
+4. [Quick Start](#4-quick-start)
+5. [Working Through the Phases](#5-working-through-the-phases)
+6. [Command Reference](#6-command-reference)
+7. [Configuration](#7-configuration)
+8. [CI and Automation](#8-ci-and-automation)
+9. [Agent Context and Editor Sync](#9-agent-context-and-editor-sync)
+10. [Daily Workflow and Maintenance](#10-daily-workflow-and-maintenance)
+11. [Principles and Governance](#11-principles-and-governance)
+12. [Troubleshooting](#12-troubleshooting)
+13. [Reference](#13-reference)
 
----
+## 1. Overview
 
-## 1. What Is SkillForgeAI?
+SkillForgeAI has three building blocks:
 
-Most AI coding agents jump straight from a vague request to code — skipping requirements, skipping architecture, and producing untraceable, untested output.
+- **Skills** are instruction files in `.agents/skills/<skill-name>/SKILL.md`. They tell
+  an AI coding agent what to produce in a given phase and which constraints to respect.
+- **Validators** are Node.js scripts that inspect the resulting artifact. They parse
+  OpenAPI documents, Markdown sections, Dockerfiles, test files, and source trees rather
+  than checking for a few header strings.
+- **Quality gates** map validators to project artifacts. A gate passes only when its
+  artifact satisfies the rules for that phase.
 
-**SkillForgeAI prevents this.** It installs structured, phase-locked *skills* into any AI coding agent, forcing every feature to travel through a verified SDLC pipeline:
+A typical feature moves through the following artifacts:
 
+```mermaid
+flowchart LR
+    A["Plan"] --> B["PRD"]
+    B --> C["OpenAPI contract"]
+    C --> D["Architecture and ADRs"]
+    D --> E["Human sign-off"]
+    E --> F["Scaffolded code"]
+    F --> G["Tests"]
+    G --> H["Container and CI"]
+    H --> I["Security audit"]
+    I --> J["Release"]
+    J --> K["Incident RCA"]
 ```
-Idea → Plan → PRD → API Contract → Architecture → Code → Tests → CI/CD → Maintenance
-```
 
-Each phase has:
-- A dedicated **Skill** that instructs the AI agent exactly what to produce
-- A **validation script** that checks the deliverable automatically
-- A **Quality Gate** that blocks progression if standards aren't met
+Each transition is guarded by a gate. Gates are fail-closed: when a required artifact is
+missing or cannot be validated, the gate fails instead of assuming success.
 
-> [!IMPORTANT]
-> SkillForgeAI is **language-agnostic** and **editor-agnostic**. It works with TypeScript, C#/.NET, Python, Go, and Java/Kotlin — and syncs to Antigravity, Cursor, Claude Code, Windsurf, OpenCode, and VSCode automatically.
+The `scaffold` command generates TypeScript and .NET templates today. The skills and
+validators are not limited to those stacks.
 
----
+## 2. Requirements
 
-## 2. Prerequisites
-
-| Requirement | Minimum Version | Purpose |
+| Requirement | Version | Notes |
 |:---|:---|:---|
-| **Node.js** | v22+ | Runs the `skillforge` CLI and all validation scripts |
-| **.NET SDK** | 10 (optional) | Required only if using the C# / .NET examples or scaffolder |
-| **Git** | Any | Required for the `diff` and `signoff` commands |
-| **An AI Coding Agent** | — | Antigravity, Cursor, Claude Code, Windsurf, OpenCode, or VSCode Copilot |
+| Node.js | 22.6 or newer | Node 24 is recommended and used by CI |
+| Git | Any recent version | Required for change analysis and sign-off verification |
+| .NET SDK | 10 (optional) | Only needed for the C# example and its tests |
+| AI coding agent | Any supported editor | Antigravity, Cursor, Claude Code, Windsurf, OpenCode, or VSCode Copilot |
 
-```bash
-# Verify prerequisites
-node --version    # Should be v22+
-git --version
-dotnet --version  # Optional — only for .NET projects
-```
-
-Then install the CLI's runtime dependencies from the repository root:
+Install the runtime dependencies from the repository root:
 
 ```bash
 npm ci
 ```
 
-The published `skillforge-ai` package installs these automatically; `npm ci` is
-required when working from a source checkout (parsers and validators rely on
-runtime packages such as `yaml` and `tree-sitter`).
-
----
-
-## 3. The 7-Phase SDLC Architecture
-
-```mermaid
-flowchart LR
-    P1["① Planning<br/><code>sfa-project-planner-estimator</code>"]
-    --> P2["② Requirements<br/><code>sfa-prd-generator-validator</code><br/><code>sfa-api-contract-designer</code>"]
-    --> P3["③ Architecture<br/><code>sfa-system-architecture-adr</code>"]
-    --> P4["④ Development<br/><code>sfa-feature-scaffolder</code>"]
-    --> P5["⑤ Testing & QA<br/><code>sfa-unit-test-synthesizer</code>"]
-    --> P6["⑥ Deployment & Security<br/><code>sfa-cicd-container-automator</code><br/><code>sfa-security-vulnerability-auditor</code>"]
-    --> P7["⑦ Maintenance<br/><code>sfa-incident-root-cause-analyzer</code>"]
-
-    QG["🛡️ Cross-Cutting<br/><code>sfa-quality-gate-orchestrator</code>"]
-    QG -.->|"validates every phase"| P1 & P2 & P3 & P4 & P5 & P6 & P7
-```
-
 > [!NOTE]
-> The `sfa-quality-gate-orchestrator` is a cross-cutting skill — it runs automated validation scripts at **every phase transition**, preventing you from progressing with incomplete or non-conforming artifacts.
+> Run `npm ci` before using the CLI from a source checkout. The parser and validator
+> modules depend on runtime packages such as `yaml` and `tree-sitter`. The published
+> package installs these dependencies automatically.
 
----
-
-## 4. Path A — Brand-New Project
-
-Follow these steps in sequence. Never skip a phase.
-
-### Step 1 — Clone & Initialize
+Verify the toolchain:
 
 ```bash
-# Clone SkillForgeAI as your project foundation
-git clone https://github.com/way2solutions/SkillForgeAI my-new-project
-cd my-new-project
-
-# Initialize environment (installs git hooks, validates Node version)
-node bin/skillforge.mjs init
-
-# Sync agent instruction files for all editors
-node bin/skillforge.mjs sync
+node --version    # 22.6 or newer
+git --version
+dotnet --version  # Optional
 ```
 
-The `sync` command auto-generates:
+## 3. How It Works
 
-| File Generated | Target Editor |
+The framework organizes delivery into seven phases. Ten quality gates cover the
+transition points; some phases have more than one gate, and human sign-off sits between
+Phases 3 and 4.
+
+| Phase | Gate ID | Artifact key | Validator |
+|:---|:---|:---|:---|
+| 1. Planning | `plan` | `plan` | `validate-plan.mjs` |
+| 2. Requirements | `prd` | `prd` | `validate-prd.mjs` |
+| 2/3. API contract | `openapi` | `openapi` | `validate-openapi.mjs` |
+| 3. Architecture | `architecture` | `architecture` | `validate-architecture.mjs` |
+| 3 to 4. Human sign-off | `signoff` | `signoff` | `verify-human-signoff.mjs` |
+| 4. Scaffolding | `scaffold` | `src` | `verify-scaffold.mjs` |
+| 5. Tests | `tests` | `tests` | `verify-coverage-criteria.mjs` |
+| 6. Container and CI | `container` | `dockerfile` | `validate-ci-container.mjs` |
+| 6. Security | `security` | `src` | `audit-security.mjs` |
+| 7. Maintenance | `rca` | `rca` | `validate-rca.mjs` |
+
+The `src` artifact key is shared by the scaffolding and security gates, so both checks
+run against the same source tree.
+
+### Modes
+
+| Mode | When it is used | What it checks |
+|:---|:---|:---|
+| `project` | `skillforge.config.json` exists and sets `"mode": "project"` | Your artifacts, resolved from the configured paths and globs |
+| `self-test` | No config is present, the config uses self-test mode, or `--self-test` is passed | The framework's own templates and example artifacts |
+
+In project mode, a missing required artifact fails the gate. Use `--allow-missing` only
+when you intentionally want missing artifacts reported as skipped while the project is
+still being set up.
+
+### Key terms
+
+| Term | Meaning |
 |:---|:---|
-| `AGENTS.md` | Antigravity |
-| `CLAUDE.md` | Claude Code |
-| `.cursorrules` | Cursor IDE |
-| `.windsurfrules` | Windsurf |
-| `OPENCODE.md` | OpenCode |
-| `.vscode/tasks.json` | VSCode Tasks |
-| `.github/copilot-instructions.md` | GitHub Copilot |
-| `.clinerules` | Cline / Roo |
+| PRD | Product Requirements Document; the source of functional requirements and edge cases |
+| FR / EC / NFR | Functional requirement, edge case, and non-functional requirement identifiers |
+| ADR | Architecture Decision Record; a short document recording a design decision |
+| HITL | Human-in-the-loop; a human approval that an AI agent cannot grant on its own |
+| WBS | Work Breakdown Structure; the task and milestone breakdown in the project plan |
+| Gate | An automated check that must pass before work proceeds to the next phase |
 
----
+## 4. Quick Start
 
-### Step 2 — Phase 1: Plan the Project
+### Path A: Start from the framework repository
 
-**Skill:** `sfa-project-planner-estimator`
+Use this path when you want the complete framework, examples, and reference artifacts in
+one repository. If you only need the framework in an existing application, use Path B.
 
-**Prompt your AI agent:**
-> *"Use the sfa-project-planner-estimator skill to create a project plan for [your app / feature idea]."*
+```bash
+git clone https://github.com/rishikesh-net/SkillForgeAI.git my-project
+cd my-project
+npm ci
+node bin/skillforge.mjs init
+```
 
-**What the agent produces:**
-- Work Breakdown Structure (WBS) with milestones
-- T-shirt / story-point effort estimates
-- Risk register with mitigation strategies
-- Validated via `validate-plan.mjs`
+Update the `name` and `description` fields in `package.json` for your project. `init`
+installs the Git hooks, synchronizes editor instructions, generates the code graph, and
+creates the domain slice maps. `sync` can be run again at any time to regenerate editor
+configuration files after skills change. The generated files are listed under
+[Editors](#editors).
 
-**Output location:** `docs/plan.md`
+Run the gates once to confirm the installation:
 
----
+```bash
+node bin/skillforge.mjs gate
+```
 
-### Step 3 — Phase 2: Write Requirements (PRD)
+The repository ships with a self-test configuration. When you start validating your own
+artifacts, create a project configuration as described in [Configuration](#7-configuration).
 
-**Skill:** `sfa-prd-generator-validator`
+### Path B: Adopt the framework in an existing repository
+
+Run the following steps from your project root.
+
+1. Copy the runtime directories and configuration files from the framework repository:
+
+   ```bash
+   # macOS / Linux
+   cp -r <path-to-SkillForgeAI>/.agents .
+   cp -r <path-to-SkillForgeAI>/bin .
+   cp -r <path-to-SkillForgeAI>/src .
+   cp -r <path-to-SkillForgeAI>/scripts .
+   cp -r <path-to-SkillForgeAI>/templates .
+   cp <path-to-SkillForgeAI>/skillforge.config.example.json .
+   cp <path-to-SkillForgeAI>/skillforge.config.schema.json .
+   ```
+
+   ```powershell
+   # Windows PowerShell
+   Copy-Item -Recurse <path-to-SkillForgeAI>\.agents   .
+   Copy-Item -Recurse <path-to-SkillForgeAI>\bin       .
+   Copy-Item -Recurse <path-to-SkillForgeAI>\src       .
+   Copy-Item -Recurse <path-to-SkillForgeAI>\scripts   .
+   Copy-Item -Recurse <path-to-SkillForgeAI>\templates .
+   Copy-Item <path-to-SkillForgeAI>\skillforge.config.example.json .
+   Copy-Item <path-to-SkillForgeAI>\skillforge.config.schema.json .
+   ```
+
+   > [!IMPORTANT]
+   > Copy `src` as well as `bin`. The CLI entrypoint imports the shared engines and
+   > validators from `src/core`; copying only `bin`, `scripts`, and `.agents` leaves the
+   > installation incomplete.
+
+2. Add the npm scripts for convenience:
+
+   ```json
+   {
+     "scripts": {
+       "skillforge": "node bin/skillforge.mjs",
+       "gate": "node bin/skillforge.mjs gate",
+       "security": "node bin/skillforge.mjs security",
+       "diff": "node bin/skillforge.mjs diff",
+       "graph": "node bin/skillforge.mjs graph",
+       "slice": "node bin/skillforge.mjs slice",
+       "scaffold": "node bin/skillforge.mjs scaffold",
+       "signoff": "node bin/skillforge.mjs signoff",
+       "heal": "node bin/skillforge.mjs heal",
+       "sync": "node bin/skillforge.mjs sync"
+     }
+   }
+   ```
+
+3. Install the runtime dependencies:
+
+   ```bash
+   npm install yaml tree-sitter tree-sitter-typescript tree-sitter-javascript tree-sitter-c-sharp tree-sitter-python tree-sitter-go
+   ```
+
+   Full OpenAPI schema validation additionally uses an optional package:
+
+   ```bash
+   npm install --save-dev @apidevtools/swagger-parser
+   ```
+
+   Without it, the OpenAPI validator still performs structural checks and emits a
+   warning.
+
+4. Initialize the environment:
+
+   ```bash
+   node bin/skillforge.mjs init
+   ```
+
+5. Create your project configuration:
+
+   ```bash
+   cp skillforge.config.example.json skillforge.config.json
+   ```
+
+   Set `"mode": "project"` and point each artifact key at your files. See
+   [Configuration](#7-configuration) for the full shape.
+
+6. Record a baseline:
+
+   ```bash
+   node bin/skillforge.mjs gate --json > baseline-audit.json
+   ```
+
+   The report lists which phases pass and which artifacts still need work. The command
+   exits non-zero while required artifacts are missing, but the JSON report is still
+   written.
+
+7. Copy the gate workflow from `.github/workflows/skillforge-gate.yml` if you want the
+   pull request scorecard. The workflow runs `npm ci`, so your repository needs a
+   lockfile or an equivalent install step.
+
+## 5. Working Through the Phases
+
+Invoke a skill by name in your AI agent, for example: “Use the
+`sfa-prd-generator-validator` skill to write a PRD for the billing feature.” The agent
+reads the skill instructions and produces the artifact. Run `skillforge gate` after each
+phase to verify the result.
+
+### 5.1 Phase 1: Planning
+
+- **Skill:** `sfa-project-planner-estimator`
+- **Produces:** a project plan with milestones, a work breakdown structure, estimates,
+  and a risk register.
+- **Location:** `docs/plan.md`
+- **Gate:** `plan` (`validate-plan.mjs`)
+
+### 5.2 Phase 2: Requirements
+
+- **Skill:** `sfa-prd-generator-validator`
+- **Produces:** a PRD with numbered functional requirements (`FR-001`), non-functional
+  requirements, edge cases (`EC-001`), explicit scope boundaries, and Given-When-Then
+  acceptance criteria.
+- **Location:** `docs/<feature>.prd.md`
+- **Gate:** `prd` (`validate-prd.mjs`)
+- **Example:** `examples/order-service/order-service.prd.md`
+
+The PRD is the reference for tests and traceability. Avoid starting implementation until
+it has been reviewed and the requirements are unambiguous.
+
+### 5.3 Phase 2/3: API contract
+
+- **Skill:** `sfa-api-contract-designer`
+- **Produces:** an OpenAPI 3.0 or 3.1 document with request and response schemas,
+  RFC 7807 problem details, and security schemes.
+- **Location:** `openapi.yaml` (or `.json`)
+- **Gate:** `openapi` (`validate-openapi.mjs`)
+
+The validator parses the document, checks versions, paths, operations, responses,
+component schemas, and security schemes, and can run full schema validation when the
+optional `swagger-parser` dependency is installed.
+
+### 5.4 Phase 3: Architecture
+
+- **Skill:** `sfa-system-architecture-adr`
+- **Produces:** C4 context and container diagrams and Architecture Decision Records.
+- **Location:** `ARCHITECTURE.md` and `docs/adr/ADR-0001-<title>.md`
+- **Gate:** `architecture` (`validate-architecture.mjs`)
+
+### 5.5 Phase 3 to 4: Human sign-off
+
+Human approval is separate from the automated gates. The CLI can generate a draft, but
+it never marks a draft as approved.
+
+```bash
+node bin/skillforge.mjs signoff --feature order-service --by "Reviewer Name"
+```
+
+A human reviewer then:
+
+1. Changes the status to `APPROVED`.
+2. Checks the authorization box.
+3. Commits the file with a signed commit:
+
+   ```bash
+   git commit -S -m "signoff: approve order-service" docs/approvals/order-service-signoff.md
+   ```
+
+4. Verifies the result:
+
+   ```bash
+   node bin/skillforge.mjs signoff --verify docs/approvals/order-service-signoff.md
+   ```
 
 > [!IMPORTANT]
-> This is the most critical step. All future tests, code, and architecture decisions trace back to this document. Never write code without an approved PRD.
+> In project mode, the sign-off commit must be authored by an allow-listed, non-agent
+> identity. If `requireSignedCommits` is enabled, the commit must also carry a valid Git
+> signature, match the recorded artifact hash, and fall within the configured TTL.
 
-**Prompt your AI agent:**
-> *"Use the sfa-prd-generator-validator skill to convert this idea into a PRD: [describe your feature]."*
+The relevant configuration lives under `governance` in `skillforge.config.json`.
 
-**The agent will:**
-1. Ask targeted clarifying questions (scope, auth mechanism, database, scale, out-of-scope items)
-2. Draft a structured PRD with numbered requirements
-3. Auto-validate with `validate-prd.mjs`
+### 5.6 Phase 4: Scaffolding
 
-**PRD structure produced:**
-
-| Section | Example |
-|:---|:---|
-| Functional Requirements | `FR-001`: Create Order — System creates a new order in `PENDING` state |
-| Non-Functional Requirements | `NFR-001`: In-memory latency < 10ms |
-| Edge Cases | `EC-001`: Reject duplicate order with `409 Conflict` |
-| Acceptance Criteria | Given-When-Then BDD scenarios |
-
-**Output location:** `docs/<feature-name>.prd.md`
-
-See the reference example: [`examples/order-service/order-service.prd.md`](examples/order-service/order-service.prd.md)
-
----
-
-### Step 4 — Phase 2/3: Design API Contracts
-
-**Skill:** `sfa-api-contract-designer`
-
-**Prompt your AI agent:**
-> *"Use the sfa-api-contract-designer skill to draft an OpenAPI 3.1 contract from the approved PRD."*
-
-**What the agent produces:**
-- Full OpenAPI 3.1 YAML with typed request/response schemas
-- RFC 7807 Problem Details for all error responses (`400`, `401`, `404`, `409`, `500`)
-- Security schemes (Bearer JWT, API Key)
-- Idempotency headers (`Idempotency-Key`, `X-Request-Id`)
-- Validated via `validate-openapi.mjs`
-
-> [!TIP]
-> The API contract is the **shared source of truth** between the backend agent (scaffolder) and frontend/test agents. Lock it down before writing any implementation code.
-
----
-
-### Step 5 — Phase 3: Architecture & ADRs
-
-**Skill:** `sfa-system-architecture-adr`
-
-**Prompt your AI agent:**
-> *"Use the sfa-system-architecture-adr skill to generate C4 diagrams and Architecture Decision Records for this system."*
-
-**What the agent produces:**
-- **C4 Context Diagram** — actors, users, external systems
-- **C4 Container Diagram** — services, databases, caches, queues
-- **ADR files** in `docs/adr/ADR-0001-[title].md` for every major decision (database, auth mechanism, caching strategy)
-- Validated via `validate-architecture.mjs`
-
-**ADR structure:**
-
-```
-docs/adr/
-├── ADR-0001-database-choice.md       # Context, Decision, Consequences
-├── ADR-0002-auth-mechanism.md
-└── ADR-0003-caching-strategy.md
-```
-
----
-
-### Step 6 — Phase 4: Scaffold Code
-
-**Skill:** `sfa-feature-scaffolder`
-**CLI:** `node bin/skillforge.mjs scaffold`
+The scaffolder generates TypeScript or .NET layers that follow the architecture rules.
 
 ```bash
-# TypeScript / Node.js — Vertical Slice / Layered Architecture
-node bin/skillforge.mjs scaffold --name "order" --lang "ts"
-
-# C# / .NET 10 — Clean Architecture
-node bin/skillforge.mjs scaffold --name "order" --lang "dotnet"
+node bin/skillforge.mjs scaffold --name order --lang ts
+node bin/skillforge.mjs scaffold --name order --lang dotnet
 ```
 
-Or prompt your AI agent:
-> *"Use the sfa-feature-scaffolder skill to scaffold the order domain from the approved PRD."*
+TypeScript output under the default `src/features/<name>` directory (paths shown
+relative to that directory):
 
-**Architecture enforced:**
-
-```mermaid
-flowchart TD
-    A["Presentation Layer<br/>Controllers / Routes / DTOs"]
-    --> B["Application Layer<br/>Services / Use Cases"]
-    --> C["Domain Layer<br/>Entities / Ports / Value Objects"]
-    D["Infrastructure Layer<br/>DB Adapters / External APIs"]
-    D -.->|"implements Ports"| C
+```text
+domain/entities/order.entity.ts
+domain/ports/order.repository.ts
+services/order.service.ts
+repositories/in-memory-order.repository.ts
+tests/order.service.spec.ts
 ```
 
-> [!CAUTION]
-> **Domain entities MUST NOT import database drivers, ORMs, or web framework packages.** The quality gate will fail if this boundary is violated.
+.NET output follows the same separation using `Domain/Entities`, `Domain/Ports`,
+`Application/Services`, `Infrastructure/Persistence`, and `Tests`.
 
-**TypeScript output structure:**
-```
-src/
-├── domain/
-│   ├── entities/order.entity.ts        # Pure business logic, no external deps
-│   └── ports/order-repository.port.ts  # Interface / abstract port
-├── services/order.service.ts           # Application use-case orchestration
-└── repositories/order.repository.ts    # Infrastructure adapter (implements port)
-```
+Useful options:
 
----
+- `--out <dir>` writes to a different directory.
+- `--dry-run` prints the plan without writing files.
+- Existing files are skipped by default.
+- `--force` overwrites existing files.
+- `--backup` copies each existing file to `<file>.bak` before overwriting.
+- `--force` and `--backup` cannot be combined.
 
-### Step 7 — Phase 5: Synthesize Tests
+> [!NOTE]
+> Scaffolding is intentionally non-destructive. On an existing feature, review the
+> dry-run output before using `--force` or `--backup`.
 
-**Skill:** `sfa-unit-test-synthesizer`
+Gate: `scaffold` (`verify-scaffold.mjs`).
 
-**Prompt your AI agent:**
-> *"Use the sfa-unit-test-synthesizer skill to generate a full test suite for the order service. Cite FR-001, FR-002, EC-001 from the PRD."*
+### 5.7 Phase 5: Tests
 
-**Test matrix produced:**
+- **Skill:** `sfa-unit-test-synthesizer`
+- **Produces:** unit tests following Arrange-Act-Assert, with assertions and requirement
+  citations (`FR-001`, `EC-001`).
+- **Location:** `tests/*.spec.ts`, `*Tests.cs`, `test_*.py`, or `*_test.go`
+- **Gate:** `tests` (`verify-coverage-criteria.mjs`)
 
-| Category | Coverage |
-|:---|:---|
-| Happy Path | Valid inputs → expected state transitions |
-| Boundary Conditions | Empty strings, min/max values, zero quantities |
-| Negative / Error Cases | Missing fields, domain rule violations, duplicate entities |
-| Idempotency | Calling the same operation twice verifies state integrity |
+The validator checks that test files exist, contain recognized test declarations, assert
+outcomes, and cite requirement or edge-case identifiers.
 
-**Every test must cite a requirement ID:**
+### 5.8 Phase 6: Container and CI
 
-```typescript
-it('should create order in PENDING state (FR-001)', async () => {
-  // Arrange
-  const repo = new InMemoryOrderRepository();
-  const service = new OrderService(repo);
+- **Skill:** `sfa-cicd-container-automator`
+- **Produces:** a multi-stage Dockerfile with an unprivileged runtime user and a CI
+  workflow that runs automated tests.
+- **Location:** `Dockerfile`, `.github/workflows/*.yml`
+- **Gate:** `container` (`validate-ci-container.mjs`)
 
-  // Act
-  const order = await service.createOrder({ items: [{ sku: 'ABC', qty: 2 }] });
+For directory targets, the validator discovers Dockerfiles and workflow files in the
+project and checks each one.
 
-  // Assert
-  expect(order.status).toBe('PENDING');
-});
-```
+### 5.9 Phase 6: Security
 
----
-
-### Step 8 — Phase 6: Container & CI/CD
-
-**Skill:** `sfa-cicd-container-automator`
-
-**Prompt your AI agent:**
-> *"Use the sfa-cicd-container-automator skill to create a hardened Dockerfile and GitHub Actions CI pipeline."*
-
-**What the agent produces:**
-- **Multi-stage Dockerfile** with Alpine/Slim base, build stage, and non-root runner stage
-- **`.dockerignore`** excluding `.env*`, `node_modules`, `tests`, `.git`
-- **GitHub Actions workflow** (lint → test → build → scan → deploy)
-- Validated via `validate-ci-container.mjs`
-
----
-
-### Step 9 — Phase 6: Security & Vulnerability Audit
-
-**Skill:** `sfa-security-vulnerability-auditor`
-**CLI:** `node bin/skillforge.mjs security`
-
-**Prompt your AI agent:**
-> *"Use the sfa-security-vulnerability-auditor skill to audit code changes and application source for vulnerabilities, leaked secrets, and OWASP Top 10 / CWE weaknesses."*
+- **Skill:** `sfa-security-vulnerability-auditor`
+- **Produces:** a security review covering secrets, injection risks, unsafe
+  deserialization, path traversal, cryptography, and common misconfigurations.
+- **Gate:** `security` (`audit-security.mjs`)
 
 ```bash
-# Audit full application workspace
-node bin/skillforge.mjs security
-
-# Audit only uncommitted Git diff changes (pre-commit / PR)
+node bin/skillforge.mjs security --path src
 node bin/skillforge.mjs security --diff
-
-# Audit specific directory
-node bin/skillforge.mjs security --path "src/"
+node bin/skillforge.mjs security --staged --strict
+node bin/skillforge.mjs security --json
 ```
 
-**What the agent verifies:**
-- No leaked private keys, AWS tokens, GitHub PATs, or JWT secrets (`CWE-798`)
-- Parameterized queries protecting against SQL Injection (`CWE-89`)
-- Safe execution avoiding OS Command Injection (`CWE-78`) and Code Injection (`CWE-94`)
-- Secure path handling preventing Path Traversal (`CWE-22`)
-- Modern cryptography (`SHA-256`, Argon2) instead of broken algorithms (`MD5`, `SHA-1`)
-- Production hardening: TLS validation active, strict CORS without wildcard credentials
+The command exits non-zero for critical or high findings, and for missing targets. Use
+`--strict` to also fail on medium and low findings.
 
----
+### 5.10 Phase 7: Maintenance
 
-### Step 10 — Run Quality Gate Before Every PR
+- **Skill:** `sfa-incident-root-cause-analyzer`
+- **Produces:** an incident report with an executive summary, timeline, root cause
+  analysis, action items, and a regression test.
+- **Location:** `docs/incidents/RCA-*.md`
+- **Gate:** `rca` (`validate-rca.mjs`)
+
+`skillforge heal` can help with failing suites. It detects the project test runner,
+captures diagnostics, and, when tests fail, writes
+`docs/context/LATEST-TEST-FAILURE.json`. Without `--fix` it performs one diagnostic run.
+With `--fix` and `--max-iterations`, it invokes the fixer between attempts and retries
+within the bound.
+
+## 6. Command Reference
+
+All commands support `--help`. The CLI is available as `node bin/skillforge.mjs <command>`
+or as `skillforge <command>` when the package bin is installed.
+
+| Command | Purpose | Options |
+|:---|:---|:---|
+| `gate` | Evaluate SDLC quality gates | `--phase <1-7>`, `--config <file>`, `--self-test`, `--allow-missing`, `--strict`, `--json`, `--out <file>` |
+| `security` | Audit secrets and vulnerability classes | `--path <dir\|file>`, `--diff`, `--staged`, `--strict`, `--json` |
+| `diff` | Classify changes and list affected callers | `--staged`, `--target <branch>`, `--json`, `--out <file>` |
+| `graph` | Build the code graph and repository map | `--format md\|json\|mermaid`, `--check` |
+| `slice` | Generate or inspect domain slice maps | `--list`, `--name <slice>`, `--json` |
+| `scaffold` | Generate TypeScript or .NET layers | `--name <feature>`, `--lang ts\|dotnet`, `--out <dir>`, `--dry-run`, `--skip-existing`, `--force`, `--backup` |
+| `signoff` | Draft or verify a human sign-off | `--feature <name>`, `--by <name>`, `--role <role>`, `--phase <2\|3\|6>`, `--verify <path>`, `--config <file>` |
+| `heal` | Diagnose or retry failing test projects | `--max-iterations <n>`, `--fix <script.mjs>`, `--project <dir>`, `--all`, `--dry-run` |
+| `init` | Install hooks, sync editors, generate context | None |
+| `sync` | Regenerate editor instructions | None |
+| `mcp` | Start the MCP server | None |
+| `version` | Print the installed version | None |
+| `help` | Show the top-level help | None |
+
+A common CI sequence:
 
 ```bash
-# Run all 10 SDLC quality gates
-node bin/skillforge.mjs gate
-
-# Check a specific phase only
-node bin/skillforge.mjs gate --phase 6
-
-# Output JSON for CI tooling
-node bin/skillforge.mjs gate --json
+node bin/skillforge.mjs security --diff
+node bin/skillforge.mjs diff --json --out diff-report.json
+node bin/skillforge.mjs gate --json --out gate-report.json
 ```
 
-> [!CAUTION]
-> Never merge a PR without all 10 gates passing. The included GitHub Actions bot (`.github/workflows/skillforge-gate.yml`) automatically blocks merges if any gate fails.
+`graph` writes `docs/context/code-graph.json` and `docs/context/REPO-MAP.md`; `--check`
+verifies committed artifacts without writing. `slice` writes
+`docs/context/slices/`. `diff` classifies changes as destructive, additive, or patch-level
+and lists downstream callers from the cached code graph.
 
-#### Configure which artifacts each gate validates
+## 7. Configuration
 
-Gates read `skillforge.config.json` at the repo root. Copy [`skillforge.config.example.json`](skillforge.config.example.json) and point each key at your own artifacts:
+The gate runner reads `skillforge.config.json` from the working directory. The schema is
+available at `skillforge.config.schema.json`.
 
-```jsonc
+### Artifact mapping
+
+| Key | Used by | Example |
+|:---|:---|:---|
+| `plan` | `plan` | `docs/plan.md` |
+| `prd` | `prd` | `docs/**/*.prd.md` |
+| `openapi` | `openapi` | `openapi.yaml` |
+| `architecture` | `architecture` | `docs/ARCHITECTURE.md` |
+| `signoff` | `signoff` | `docs/approvals/*.md` |
+| `src` | `scaffold`, `security` | `src` |
+| `tests` | `tests` | `tests` |
+| `dockerfile` | `container` | `Dockerfile` |
+| `rca` | `rca` | `docs/incidents/RCA-*.md` |
+
+Each value can be a path, a glob, or an array of paths and globs.
+
+### Governance
+
+| Key | Purpose |
+|:---|:---|
+| `allowedReviewers` | Email addresses permitted to authorize sign-offs |
+| `requireSignedCommits` | Require a valid Git signature on the sign-off commit |
+| `signoffTtlDays` | Maximum age of a sign-off before it must be renewed |
+| `allowAgentIdentities` | Permit bot or agent identities as sign-off authors |
+
+### Gate overrides
+
+| Key | Purpose |
+|:---|:---|
+| `gates.disable` | Gate IDs to skip (for example, when a phase does not apply) |
+| `gates.validators` | Map a gate ID to a different built-in validator key |
+
+### Example
+
+```json
 {
+  "$schema": "./skillforge.config.schema.json",
   "version": 1,
   "mode": "project",
   "artifacts": {
@@ -368,413 +515,211 @@ Gates read `skillforge.config.json` at the repo root. Copy [`skillforge.config.e
     "tests": "tests",
     "dockerfile": "Dockerfile",
     "rca": "docs/incidents/RCA-*.md"
+  },
+  "gates": {
+    "disable": [],
+    "validators": {}
+  },
+  "governance": {
+    "allowedReviewers": ["you@example.com"],
+    "requireSignedCommits": true,
+    "signoffTtlDays": 30,
+    "allowAgentIdentities": false
   }
 }
 ```
 
-```bash
-node bin/skillforge.mjs gate --config skillforge.config.json
-node bin/skillforge.mjs gate --self-test      # validate the framework's own examples
-node bin/skillforge.mjs gate --allow-missing  # report missing artifacts as SKIPPED
-```
+Set `"mode": "project"` for real adoption. A missing required artifact fails its gate. If
+you need a temporary green build while artifacts are still being produced, use
+`--allow-missing`, which reports unconfigured artifacts as `SKIPPED`.
 
-In `project` mode a missing **required** artifact fails the gate (fail closed) so a PR can never be certified against framework templates by accident.
+## 8. CI and Automation
 
----
+The repository includes two workflows.
 
-## 5. Path B — Adopting Into an Existing Repo
+### Quality gate bot
 
-You **don't need to start over.** SkillForgeAI overlays cleanly on any existing codebase in six steps.
+`.github/workflows/skillforge-gate.yml` runs on pull requests and pushes to `main`. It:
 
-### Step 1 — Overlay the Framework
+1. Checks out the repository and installs Node, .NET, and npm dependencies.
+2. Runs `skillforge diff` and writes `diff-report.json`.
+3. Runs `skillforge gate` and writes `gate-report.json`.
+4. Verifies that the gate report exists.
+5. Generates `pr-scorecard.md`, publishes it to the job summary, and comments on the PR.
+6. Fails the job when the gate report is missing or any gate failed.
 
-```bash
-# From inside your existing project root (Windows):
-xcopy /E /I <path-to-SkillForgeAI>\.agents   .agents
-xcopy /E /I <path-to-SkillForgeAI>\scripts   scripts
-xcopy /E /I <path-to-SkillForgeAI>\bin       bin
-xcopy /E /I <path-to-SkillForgeAI>\templates templates
+The workflow runs `npm ci`, so an adopting repository needs a lockfile or an equivalent
+install step.
 
-# From inside your existing project root (macOS / Linux):
-cp -r <path-to-SkillForgeAI>/.agents   .
-cp -r <path-to-SkillForgeAI>/scripts   .
-cp -r <path-to-SkillForgeAI>/bin       .
-cp -r <path-to-SkillForgeAI>/templates .
-```
+### Repository CI
 
-Then add the npm scripts to your `package.json`:
-```json
-{
-  "scripts": {
-    "skillforge": "node bin/skillforge.mjs",
-    "gate":       "node bin/skillforge.mjs gate",
-    "security":   "node bin/skillforge.mjs security",
-    "diff":       "node bin/skillforge.mjs diff",
-    "graph":      "node bin/skillforge.mjs graph",
-    "slice":      "node bin/skillforge.mjs slice",
-    "scaffold":   "node bin/skillforge.mjs scaffold",
-    "signoff":    "node bin/skillforge.mjs signoff",
-    "heal":       "node bin/skillforge.mjs heal",
-    "sync":       "node bin/skillforge.mjs sync"
-  }
-}
-```
+`.github/workflows/ci.yml` runs lint, formatting, type checking, generated-context
+checks, editor-config checks, the Node test suite, coverage, and the .NET tests. These
+checks protect contributions to the framework itself and serve as a reference for
+project-specific CI.
 
-### Step 2 — Initialize & Sync
+Generated context and editor configuration are committed. CI fails when either set is
+stale, so regenerate them after changing source or skills:
 
 ```bash
-node bin/skillforge.mjs init   # Install git hooks and validate environment
-node bin/skillforge.mjs sync   # Auto-generate all editor instruction files
-```
-
-### Step 3 — Baseline Audit: Find Your Red Gates
-
-```bash
-# Run all 10 gates and export a JSON baseline
-node bin/skillforge.mjs gate --json > baseline-audit.json
-```
-
-This tells you exactly which SDLC phases are **failing** vs **passing**, giving you a prioritized remediation backlog.
-
-### Step 4 — Map Existing Artifacts to SDLC Phases
-
-| What you already have | SkillForgeAI equivalent | Remediation action |
-|:---|:---|:---|
-| Confluence doc / Jira ticket | Phase 2 PRD | Migrate to `.prd.md` via `sfa-prd-generator-validator` |
-| Existing Swagger / OpenAPI file | Phase 2/3 Contract | Validate with `validate-openapi.mjs` |
-| Design doc / architecture diagram | Phase 3 ADR | Formalize with `sfa-system-architecture-adr` → `docs/adr/` |
-| Existing source folders | Phase 4 Scaffold | Run `skillforge graph` to map it; refactor to Clean Architecture |
-| Existing test files | Phase 5 Quality | Run `skillforge gate --phase 5` for AAA and `FR-XXX` traceability |
-| Existing Dockerfile | Phase 6 Container | Run `skillforge gate --phase 6` to audit non-root, multi-stage hardening |
-| Security configs / SAST scans | Phase 6 Security | Run `skillforge security` to audit secrets, SAST, and OWASP/CWE weaknesses |
-
-### Step 5 — Generate a Code Graph of What Exists
-
-```bash
-# Understand your current codebase
 node bin/skillforge.mjs graph
-node bin/skillforge.mjs graph --format mermaid
-
-# For large monorepos: partition into focused domain slices
-node bin/skillforge.mjs slice
-node bin/skillforge.mjs slice --list
+node scripts/sync-editors.mjs
 ```
 
-### Step 6 — Enable the GitHub Actions CI Bot
+## 9. Agent Context and Editor Sync
 
-Copy `.github/workflows/skillforge-gate.yml` to your repo. On every PR it will:
-1. Run all 10 quality gates
-2. Post a detailed scorecard comment directly on the PR
-3. Update the comment in-place (anti-spam)
-4. **Block merging** if any gate fails
+The graph and slice commands produce context that AI agents can read without scanning
+the entire repository.
 
----
+| Output | Purpose |
+|:---|:---|
+| `docs/context/code-graph.json` | File, symbol, and import graph with parser metadata |
+| `docs/context/REPO-MAP.md` | Compact repository map for agent prompts |
+| `docs/context/slices/index.md` | Router for domain slice maps |
+| `docs/context/slices/slices.json` | Machine-readable slice registry |
+| `docs/context/slices/*-map.md` | Focused maps for each domain or module |
 
-## 6. The 10 SDLC Skills — Reference Card
+The current slices cover the CLI, the core engines, and the TypeScript and .NET example
+services. Open `docs/context/slices/index.md` for the current token estimates and file
+counts; they are generated values, not fixed documentation.
 
-| Phase | Skill Name | Trigger Prompt | Key Output | Validator Script |
-|:---|:---|:---|:---|:---|
-| **Phase 1** | `sfa-project-planner-estimator` | *"Use sfa-project-planner-estimator to plan [feature]"* | `docs/plan.md` (WBS, milestones, risks) | `validate-plan.mjs` |
-| **Phase 2** | `sfa-prd-generator-validator` | *"Use sfa-prd-generator-validator to write a PRD for [feature]"* | `docs/<feature>.prd.md` with `FR-XXX`, `EC-XXX` | `validate-prd.mjs` |
-| **Phase 2/3** | `sfa-api-contract-designer` | *"Use sfa-api-contract-designer to design the API contract from the PRD"* | `openapi.yaml` (OpenAPI 3.1 + RFC 7807) | `validate-openapi.mjs` |
-| **Phase 3** | `sfa-system-architecture-adr` | *"Use sfa-system-architecture-adr to generate C4 diagrams and ADRs"* | `ARCHITECTURE.md`, `docs/adr/*.md` | `validate-architecture.mjs` |
-| **Phase 4** | `sfa-feature-scaffolder` | *"Use sfa-feature-scaffolder to scaffold the [domain] feature"* | `src/domain/`, `src/services/`, `src/repositories/` | `verify-scaffold.mjs` |
-| **Phase 5** | `sfa-unit-test-synthesizer` | *"Use sfa-unit-test-synthesizer to write tests citing FR-001, EC-001"* | `tests/*.spec.ts` or `*Tests.cs` (AAA pattern) | `verify-coverage-criteria.mjs` |
-| **Phase 6** | `sfa-cicd-container-automator` | *"Use sfa-cicd-container-automator to create a Dockerfile and CI pipeline"* | `Dockerfile`, `.github/workflows/*.yml` | `validate-ci-container.mjs` |
-| **Phase 6** | `sfa-security-vulnerability-auditor` | *"Use sfa-security-vulnerability-auditor to audit changes and app for OWASP/CWE flaws"* | `docs/security/audit-report.md`, threat matrix | `audit-security.mjs` |
-| **Phase 7** | `sfa-incident-root-cause-analyzer` | *"Use sfa-incident-root-cause-analyzer to diagnose this error: [stack trace]"* | `docs/incidents/RCA-*.md`, regression test | `validate-rca.mjs` |
-| **Cross-Cutting** | `sfa-quality-gate-orchestrator` | *(runs automatically via CLI)* | Gate pass/fail report | `run-all-gates.mjs` |
+The MCP server exposes the same information to compatible clients:
 
----
+- `get_code_graph`
+- `check_breaking_changes`
+- `run_quality_gate`
+- `verify_human_signoff`
+- `get_skill_instructions`
+- `list_domain_slices`
+- `get_domain_slice`
+- `audit_security`
 
-## 7. The Quality Gate System
+### Editors
 
-The `sfa-quality-gate-orchestrator` runs **10 automated gates** that map to SDLC phase transitions:
+`sync` generates the same instructions for every supported editor. `sync-editors --check`
+verifies that the committed files match the current skill descriptions.
 
-> **Fail-closed by design:** If the gate report is missing or unparseable (e.g., a crashed gate run), the PR scorecard reports `MISSING` and blocks merge — it never assumes success.
+| Editor | Generated file |
+|:---|:---|
+| Antigravity and general agents | `AGENTS.md` |
+| Claude Code | `CLAUDE.md` |
+| Cursor | `.cursorrules` |
+| Windsurf | `.windsurfrules` |
+| OpenCode | `OPENCODE.md` and `.opencode/instructions.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| Cline and Roo Code | `.clinerules` |
+| VSCode | `.vscode/tasks.json` |
 
-```mermaid
-flowchart TD
-    G1["Gate 1: Plan & Risk Validation"] --> G2["Gate 2: PRD & Contract Validation"]
-    G2 --> G3["Gate 3: Architecture & ADR Validation"]
-    G3 --> G4["Gate 4: Code Scaffolding & Layer Boundaries"]
-    G4 --> G5["Gate 5: Test Criteria, AAA Structure & FR Traceability"]
-    G5 --> G6A["Gate 6: Container Hardening & CI/CD Pipeline"]
-    G6A --> G6B["Gate 6: Security Weakness & Vulnerability Audit"]
-    G6B --> G7["Gate 7: RCA & Incident Prevention Check"]
-```
+## 10. Daily Workflow and Maintenance
 
-### Sample PR Scorecard Output (GitHub Actions)
+A typical feature proceeds from planning through PRD, contract design, architecture,
+human sign-off, scaffolding, tests, and security review before the final gate and pull
+request. Prompts commonly used with an agent:
 
-```
-🛡️ SkillForgeAI Quality Gate Report
+1. “Use the `sfa-project-planner-estimator` skill to plan this feature.”
+2. “Use the `sfa-prd-generator-validator` skill to write the PRD.”
+3. “Use the `sfa-api-contract-designer` skill to design the API contract.”
+4. “Use the `sfa-system-architecture-adr` skill to produce the architecture and ADRs.”
+5. “Use the `sfa-feature-scaffolder` skill to scaffold the feature.”
+6. “Use the `sfa-unit-test-synthesizer` skill to write tests citing FR and EC IDs.”
+7. “Use the `sfa-security-vulnerability-auditor` skill to review the changes.”
+8. Run `node bin/skillforge.mjs gate` before opening the pull request.
 
-> Status: ✅ ALL 10 SDLC QUALITY GATES PASSED
-> Recommended SemVer Bump: PATCH | Gates Evaluated: 10/10 Passing
+For incidents, use the `sfa-incident-root-cause-analyzer` skill, add a regression test,
+apply the fix, and run the gates again. The RCA report belongs in
+`docs/incidents/RCA-YYYY-MM-DD-<title>.md`.
 
-| SDLC Phase | Gate Name                            | Status     |
-|:-----------|:-------------------------------------|:-----------|
-| Phase 1    | Planning & Feasibility               | ✅ PASSED  |
-| Phase 2    | Requirements Analysis (PRD)          | ✅ PASSED  |
-| Phase 2    | API Contract (OpenAPI)               | ✅ PASSED  |
-| Phase 3    | Architecture & ADRs                  | ✅ PASSED  |
-| Phase 3→4  | Human-in-the-Loop (HITL) Sign-Off    | ✅ PASSED  |
-| Phase 4    | Code Scaffolding Boundaries          | ✅ PASSED  |
-| Phase 5    | Test Criteria & AAA Structure        | ✅ PASSED  |
-| Phase 6    | Container Hardening & CI/CD          | ✅ PASSED  |
-| Phase 6    | Security Weakness & Vulnerability Audit | ✅ PASSED  |
-| Phase 7    | Maintenance & Incident RCA           | ✅ PASSED  |
-```
+## 11. Principles and Governance
 
----
+The framework is built around four operating rules. They are enforced by the gates and
+reviewed in CI.
 
-## 8. The `skillforge` CLI — Full Command Reference
+**Requirements before implementation.** Start with a PRD for any new feature. Code
+written from an unresolved request is difficult to test and trace.
 
-```bash
-# ── Quality Gates ─────────────────────────────────────────────────
-node bin/skillforge.mjs gate                     # Run all 10 SDLC gates
-node bin/skillforge.mjs gate --phase 6           # Run a specific phase gate
-node bin/skillforge.mjs gate --json              # Output JSON for CI tooling
+**Respect architecture boundaries.** Domain code must not import database drivers, ORMs,
+web frameworks, or infrastructure packages. Dependencies point inward.
 
-# ── Security & Vulnerability Audit ────────────────────────────────
-node bin/skillforge.mjs security                 # Audit workspace for secrets & CWEs
-node bin/skillforge.mjs security --diff          # Audit uncommitted Git changes
-node bin/skillforge.mjs security --staged        # Audit staged changes only
-node bin/skillforge.mjs security --path "src/"   # Audit specific directory or file
-node bin/skillforge.mjs security --strict        # Fail on medium/low warnings
+**Cite requirements in tests.** Every test should reference a requirement or edge-case
+ID so failures can be traced back to the specification.
 
-# ── Breaking Change & SemVer Analysis ─────────────────────────────
-node bin/skillforge.mjs diff                     # Compare working tree vs HEAD
-node bin/skillforge.mjs diff --staged            # Compare staged changes only
+**Run the gates before opening a pull request.** The gate bot blocks merges when a gate
+fails or the report is missing.
 
-# ── Code Graph & Symbol Map ────────────────────────────────────────
-node bin/skillforge.mjs graph                    # Generate REPO-MAP.md
-node bin/skillforge.mjs graph --format mermaid   # Output as Mermaid diagram
+Repository policies are documented in the following files:
 
-# ── Clean Architecture Scaffolder ─────────────────────────────────
-node bin/skillforge.mjs scaffold --name "order" --lang "ts"      # TypeScript
-node bin/skillforge.mjs scaffold --name "order" --lang "dotnet"  # C# .NET 10
+- `CONTRIBUTING.md`: setup, development commands, pull request conventions.
+- `SECURITY.md`: vulnerability reporting and supported versions.
+- `CODE_OF_CONDUCT.md`: community expectations.
+- `LICENSE`: MIT license terms.
+- `CHANGELOG.md`: notable changes by release.
 
-# ── Monorepo Domain Slicing ────────────────────────────────────────
-node bin/skillforge.mjs slice                         # Generate all slice maps
-node bin/skillforge.mjs slice --list                  # List slices with token counts
-node bin/skillforge.mjs slice --name "order-service"  # Inspect one slice
+## 12. Troubleshooting
 
-# ── HITL Sign-Off Draft & Verification ────────────────────────────
-# Generates a PENDING_REVIEW draft only (never self-approves).
-node bin/skillforge.mjs signoff --feature "order-service" --by "Lead Architect"
-# A human sets Status: APPROVED, checks the boxes, and commits with `git commit -S`.
-# Verification requires an allow-listed, non-agent author and a signed commit.
-node bin/skillforge.mjs signoff --verify docs/approvals/order-service-signoff.md
-
-# ── Automated Self-Healing Loop ───────────────────────────────────
-node bin/skillforge.mjs heal                     # Auto-fix failing tests in a loop
-
-# ── Environment & Editor Sync ─────────────────────────────────────
-node bin/skillforge.mjs init                     # Initialize environment & git hooks
-node bin/skillforge.mjs sync                     # Regenerate all editor config files
-
-# ── MCP Server (Cursor, Claude Desktop, Antigravity) ─────────────
-node bin/skillforge.mjs mcp                      # Start the MCP server
-```
-
-> [!TIP]
-> All commands are also available as `npm run <command>` (e.g. `npm run gate`, `npm run diff`) when the scripts are added to your `package.json`.
-
----
-
-## 9. Monorepo Domain Slicing
-
-In large enterprise codebases (10,000+ files), loading a full `REPO-MAP.md` burns tens of thousands of AI tokens. SkillForgeAI partitions the codebase into **focused domain slice maps**:
-
-```
-docs/context/
-├── REPO-MAP.md                      # Full monolithic map (~935 tokens)
-├── code-graph.json                  # Symbol-level AST dependency graph
-└── slices/
-    ├── index.md                     # Slice router — agents load this first
-    ├── slices.json                  # Machine-readable registry
-    ├── order-service-map.md         # Focused slice (~234 tokens)
-    ├── dotnet-order-service-map.md  # C# .NET slice (~278 tokens)
-    └── cli-map.md                   # CLI module slice (~347 tokens)
-```
-
-**Result: 65–98% token reduction** — an agent working on "Order Processing" loads the 234-token slice map instead of the full 935-token repo map.
-
-```bash
-# Generate or refresh all slice maps
-node bin/skillforge.mjs slice
-
-# Show slice list with token savings
-node bin/skillforge.mjs slice --list
-
-# Focus agent context on one domain
-node bin/skillforge.mjs slice --name "order-service"
-```
-
-The MCP server also exposes `list_domain_slices` and `get_domain_slice` tools for Cursor, Claude Desktop, and Antigravity.
-
----
-
-## 10. Multi-Editor Sync
-
-A single command keeps **all editors in sync** from one source of truth:
-
-```bash
-node bin/skillforge.mjs sync
-```
-
-| Editor | Config File | Features |
+| Symptom | Likely cause | Action |
 |:---|:---|:---|
-| **Antigravity** | `AGENTS.md` | Native skill discovery, phase constraints |
-| **Cursor IDE** | `.cursorrules` | Chat and Composer constraints |
-| **Claude Code** | `CLAUDE.md` | Terminal assistant instructions |
-| **Windsurf** | `.windsurfrules` | Cascade flow enforcement |
-| **OpenCode** | `OPENCODE.md` + `.opencode/` | Skill discovery and verification |
-| **VSCode Copilot** | `.github/copilot-instructions.md` | Copilot Chat SDLC guidance |
-| **VSCode Cline / Roo** | `.clinerules` | Autonomous loop phase constraints |
-| **VSCode Tasks** | `.vscode/tasks.json` | GUI tasks (`Ctrl+Shift+B`) |
+| `ERR_MODULE_NOT_FOUND: yaml` | Runtime dependencies are not installed | Run `npm ci` in a source checkout, or install the runtime packages in an adopting repository |
+| Gates validate framework templates instead of project files | No config, or mode is `self-test` | Create `skillforge.config.json`, set `"mode": "project"`, and map artifacts |
+| `FAILED (missing artifact)` | The configured path does not exist or does not match the glob | Fix `artifacts`, or use `--allow-missing` temporarily |
+| Sign-off verification fails | Reviewer is not allow-listed, commit is unsigned, hash differs, or the sign-off expired | Check `governance`, commit with `git commit -S`, and regenerate the sign-off |
+| Graph nodes are labeled `heuristic` | A tree-sitter grammar binding is unavailable | Reinstall dependencies; the graph remains usable with reduced accuracy |
+| `graph --check` reports stale files | `docs/context` was not regenerated | Run `node bin/skillforge.mjs graph` and commit the result |
+| `node scripts/sync-editors.mjs --check` reports stale files | Editor instructions were not regenerated after skill changes | Run `node scripts/sync-editors.mjs` and commit the result |
+| Gate report is `MISSING` in CI | The gate step crashed, often because dependencies were not installed | Check the CI log and ensure `npm ci` runs before the gate |
 
----
+## 13. Reference
 
-## 11. Daily Developer Workflow
+### Skills
 
-```mermaid
-flowchart TD
-    A["💡 New Feature Request"] --> B["sfa-prd-generator-validator\n→ docs/feature.prd.md"]
-    B --> C["sfa-api-contract-designer\n→ openapi.yaml"]
-    C --> D["sfa-system-architecture-adr\n→ docs/adr/*.md"]
-    D --> E["sfa-feature-scaffolder\n→ src/domain/, src/services/"]
-    E --> F["sfa-unit-test-synthesizer\n→ tests/*.spec.ts"]
-    F --> SEC["sfa-security-vulnerability-auditor\n→ skillforge security --diff"]
-    SEC --> G["skillforge gate\n✅ 10/10 gates pass"]
-    G --> H["Open PR → GitHub Actions CI scorecard"]
-    H --> I["Merge ✅"]
-```
+| Phase | Skill | Primary output | Validator or gate |
+|:---|:---|:---|:---|
+| 1 | `sfa-project-planner-estimator` | `docs/plan.md` | `validate-plan.mjs` |
+| 2 | `sfa-prd-generator-validator` | `docs/<feature>.prd.md` | `validate-prd.mjs` |
+| 2/3 | `sfa-api-contract-designer` | `openapi.yaml` | `validate-openapi.mjs` |
+| 3 | `sfa-system-architecture-adr` | `ARCHITECTURE.md`, `docs/adr/*.md` | `validate-architecture.mjs` |
+| 4 | `sfa-feature-scaffolder` | `src/features/<name>/` or configured output | `verify-scaffold.mjs` |
+| 5 | `sfa-unit-test-synthesizer` | `tests/*.spec.ts`, `*Tests.cs`, `test_*.py`, `*_test.go` | `verify-coverage-criteria.mjs` |
+| 6 | `sfa-cicd-container-automator` | `Dockerfile`, `.github/workflows/*.yml` | `validate-ci-container.mjs` |
+| 6 | `sfa-security-vulnerability-auditor` | Security findings and remediation notes | `audit-security.mjs` |
+| 7 | `sfa-incident-root-cause-analyzer` | `docs/incidents/RCA-*.md` | `validate-rca.mjs` |
+| Cross-cutting | `sfa-quality-gate-orchestrator` | Gate report | `run-all-gates.mjs` |
 
-### Recommended Agent Interaction Pattern
+### Examples
 
-For every new feature, use this sequence of agent prompts:
+The repository includes two reference implementations:
 
-```
-1. "Use the sfa-project-planner-estimator skill to plan [feature]."
-2. "Use the sfa-prd-generator-validator skill to write a PRD for [feature]."
-3. "Use the sfa-api-contract-designer skill to design the API from the PRD."
-4. "Use the sfa-system-architecture-adr skill to generate C4 diagrams and ADRs."
-5. "Use the sfa-feature-scaffolder skill to scaffold the [domain] from the PRD."
-6. "Use the sfa-unit-test-synthesizer skill to write tests citing all FR-XXX and EC-XXX."
-7. "Use the sfa-security-vulnerability-auditor skill to audit changes: node bin/skillforge.mjs security --diff"
-8. "Run the quality gate: node bin/skillforge.mjs gate"
-```
+- `examples/order-service`: TypeScript service with a PRD, domain model, ports,
+  in-memory adapter, and tests.
+- `examples/dotnet-order-service`: .NET 10 service with the same layering and xUnit
+  tests.
 
-### Maintenance Workflow (Phase 7)
-
-When a production incident occurs:
-
-```
-1. "Use the sfa-incident-root-cause-analyzer skill to diagnose this error: [paste stack trace]."
-2. Agent writes a failing regression test → confirms it reproduces the bug
-3. Agent applies the minimal hotfix → confirms all tests pass
-4. Agent drafts the RCA post-mortem in docs/incidents/RCA-YYYY-MM-DD-[title].md
-5. node bin/skillforge.mjs gate  ← verify all gates still pass after the fix
-```
-
----
-
-## 12. The 4 Golden Rules
-
-> [!CAUTION]
-> These are enforced by the automated quality gates. Breaking any of them causes the CI bot to block your PR.
-
-### Rule 1: Never Guess Requirements
-Always run `sfa-prd-generator-validator` first for any new feature. Never start coding from a vague prompt.
-
-### Rule 2: Enforce Architecture Boundaries
-Domain entities and business logic **MUST NOT** import database drivers, ORMs, web frameworks, or infrastructure packages. Dependency flows inward only:
-```
-Infrastructure → Application → Domain   ✅ Allowed
-Domain → Infrastructure                 ❌ Gate fails
-```
-
-### Rule 3: Every Test Must Cite a Requirement
-All test descriptions must reference a requirement ID from the PRD:
-```typescript
-it('should reject duplicate order with 409 Conflict (EC-001)', ...)   // ✅ Correct
-it('should reject duplicate order', ...)                               // ❌ Gate fails
-```
-
-### Rule 4: Gate Before Every PR
-Run `node bin/skillforge.mjs gate` and pass all 10 gates before opening any pull request. The GitHub Actions CI bot enforces this automatically — it comments a scorecard on every PR and blocks merging on failure.
-
----
-
-## 13. Verified Reference Examples
-
-Two complete, working examples are included in the repo:
-
-### TypeScript Order Processing Service
-
-**Location:** [`examples/order-service/`](examples/order-service/)
-
-```
-examples/order-service/
-├── order-service.prd.md           ← Approved PRD (FR-001, FR-002, FR-003, EC-001)
-├── src/
-│   ├── domain/entities/           ← Pure TypeScript domain entity (zero external deps)
-│   ├── services/order.service.ts  ← Application use-case orchestration
-│   └── repositories/              ← In-memory adapter implementing the port
-└── tests/order.service.spec.ts    ← 100% passing AAA tests with FR/EC citations
-```
+Run their tests with:
 
 ```bash
-# Run TypeScript tests
 node --experimental-strip-types --test examples/order-service/tests/order.service.spec.ts
-```
-
-### C# / .NET 10 Clean Architecture Order Service
-
-**Location:** [`examples/dotnet-order-service/`](examples/dotnet-order-service/)
-
-```
-examples/dotnet-order-service/
-├── src/
-│   ├── Domain/Entities/Order.cs                        ← C# 13 entity, zero external deps
-│   ├── Domain/Ports/IOrderRepository.cs                ← Abstract repository port
-│   ├── Application/Services/OrderService.cs            ← Business orchestration
-│   └── Infrastructure/Persistence/InMemoryOrderRepo.cs ← Adapter
-└── tests/OrderService.Tests/OrderServiceTests.cs       ← xUnit tests (100% pass, 21ms)
-```
-
-```bash
-# Run .NET 10 tests
 dotnet run --project examples/dotnet-order-service/tests/OrderService.Tests/OrderService.Tests.csproj
 ```
 
----
+### Repository layout
 
-## Quick Reference: Where Things Live
-
-```
+```text
 SkillForgeAI/
-├── .agents/skills/                  ← All 10 SDLC skill instruction files (SKILL.md)
-│   ├── sfa-prd-generator-validator/
-│   ├── sfa-api-contract-designer/
-│   ├── sfa-system-architecture-adr/
-│   ├── sfa-feature-scaffolder/
-│   ├── sfa-unit-test-synthesizer/
-│   ├── sfa-cicd-container-automator/
-│   ├── sfa-security-vulnerability-auditor/
-│   ├── sfa-incident-root-cause-analyzer/
-│   ├── sfa-project-planner-estimator/
-│   └── sfa-quality-gate-orchestrator/
-├── bin/skillforge.mjs               ← Unified CLI entry point
-├── scripts/                         ← Editor sync, code graph, PR scorecard, self-heal
-├── templates/                       ← Phase sign-off template
-├── docs/context/                    ← REPO-MAP.md and domain slice maps
-├── examples/                        ← Verified TypeScript and .NET reference implementations
-├── .github/workflows/               ← skillforge-gate.yml CI bot for PRs
-├── AGENTS.md                        ← Antigravity agent instructions (auto-generated)
-├── CLAUDE.md                        ← Claude Code instructions (auto-generated)
-├── .cursorrules                     ← Cursor IDE rules (auto-generated)
-└── package.json                     ← npm scripts for all CLI commands
+├── .agents/skills/              Skill instructions, templates, and validator wrappers
+├── bin/skillforge.mjs           Unified CLI entry point
+├── src/
+│   ├── cli/                     Commands, output formatting, context checks
+│   └── core/                    Shared engines, parsers, validators, and gate runner
+├── scripts/                     Standalone wrappers and maintenance scripts
+├── templates/                   Phase sign-off template
+├── docs/context/                Generated code graph, repository map, and slices
+├── examples/                    TypeScript and .NET reference implementations
+├── .github/workflows/           Gate bot and framework CI
+├── skillforge.config.example.json
+├── skillforge.config.schema.json
+├── AGENTS.md                    Generated agent instructions
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── CODE_OF_CONDUCT.md
+├── CHANGELOG.md
+└── LICENSE
 ```
