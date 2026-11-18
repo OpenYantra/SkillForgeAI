@@ -126,3 +126,10 @@ describe('dependabot policy', () => {
     );
   });
 });
+
+describe('gate report workflow', () => {
+  it('skips cancelled evaluator runs', () => {
+    const workflow = loadWorkflow('skillforge-gate-report.yml');
+    assert.match(String(workflow.jobs['publish-scorecard'].if), /cancelled/);
+  });
+});

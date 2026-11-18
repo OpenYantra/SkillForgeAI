@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI: upgraded GitHub Actions to checkout v7, setup-node v7, setup-dotnet v6,
+  upload-artifact v7, download-artifact v8, and github-script v9.
+
 ## [2.0.0] - 2026-11-18
 
 ### Security
