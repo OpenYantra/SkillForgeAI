@@ -48,6 +48,19 @@ node .agents/skills/sfa-quality-gate-orchestrator/scripts/run-all-gates.mjs
 - HITL sign-offs must be committed, bind to artifact SHA-256 hashes, and use an
   allow-listed reviewer identity/key.
 
+## Dependency policy
+
+- `@types/node` follows the Node runtime major (currently 24). Do not bump it to
+  a newer major without also bumping `engines.node` and the CI Node version.
+- `tree-sitter` and all grammar packages (`tree-sitter-*`) are upgraded together
+  in one PR. Their 0.x minor bumps are breaking and are intentionally ignored by
+  Dependabot.
+- GitHub Actions minor/patch updates are grouped and run monthly. Action majors
+  require a manual, reviewed upgrade with release-note and input/output checks.
+- Dependabot PRs that touch `.github/workflows` are exempt from the
+  `skillforge:policy-change` label; human and agent PRs still require it.
+- Keep every action pinned to a full 40-character commit SHA.
+
 ## Repository layout
 
 | Path | Purpose |

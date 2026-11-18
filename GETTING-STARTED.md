@@ -567,9 +567,12 @@ never evaluated with a write token.
 
 1. Checks out the pull request with `persist-credentials: false`.
 2. Guards protected enforcement paths (`src/core`, `bin`, `.agents`, workflows,
-   `skillforge.config.json`, `gate-policy.json`); a maintainer can apply the
-   `skillforge:policy-change` label for an intentional framework change.
-3. Creates a worktree of the base branch and installs it with `npm ci --ignore-scripts`.
+   `skillforge.config.json`, `gate-policy.json`). Human and agent PRs need the
+   `skillforge:policy-change` label for an intentional framework change; Dependabot
+   PRs are exempt because they run with a read-only token and action bumps necessarily
+   touch workflow files.
+3. Checks out the base branch into `.skillforge-eval` and installs it with
+   `npm ci --ignore-scripts`.
 4. Runs `diff` and `gate` using the **base-branch** evaluator against the PR artifacts, so
    the PR cannot grade itself.
 5. Runs `npm audit --omit=dev --audit-level=high`.
