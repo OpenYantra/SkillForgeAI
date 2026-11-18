@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T06:39:33.043Z",
+  "generatedAt": "2026-11-18T07:06:46.564Z",
   "totalFiles": 99,
   "languages": {
     "typescript": 91,
@@ -1857,7 +1857,9 @@
       "symbols": {
         "classes": [],
         "interfaces": [],
-        "types": [],
+        "types": [
+          "IgnoreEntry"
+        ],
         "functions": [
           "loadWorkflow",
           "stepsOf",
